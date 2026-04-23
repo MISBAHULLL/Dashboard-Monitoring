@@ -6,14 +6,6 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Tambah kolom custom ke tabel users.
-     *
-     * Users dibuat oleh Laravel default. Kita tambahkan:
-     * - role: admin (full access) atau member (limited)
-     * - team_id: member terhubung ke team
-     * - avatar, phone, is_active, theme (dark mode preference)
-     */
     public function up(): void
     {
         Schema::table('users', function (Blueprint $table) {

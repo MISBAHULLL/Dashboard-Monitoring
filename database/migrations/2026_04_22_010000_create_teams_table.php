@@ -6,15 +6,6 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Tabel 'teams' — Anggota tim Product Owner & Engineer.
-     *
-     * Mapping dari database lama (mtpo.team):
-     * - nama   → name
-     * - alamat  → address
-     * - no_hp   → phone
-     * - tim     → type (PRODUCT/ENGINEER, perbaiki typo 'ENGINER')
-     */
     public function up(): void
     {
         Schema::create('teams', function (Blueprint $table) {

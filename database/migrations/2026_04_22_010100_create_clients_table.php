@@ -6,17 +6,6 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Tabel 'clients' — Data client/faskes.
-     *
-     * Mapping dari database lama (mtpo.client):
-     * - nama    → name
-     * - alamat  → address
-     * - kota    → city      (untuk filter dropdown)
-     * - tipe    → type      (A/B/C/PRATAMA)
-     * - pic     → pic_name
-     * - no_pic  → pic_phone
-     */
     public function up(): void
     {
         Schema::create('clients', function (Blueprint $table) {

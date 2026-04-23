@@ -5,98 +5,57 @@ namespace App\Http\Controllers;
 use App\Models\Team;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
+use Illuminate\Validation\Rule;
 
-/**
- * TeamController — Mengelola CRUD data Tim.
- *
- * Setiap method di controller ini menangani 1 aksi:
- * - index()   → Tampilkan daftar tim
- * - store()   → Simpan tim baru
- * - update()  → Update tim yang sudah ada
- * - destroy() → Hapus tim (soft delete)
- */
 class TeamController extends Controller
 {
-    /**
-     * Tampilkan halaman daftar tim.
-     *
-     * Inertia::render() mengirim data dari PHP ke Vue component.
-     * Ini menggantikan blade view di Laravel tradisional.
-     */
-    public function index(Request $request)
+    public function index()
     {
-        // Query tim dengan filter dan pagination
-        $teams = Team::query()
-            ->when($request->search, function ($query, $search) {
-                // 'when' = conditional query: hanya filter jika ada parameter 'search'
-                $query->where('name', 'like', "%{$search}%");
-            })
-            ->when($request->type, function ($query, $type) {
-                $query->where('type', $type);
-            })
-            ->orderBy('name')
-            ->paginate(10)                    // Pagination: 10 item per halaman
-            ->withQueryString();               // Pertahankan query string di URL pagination
-
-        // Render Vue page 'Teams/Index' dan kirim data
         return Inertia::render('Teams/Index', [
-            'teams'   => $teams,
-            'filters' => $request->only(['search', 'type']),
+            // withCount('users') akan otomatis membuat atribut 'users_count'
+            'teams' => Team::withCount('users')->latest()->get(),
         ]);
     }
 
-    /**
-     * Simpan tim baru ke database.
-     *
-     * Request validation di Laravel = auto-return error ke frontend
-     * jika ada field yang tidak valid.
-     */
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'name'        => 'required|string|max:255',
-            'type'        => 'required|in:product,engineer',
-            'description' => 'nullable|string|max:1000',
+            'name' => 'required|string|max:255',
+            'type' => ['required', Rule::in(['PRODUCT', 'ENGINEER'])],
+            'phone' => 'nullable|string|max:20',
+            'address' => 'nullable|string',
+            'is_active' => 'boolean',
         ]);
 
         Team::create($validated);
 
-        return redirect()->route('teams.index')
-            ->with('success', 'Tim berhasil ditambahkan!');
+        return back()->with('success', 'Tim berhasil ditambahkan.');
     }
 
-    /**
-     * Update data tim yang sudah ada.
-     *
-     * Route Model Binding: Laravel otomatis cari Team berdasarkan ID di URL.
-     * Jika tidak ditemukan → auto 404.
-     */
     public function update(Request $request, Team $team)
     {
         $validated = $request->validate([
-            'name'        => 'required|string|max:255',
-            'type'        => 'required|in:product,engineer',
-            'description' => 'nullable|string|max:1000',
-            'is_active'   => 'boolean',
+            'name' => 'required|string|max:255',
+            'type' => ['required', Rule::in(['PRODUCT', 'ENGINEER'])],
+            'phone' => 'nullable|string|max:20',
+            'address' => 'nullable|string',
+            'is_active' => 'boolean',
         ]);
 
         $team->update($validated);
 
-        return redirect()->route('teams.index')
-            ->with('success', 'Tim berhasil diupdate!');
+        return back()->with('success', 'Tim berhasil diperbarui.');
     }
 
-    /**
-     * Hapus tim (soft delete).
-     *
-     * Soft delete = data tidak benar-benar dihapus dari database,
-     * hanya ditandai 'deleted_at' (bisa di-restore nanti).
-     */
     public function destroy(Team $team)
     {
+        // Proteksi agar tidak menghapus tim yang masih ada anggotanya
+        if ($team->users()->count() > 0) {
+            return back()->with('error', 'Tim tidak bisa dihapus karena masih memiliki anggota pengguna.');
+        }
+
         $team->delete();
 
-        return redirect()->route('teams.index')
-            ->with('success', 'Tim berhasil dihapus!');
+        return back()->with('success', 'Tim berhasil dihapus.');
     }
 }

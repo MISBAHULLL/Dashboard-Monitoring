@@ -5,70 +5,61 @@ namespace App\Http\Controllers;
 use App\Models\Client;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
+use Illuminate\Validation\Rule;
 
-/**
- * ClientController — Mengelola CRUD data Client/Faskes.
- */
 class ClientController extends Controller
 {
-    public function index(Request $request)
+    public function index()
     {
-        $clients = Client::query()
-            ->when($request->search, function ($query, $search) {
-                $query->where('name', 'like', "%{$search}%")
-                      ->orWhere('code', 'like', "%{$search}%");
-            })
-            ->withCount('tasks')               // Tambahkan hitungan task per client
-            ->orderBy('name')
-            ->paginate(10)
-            ->withQueryString();
-
         return Inertia::render('Clients/Index', [
-            'clients' => $clients,
-            'filters' => $request->only(['search']),
+            // withCount('tasks') berguna untuk menampilkan total project si client
+            'clients' => Client::withCount('tasks')->latest()->get(),
         ]);
     }
 
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'name'           => 'required|string|max:255',
-            'code'           => 'nullable|string|max:50|unique:clients,code',
-            'address'        => 'nullable|string|max:500',
-            'contact_person' => 'nullable|string|max:255',
-            'contact_email'  => 'nullable|email|max:255',
-            'contact_phone'  => 'nullable|string|max:20',
+            'name' => 'required|string|max:255',
+            'address' => 'nullable|string',
+            'city' => 'nullable|string|max:100',
+            'type' => ['nullable', Rule::in(['A', 'B', 'C', 'PRATAMA'])],
+            'pic_name' => 'nullable|string|max:255',
+            'pic_phone' => 'nullable|string|max:20',
+            'is_active' => 'boolean',
         ]);
 
         Client::create($validated);
 
-        return redirect()->route('clients.index')
-            ->with('success', 'Client berhasil ditambahkan!');
+        return back()->with('success', 'Faskes / Client berhasil ditambahkan.');
     }
 
     public function update(Request $request, Client $client)
     {
         $validated = $request->validate([
-            'name'           => 'required|string|max:255',
-            'code'           => 'nullable|string|max:50|unique:clients,code,' . $client->id,
-            'address'        => 'nullable|string|max:500',
-            'contact_person' => 'nullable|string|max:255',
-            'contact_email'  => 'nullable|email|max:255',
-            'contact_phone'  => 'nullable|string|max:20',
-            'is_active'      => 'boolean',
+            'name' => 'required|string|max:255',
+            'address' => 'nullable|string',
+            'city' => 'nullable|string|max:100',
+            'type' => ['nullable', Rule::in(['A', 'B', 'C', 'PRATAMA'])],
+            'pic_name' => 'nullable|string|max:255',
+            'pic_phone' => 'nullable|string|max:20',
+            'is_active' => 'boolean',
         ]);
 
         $client->update($validated);
 
-        return redirect()->route('clients.index')
-            ->with('success', 'Client berhasil diupdate!');
+        return back()->with('success', 'Faskes / Client berhasil diperbarui.');
     }
 
     public function destroy(Client $client)
     {
+        // Proteksi data master
+        if ($client->tasks()->count() > 0) {
+            return back()->with('error', 'Client tidak bisa dihapus karena masih memiliki history Task.');
+        }
+
         $client->delete();
 
-        return redirect()->route('clients.index')
-            ->with('success', 'Client berhasil dihapus!');
+        return back()->with('success', 'Faskes / Client berhasil dihapus.');
     }
 }

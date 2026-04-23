@@ -26,4 +26,12 @@ class Team extends Model
     {
         return $this->hasMany(User::class);
     }
+
+    /**
+     * Local Scope untuk mengambil tim yang aktif saja.
+     */
+    public function scopeActive($query)
+    {
+        return $query->where('is_active', true);
+    }
 }

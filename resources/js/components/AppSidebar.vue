@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { Link } from '@inertiajs/vue3';
-import { BookOpen, FolderGit2, LayoutGrid } from 'lucide-vue-next';
+import { Link, usePage } from '@inertiajs/vue3';
+import { LayoutGrid, ListTodo, Users, Building2, UsersRound, Settings } from 'lucide-vue-next';
 import AppLogo from '@/components/AppLogo.vue';
 import NavFooter from '@/components/NavFooter.vue';
 import NavMain from '@/components/NavMain.vue';
@@ -14,27 +14,63 @@ import {
     SidebarMenuButton,
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
-import { dashboard } from '@/routes';
-import type { NavItem } from '@/types';
 
-const mainNavItems: NavItem[] = [
-    {
-        title: 'Dashboard',
-        href: dashboard(),
-        icon: LayoutGrid,
-    },
-];
+// Import route generator otomatis dari Laravel Wayfinder
+import { dashboard } from '@/routes';
+import { index as tasksIndex } from '@/actions/App/Http/Controllers/TaskController';
+import { index as usersIndex } from '@/actions/App/Http/Controllers/UserController';
+import { index as teamsIndex } from '@/actions/App/Http/Controllers/TeamController';
+import { index as clientsIndex } from '@/actions/App/Http/Controllers/ClientController';
+
+import type { NavItem } from '@/types';
+import { computed } from 'vue';
+
+// Mengambil data user yang login dari middleware HandleInertiaRequests yang kita buat
+const page = usePage();
+const user = computed(() => page.props.auth.user);
+
+// Menu utama (Bisa diakses semua user)
+const mainNavItems = computed<NavItem[]>(() => {
+    const items = [
+        {
+            title: 'Dashboard',
+            href: dashboard(),
+            icon: LayoutGrid,
+        },
+        {
+            title: 'Monitoring Task',
+            href: tasksIndex.url(),
+            icon: ListTodo,
+        },
+    ];
+
+    // Menu master data HANYA ditambahkan jika user adalah admin
+    if (user.value?.role === 'admin') {
+        items.push({
+            title: 'Faskes / Client',
+            href: clientsIndex.url(),
+            icon: Building2,
+        });
+        items.push({
+            title: 'Master Team',
+            href: teamsIndex.url(),
+            icon: UsersRound,
+        });
+        items.push({
+            title: 'Master User',
+            href: usersIndex.url(),
+            icon: Users,
+        });
+    }
+
+    return items;
+});
 
 const footerNavItems: NavItem[] = [
     {
-        title: 'Repository',
-        href: 'https://github.com/laravel/vue-starter-kit',
-        icon: FolderGit2,
-    },
-    {
-        title: 'Documentation',
-        href: 'https://laravel.com/docs/starter-kits#vue',
-        icon: BookOpen,
+        title: 'Pengaturan Sistem',
+        href: '#', // Nanti kita arahkan ke halaman pengaturan SLA dsb
+        icon: Settings,
     },
 ];
 </script>
@@ -54,11 +90,14 @@ const footerNavItems: NavItem[] = [
         </SidebarHeader>
 
         <SidebarContent>
+            <!-- Daftar Menu -->
             <NavMain :items="mainNavItems" />
         </SidebarContent>
 
         <SidebarFooter>
             <NavFooter :items="footerNavItems" />
+            
+            <!-- Profil User & Tombol Logout -->
             <NavUser />
         </SidebarFooter>
     </Sidebar>

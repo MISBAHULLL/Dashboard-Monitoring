@@ -9,7 +9,7 @@ use App\Http\Controllers\TaskController;
 
 Route::get('/', function () {
     return redirect()->route('login');
-});
+})->name('home');
 
 // Group route yang wajib login
 Route::middleware(['auth'])->group(function () {
@@ -30,3 +30,5 @@ Route::middleware(['auth'])->group(function () {
         
     });
 });
+
+require __DIR__.'/settings.php';

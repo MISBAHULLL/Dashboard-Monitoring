@@ -1,23 +1,32 @@
 <?php
 
+use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\UserController;
 use App\Http\Controllers\TeamController;
 use App\Http\Controllers\ClientController;
-use Illuminate\Support\Facades\Route;
-use Laravel\Fortify\Features;
+use App\Http\Controllers\TaskController;
 
-Route::inertia('/', 'Welcome', [
-    'canRegister' => Features::enabled(Features::registration()),
-])->name('home');
-
-Route::middleware(['auth', 'verified'])->group(function () {
-    Route::inertia('dashboard', 'Dashboard')->name('dashboard');
-
-    // Team CRUD routes → /teams, /teams/{team}
-    // resource() otomatis membuat: index, store, update, destroy
-    Route::resource('teams', TeamController::class)->only(['index', 'store', 'update', 'destroy']);
-
-    // Client CRUD routes → /clients, /clients/{client}
-    Route::resource('clients', ClientController::class)->only(['index', 'store', 'update', 'destroy']);
+Route::get('/', function () {
+    return redirect()->route('login');
 });
 
-require __DIR__.'/settings.php';
+// Group route yang wajib login
+Route::middleware(['auth'])->group(function () {
+    
+    // Dashboard
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+
+    // Tasks (Bisa diakses oleh semua user yang login)
+    Route::resource('tasks', TaskController::class);
+
+    // Group khusus Admin (Menggunakan alias middleware 'role' yang kita buat)
+    Route::middleware(['role:admin'])->group(function () {
+        
+        // Master Data (Hanya Index, Store, Update, Destroy)
+        Route::resource('users', UserController::class)->except(['create', 'show', 'edit']);
+        Route::resource('teams', TeamController::class)->except(['create', 'show', 'edit']);
+        Route::resource('clients', ClientController::class)->except(['create', 'show', 'edit']);
+        
+    });
+});

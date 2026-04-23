@@ -2,18 +2,27 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class DocumentVersion extends Model
 {
+    use HasFactory;
+
+    // Matikan updated_at karena versi dokumen bersifat read-only (tidak pernah diupdate)
+    public const UPDATED_AT = null;
+
     protected $fillable = [
         'document_id',
         'version_number',
         'file_path',
-        'file_size',
+        'doc_url',
         'uploaded_by',
-        'change_notes',
+    ];
+
+    protected $casts = [
+        'version_number' => 'integer',
     ];
 
     public function document(): BelongsTo

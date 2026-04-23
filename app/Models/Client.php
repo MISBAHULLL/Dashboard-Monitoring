@@ -2,47 +2,33 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Client extends Model
 {
-    use SoftDeletes;
+    use HasFactory;
 
     protected $fillable = [
         'name',
-        'code',
         'address',
-        'contact_person',
-        'contact_email',
-        'contact_phone',
+        'city',
+        'type',
+        'pic_name',
+        'pic_phone',
         'is_active',
     ];
 
-    protected function casts(): array
-    {
-        return [
-            'is_active' => 'boolean',
-        ];
-    }
+    protected $casts = [
+        'is_active' => 'boolean',
+    ];
 
-    // ==========================================
-    // RELATIONSHIPS
-    // ==========================================
-
-    /** Semua task milik client ini */
+    /**
+     * Get the tasks associated with the client.
+     */
     public function tasks(): HasMany
     {
         return $this->hasMany(Task::class);
-    }
-
-    // ==========================================
-    // SCOPES
-    // ==========================================
-
-    public function scopeActive($query)
-    {
-        return $query->where('is_active', true);
     }
 }

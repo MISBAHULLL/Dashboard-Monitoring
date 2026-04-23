@@ -4,26 +4,22 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 
-class Team extends Model
+class SlaConfig extends Model
 {
     use HasFactory;
 
     protected $fillable = [
-        'name',
-        'type',
-        'phone',
-        'address',
+        'category',
+        'max_days',
+        'warning_days',
+        'description',
         'is_active',
     ];
 
     protected $casts = [
+        'max_days' => 'integer',
+        'warning_days' => 'integer',
         'is_active' => 'boolean',
     ];
-    
-    public function users(): HasMany
-    {
-        return $this->hasMany(User::class);
-    }
 }

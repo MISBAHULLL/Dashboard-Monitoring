@@ -2,11 +2,14 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class ReleaseDateLog extends Model
 {
+    use HasFactory;
+
     protected $fillable = [
         'task_id',
         'changed_by',
@@ -15,13 +18,10 @@ class ReleaseDateLog extends Model
         'reason',
     ];
 
-    protected function casts(): array
-    {
-        return [
-            'old_date' => 'date',
-            'new_date' => 'date',
-        ];
-    }
+    protected $casts = [
+        'old_date' => 'date',
+        'new_date' => 'date',
+    ];
 
     public function task(): BelongsTo
     {

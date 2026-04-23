@@ -11,36 +11,33 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Fortify\TwoFactorAuthenticatable;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-#[Fillable(['name', 'email', 'password', 'role'])]
+
+#[Fillable(['name', 'email', 'password', 'role', 'team_id', 'is_active', 'ui_theme'])]
 #[Hidden(['password', 'two_factor_secret', 'two_factor_recovery_codes', 'remember_token'])]
 class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable, TwoFactorAuthenticatable;
 
-    /**
-     * Get the attributes that should be cast.
-     *
-     * @return array<string, string>
-     */
     protected function casts(): array
     {
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'is_active' => 'boolean',
             'two_factor_confirmed_at' => 'datetime',
         ];
     }
 
-    // ==========================================
     // RELATIONSHIPS (Relasi ke tabel lain)
-    // ==========================================
 
-    /**
-     * Task yang di-assign ke user ini.
-     * Relasi: User hasMany Tasks (1 user bisa punya banyak task)
-     */
+    public function team(): BelongsTo
+    {
+        return $this->belongsTo(Team::class);
+    }
+
     public function assignedTasks(): HasMany
     {
         return $this->hasMany(Task::class, 'assigned_to');
@@ -78,14 +75,7 @@ class User extends Authenticatable
         return $this->hasMany(Notification::class);
     }
 
-    // ==========================================
     // HELPER METHODS (Fungsi pembantu)
-    // ==========================================
-
-    /**
-     * Cek apakah user adalah admin.
-     * Penggunaan: if ($user->isAdmin()) { ... }
-     */
     public function isAdmin(): bool
     {
         return $this->role === 'admin';

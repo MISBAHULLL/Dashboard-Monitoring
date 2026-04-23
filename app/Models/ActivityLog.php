@@ -2,16 +2,22 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class ActivityLog extends Model
 {
+    use HasFactory;
+
+    // Matikan updated_at karena log sifatnya read-only
+    public const UPDATED_AT = null;
+
     protected $fillable = [
         'user_id',
+        'module',
+        'target_id',
         'action',
-        'model_type',
-        'model_id',
         'description',
         'old_values',
         'new_values',
@@ -19,25 +25,13 @@ class ActivityLog extends Model
         'user_agent',
     ];
 
-    protected function casts(): array
-    {
-        return [
-            'old_values' => 'array',    // JSON otomatis di-decode jadi PHP array
-            'new_values' => 'array',
-        ];
-    }
+    protected $casts = [
+        'old_values' => 'array', // Supaya JSON otomatis jadi array di PHP
+        'new_values' => 'array',
+    ];
 
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
-    }
-
-    /**
-     * Mendapatkan model yang terkait dengan log ini.
-     * morphTo = relasi polimorfik (bisa ke Task, Team, Client, dll)
-     */
-    public function subject()
-    {
-        return $this->morphTo(null, 'model_type', 'model_id');
     }
 }

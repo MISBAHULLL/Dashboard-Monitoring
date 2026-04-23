@@ -2,85 +2,76 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\BelongsToMany;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class Task extends Model
 {
-    use SoftDeletes;
+    use HasFactory, SoftDeletes;
 
     protected $fillable = [
         'product_id',
-        'engineer_id',
         'client_id',
-        'assigned_to',
+        'engineer_id',
+        'document_id',
+        'template_id',
         'created_by',
-        'feature',
+        'assigned_to',
+        'title',
         'description',
+        'modul',
         'task_url',
-        'type',
+        'category',
         'priority',
         'status',
-        'start_date',
-        'due_date',
         'release_date',
-        'progress',
+        'completed_at',
     ];
 
-    protected function casts(): array
-    {
-        return [
-            'start_date'   => 'date',
-            'due_date'     => 'date',
-            'release_date' => 'date',
-            'progress'     => 'integer',
-        ];
-    }
+    protected $casts = [
+        'release_date' => 'date',
+        'completed_at' => 'datetime',
+    ];
 
-    // ==========================================
-    // RELATIONSHIPS (BelongsTo = "milik siapa")
-    // ==========================================
+    // --- RELATIONS ---
 
-    /** Tim product yang memiliki task ini */
     public function product(): BelongsTo
     {
         return $this->belongsTo(Team::class, 'product_id');
     }
 
-    /** Tim engineer yang mengerjakan task ini */
-    public function engineer(): BelongsTo
-    {
-        return $this->belongsTo(Team::class, 'engineer_id');
-    }
-
-    /** Client/faskes yang request task ini */
     public function client(): BelongsTo
     {
         return $this->belongsTo(Client::class);
     }
 
-    /** User yang di-assign task ini */
-    public function assignee(): BelongsTo
+    public function engineer(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'assigned_to');
+        return $this->belongsTo(Team::class, 'engineer_id');
     }
 
-    /** User yang membuat task ini */
     public function creator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
     }
 
-    // ==========================================
-    // RELATIONSHIPS (HasMany = "punya banyak")
-    // ==========================================
-
-    public function documents(): HasMany
+    public function assignee(): BelongsTo
     {
-        return $this->hasMany(Document::class);
+        return $this->belongsTo(User::class, 'assigned_to');
+    }
+
+    public function document(): BelongsTo
+    {
+        return $this->belongsTo(Document::class);
+    }
+
+    public function template(): BelongsTo
+    {
+        return $this->belongsTo(TaskTemplate::class);
     }
 
     public function comments(): HasMany
@@ -88,60 +79,8 @@ class Task extends Model
         return $this->hasMany(TaskComment::class);
     }
 
-    public function releaseDateLogs(): HasMany
-    {
-        return $this->hasMany(ReleaseDateLog::class);
-    }
-
-    // ==========================================
-    // RELATIONSHIPS (BelongsToMany = Many-to-Many)
-    // ==========================================
-
-    /** Tags yang dipasang di task ini */
     public function tags(): BelongsToMany
     {
-        return $this->belongsToMany(Tag::class, 'task_tags')->withTimestamps();
-    }
-
-    // ==========================================
-    // SCOPES (Filter query yang sering dipakai)
-    // ==========================================
-
-    /** Task yang overdue (lewat deadline) */
-    public function scopeOverdue($query)
-    {
-        return $query->where('due_date', '<', now())
-                     ->whereNotIn('status', ['done', 'released']);
-    }
-
-    /** Task yang deadline-nya dalam 7 hari ke depan */
-    public function scopeDueSoon($query)
-    {
-        return $query->whereBetween('due_date', [now(), now()->addDays(7)])
-                     ->whereNotIn('status', ['done', 'released']);
-    }
-
-    /** Filter by status */
-    public function scopeStatus($query, string $status)
-    {
-        return $query->where('status', $status);
-    }
-
-    /** Filter by priority */
-    public function scopePriority($query, string $priority)
-    {
-        return $query->where('priority', $priority);
-    }
-
-    // ==========================================
-    // HELPER METHODS
-    // ==========================================
-
-    /** Cek apakah task sudah lewat deadline */
-    public function isOverdue(): bool
-    {
-        return $this->due_date
-            && $this->due_date->isPast()
-            && !in_array($this->status, ['done', 'released']);
+        return $this->belongsToMany(Tag::class, 'task_tags');
     }
 }

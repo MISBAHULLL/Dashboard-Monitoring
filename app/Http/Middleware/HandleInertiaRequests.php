@@ -26,10 +26,8 @@ class HandleInertiaRequests extends Middleware
         return parent::version($request);
     }
 
-    /**
+        /**
      * Define the props that are shared by default.
-     *
-     * @see https://inertiajs.com/shared-data
      *
      * @return array<string, mixed>
      */
@@ -37,11 +35,24 @@ class HandleInertiaRequests extends Middleware
     {
         return [
             ...parent::share($request),
-            'name' => config('app.name'),
             'auth' => [
-                'user' => $request->user(),
+                'user' => $request->user() ? [
+                    'id' => $request->user()->id,
+                    'name' => $request->user()->name,
+                    'email' => $request->user()->email,
+                    'role' => $request->user()->role,
+                    'ui_theme' => $request->user()->ui_theme,
+                    // Kita bisa tambahkan load() kalau butuh nama team
+                    // 'team' => $request->user()->team?->name, 
+                ] : null,
             ],
-            'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
+            // Kita juga bisa kirim pesan flash session untuk Toast notifications nanti
+            'flash' => [
+                'success' => $request->session()->get('success'),
+                'error' => $request->session()->get('error'),
+                'warning' => $request->session()->get('warning'),
+                'info' => $request->session()->get('info'),
+            ],
         ];
     }
 }

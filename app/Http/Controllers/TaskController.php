@@ -97,6 +97,11 @@ class TaskController extends Controller
 
         $validated['created_by'] = $request->user()->id;
 
+        // Cegah error SQL "Column task_url cannot be null" karena database lama mewajibkan isi
+        if (empty($validated['task_url'])) {
+            $validated['task_url'] = '-';
+        }
+
         // Auto catat waktu selesai jika statusnya completed
         if ($validated['status'] === 'completed') {
             $validated['completed_at'] = now();
@@ -135,6 +140,11 @@ class TaskController extends Controller
             'status' => ['required', Rule::in(['open', 'in_progress', 'revision', 'completed'])],
             'release_date' => 'nullable|date',
         ]);
+
+        // Cegah error SQL "Column task_url cannot be null"
+        if (empty($validated['task_url'])) {
+            $validated['task_url'] = '-';
+        }
 
         // Logic manajemen waktu penyelesaian
         if ($validated['status'] === 'completed' && $task->status !== 'completed') {

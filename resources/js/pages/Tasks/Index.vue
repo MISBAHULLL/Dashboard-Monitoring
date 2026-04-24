@@ -72,7 +72,7 @@ const resetFilter = () => {
 
 // Fungsi Update Status CEK (Radio Button logic)
 const toggleCekStatus = (task: any, newStatus: string) => {
-    if (!task.task_url && (newStatus === 'completed' || newStatus === 'revision')) {
+    if ((!task.task_url || task.task_url === '-') && (newStatus === 'completed' || newStatus === 'revision')) {
         return; // Terkunci jika URL kosong
     }
 
@@ -131,28 +131,28 @@ const deleteTask = (id: number, title: string) => {
                 <!-- Baris 1 -->
                 <div class="space-y-1">
                     <Label class="text-xs text-muted-foreground flex items-center gap-1">Product</Label>
-                    <select v-model="filterForm.product_id" class="w-full text-sm border-input rounded-md h-9 focus:ring-sky-500 focus:border-sky-500 bg-background">
+                    <select v-model="filterForm.product_id" class="w-full text-sm border border-input rounded-md h-9 focus:ring-sky-500 focus:border-sky-500 bg-background">
                         <option value="">Semua Product</option>
                         <option v-for="team in product_teams" :key="team.id" :value="team.id">{{ team.name }}</option>
                     </select>
                 </div>
                 <div class="space-y-1">
                     <Label class="text-xs text-muted-foreground flex items-center gap-1">Client / Faskes</Label>
-                    <select v-model="filterForm.client_id" class="w-full text-sm border-input rounded-md h-9 focus:ring-sky-500 focus:border-sky-500 bg-background">
+                    <select v-model="filterForm.client_id" class="w-full text-sm border border-input rounded-md h-9 focus:ring-sky-500 focus:border-sky-500 bg-background">
                         <option value="">Semua Faskes</option>
                         <option v-for="client in clients" :key="client.id" :value="client.id">{{ client.name }}</option>
                     </select>
                 </div>
                 <div class="space-y-1">
                     <Label class="text-xs text-muted-foreground flex items-center gap-1">Enginer</Label>
-                    <select v-model="filterForm.engineer_id" class="w-full text-sm border-input rounded-md h-9 focus:ring-sky-500 focus:border-sky-500 bg-background">
+                    <select v-model="filterForm.engineer_id" class="w-full text-sm border border-input rounded-md h-9 focus:ring-sky-500 focus:border-sky-500 bg-background">
                         <option value="">Semua Enginer</option>
                         <option v-for="team in engineer_teams" :key="team.id" :value="team.id">{{ team.name }}</option>
                     </select>
                 </div>
                 <div class="space-y-1">
                     <Label class="text-xs text-muted-foreground flex items-center gap-1">Jenis Task</Label>
-                    <select v-model="filterForm.category" class="w-full text-sm border-input rounded-md h-9 focus:ring-sky-500 focus:border-sky-500 bg-background">
+                    <select v-model="filterForm.category" class="w-full text-sm border border-input rounded-md h-9 focus:ring-sky-500 focus:border-sky-500 bg-background px-3">
                         <option value="">Semua Jenis</option>
                         <option value="Fitur Berbayar">Fitur Berbayar</option>
                         <option value="Regulasi">Regulasi</option>
@@ -163,7 +163,7 @@ const deleteTask = (id: number, title: string) => {
                 <!-- Baris 2 -->
                 <div class="space-y-1">
                     <Label class="text-xs text-muted-foreground flex items-center gap-1">Status Link</Label>
-                    <select v-model="filterForm.has_link" class="w-full text-sm border-input rounded-md h-9 focus:ring-sky-500 focus:border-sky-500 bg-background">
+                    <select v-model="filterForm.has_link" class="w-full text-sm border border-input rounded-md h-9 focus:ring-sky-500 focus:border-sky-500 bg-background px-3">
                         <option value="">Semua Status</option>
                         <option value="yes">Sudah Ada Link</option>
                         <option value="no">Belum Ada Link</option>
@@ -171,7 +171,7 @@ const deleteTask = (id: number, title: string) => {
                 </div>
                 <div class="space-y-1">
                     <Label class="text-xs text-muted-foreground flex items-center gap-1">Status Cek</Label>
-                    <select v-model="filterForm.status" class="w-full text-sm border-input rounded-md h-9 focus:ring-sky-500 focus:border-sky-500 bg-background">
+                    <select v-model="filterForm.status" class="w-full text-sm border border-input rounded-md h-9 focus:ring-sky-500 focus:border-sky-500 bg-background px-3">
                         <option value="">Semua Status Cek</option>
                         <option value="open">Belum Di Cek</option>
                         <option value="revision">Revisi</option>
@@ -229,7 +229,7 @@ const deleteTask = (id: number, title: string) => {
                             </td>
                             
                             <td class="py-3 px-4 text-center">
-                                <a v-if="task.task_url" :href="task.task_url" target="_blank" class="inline-flex items-center gap-1 text-sky-600 hover:text-sky-800 hover:underline text-xs font-medium bg-sky-50 px-2 py-1 rounded">
+                                <a v-if="task.task_url && task.task_url !== '-'" :href="task.task_url" target="_blank" class="inline-flex items-center gap-1 text-sky-600 hover:text-sky-800 hover:underline text-xs font-medium bg-sky-50 px-2 py-1 rounded">
                                     <LinkIcon class="h-3 w-3" /> Link
                                 </a>
                                 <span v-else class="text-muted-foreground">-</span>
@@ -248,7 +248,7 @@ const deleteTask = (id: number, title: string) => {
                             
                             <td class="py-3 px-4">
                                 <!-- CEK Logic -->
-                                <div v-if="!task.task_url" class="flex flex-col gap-1 items-center justify-center opacity-40 cursor-not-allowed" title="Task URL belum diisi, tidak bisa merubah status cek">
+                                <div v-if="!task.task_url || task.task_url === '-'" class="flex flex-col gap-1 items-center justify-center opacity-40 cursor-not-allowed" title="Task URL belum diisi, tidak bisa merubah status cek">
                                     <Lock class="h-4 w-4 text-slate-500 mb-1" />
                                 </div>
                                 <div v-else class="flex flex-col gap-1.5 items-start text-[11px] font-medium">

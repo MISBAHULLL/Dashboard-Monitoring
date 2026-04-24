@@ -14,6 +14,7 @@ const props = defineProps<{
     product_teams: Array<{ id: number; name: string }>;
     engineer_teams: Array<{ id: number; name: string }>;
     users: Array<{ id: number; name: string }>;
+    existing_modules: Array<string>;
 }>();
 
 // Inertia Form State (Otomatis terisi data lama)
@@ -77,7 +78,10 @@ const submitForm = () => {
                     <div class="grid grid-cols-2 gap-4">
                         <div class="space-y-2">
                             <Label for="modul">Modul / Menu Terkait</Label>
-                            <Input id="modul" v-model="form.modul" placeholder="Contoh: Farmasi / Rawat Inap" :class="{ 'border-red-500': form.errors.modul }" />
+                            <Input id="modul" list="modul-options" v-model="form.modul" placeholder="Ketik atau pilih modul..." :class="{ 'border-red-500': form.errors.modul }" />
+                            <datalist id="modul-options">
+                                <option v-for="m in existing_modules" :key="m" :value="m"></option>
+                            </datalist>
                             <p v-if="form.errors.modul" class="text-sm text-red-500">{{ form.errors.modul }}</p>
                         </div>
                         <div class="space-y-2">

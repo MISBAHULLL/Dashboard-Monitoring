@@ -14,17 +14,55 @@ class TaskController extends Controller
 {
     public function index(Request $request)
     {
-        // Ambil task beserta relasi tabel referensinya
         $query = Task::with(['client', 'product', 'engineer', 'assignee']);
 
-        // Nanti kita tambahkan filter pencarian yang kompleks di sini
+        // Menerapkan Filter Berjenjang
+        if ($request->filled('product_id')) {
+            $query->where('product_id', $request->product_id);
+        }
+        if ($request->filled('client_id')) {
+            $query->where('client_id', $request->client_id);
+        }
+        if ($request->filled('engineer_id')) {
+            $query->where('engineer_id', $request->engineer_id);
+        }
+        if ($request->filled('category')) {
+            $query->where('category', $request->category);
+        }
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+        if ($request->filled('has_link')) {
+            if ($request->has_link === 'yes') {
+                $query->whereNotNull('task_url')->where('task_url', '!=', '');
+            } else {
+                $query->where(function($q) {
+                    $q->whereNull('task_url')->orWhere('task_url', '');
+                });
+            }
+        }
+        if ($request->filled('date_from')) {
+            $query->whereDate('release_date', '>=', $request->date_from);
+        }
+        if ($request->filled('date_to')) {
+            $query->whereDate('release_date', '<=', $request->date_to);
+        }
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('title', 'like', "%{$search}%")
+                  ->orWhere('modul', 'like', "%{$search}%");
+            });
+        }
         
         return Inertia::render('Tasks/Index', [
-            'tasks' => $query->latest()->paginate(10),
+            'tasks' => $query->latest()->paginate(10)->withQueryString(),
+            'filters' => $request->all(['search', 'product_id', 'client_id', 'engineer_id', 'category', 'status', 'has_link', 'date_from', 'date_to']),
             
             // Kirim data master ke Vue untuk dropdown filter
             'clients' => Client::where('is_active', true)->get(['id', 'name']),
-            'teams' => Team::where('is_active', true)->get(['id', 'name', 'type']),
+            'product_teams' => Team::where('type', 'PRODUCT')->where('is_active', true)->get(['id', 'name']),
+            'engineer_teams' => Team::where('type', 'ENGINEER')->where('is_active', true)->get(['id', 'name']),
         ]);
     }
 
@@ -36,6 +74,7 @@ class TaskController extends Controller
             'product_teams' => Team::where('type', 'PRODUCT')->where('is_active', true)->get(['id', 'name']),
             'engineer_teams' => Team::where('type', 'ENGINEER')->where('is_active', true)->get(['id', 'name']),
             'users' => User::where('is_active', true)->get(['id', 'name']),
+            'existing_modules' => Task::select('modul')->whereNotNull('modul')->where('modul', '!=', '')->distinct()->pluck('modul'),
         ]);
     }
 
@@ -76,6 +115,7 @@ class TaskController extends Controller
             'product_teams' => Team::where('type', 'PRODUCT')->where('is_active', true)->get(['id', 'name']),
             'engineer_teams' => Team::where('type', 'ENGINEER')->where('is_active', true)->get(['id', 'name']),
             'users' => User::where('is_active', true)->get(['id', 'name']),
+            'existing_modules' => Task::select('modul')->whereNotNull('modul')->where('modul', '!=', '')->distinct()->pluck('modul'),
         ]);
     }
 

@@ -34,10 +34,14 @@ class TaskController extends Controller
         }
         if ($request->filled('has_link')) {
             if ($request->has_link === 'yes') {
-                $query->whereNotNull('task_url')->where('task_url', '!=', '');
+                $query->whereNotNull('task_url')
+                      ->where('task_url', '!=', '')
+                      ->where('task_url', '!=', '-');
             } else {
                 $query->where(function($q) {
-                    $q->whereNull('task_url')->orWhere('task_url', '');
+                    $q->whereNull('task_url')
+                      ->orWhere('task_url', '')
+                      ->orWhere('task_url', '-');
                 });
             }
         }

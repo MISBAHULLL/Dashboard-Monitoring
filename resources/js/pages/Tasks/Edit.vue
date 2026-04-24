@@ -160,13 +160,20 @@ const submitForm = () => {
                         </div>
                     </div>
                     
-                    <div class="space-y-2">
-                        <Label for="assigned_to">Assign Ke PIC (Person in Charge)</Label>
-                        <select id="assigned_to" v-model="form.assigned_to" class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-sky-600">
-                            <option value="">(Belum ditentukan)</option>
-                            <option v-for="user in users" :key="user.id" :value="user.id">{{ user.name }}</option>
-                        </select>
-                        <p v-if="form.errors.assigned_to" class="text-sm text-red-500">{{ form.errors.assigned_to }}</p>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="space-y-2">
+                            <Label for="release_date">Tanggal Release (Target)</Label>
+                            <Input id="release_date" type="date" v-model="form.release_date" class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-sky-600" />
+                            <p v-if="form.errors.release_date" class="text-sm text-red-500">{{ form.errors.release_date }}</p>
+                        </div>
+                        <div class="space-y-2">
+                            <Label for="assigned_to">Assign Ke PIC (Person in Charge)</Label>
+                            <select id="assigned_to" v-model="form.assigned_to" class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-sky-600">
+                                <option value="">(Belum ditentukan)</option>
+                                <option v-for="user in users" :key="user.id" :value="user.id">{{ user.name }}</option>
+                            </select>
+                            <p v-if="form.errors.assigned_to" class="text-sm text-red-500">{{ form.errors.assigned_to }}</p>
+                        </div>
                     </div>
 
                 </div>

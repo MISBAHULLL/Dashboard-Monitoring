@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Link, usePage } from '@inertiajs/vue3';
-import { LayoutGrid, ListTodo, Users, Building2, UsersRound, Settings } from 'lucide-vue-next';
+import { LayoutGrid, ListTodo, Users, Building2, UsersRound, Settings, Columns3 } from 'lucide-vue-next';
 import AppLogo from '@/components/AppLogo.vue';
 import NavFooter from '@/components/NavFooter.vue';
 import NavMain from '@/components/NavMain.vue';
@@ -38,9 +38,14 @@ const mainNavItems = computed<NavItem[]>(() => {
             icon: LayoutGrid,
         },
         {
-            title: 'Monitoring Task',
-            href: tasksIndex.url(),
+            title: 'Tabel Task',
+            href: '/tasks',
             icon: ListTodo,
+        },
+        {
+            title: 'Kanban Board',
+            href: '/tasks-kanban',
+            icon: Columns3,
         },
     ];
 

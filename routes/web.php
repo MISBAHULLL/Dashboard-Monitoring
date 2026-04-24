@@ -18,6 +18,8 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
     // Tasks (Bisa diakses oleh semua user yang login)
+    Route::get('/tasks-kanban', [TaskController::class, 'kanban'])->name('tasks.kanban');
+    Route::patch('/tasks/{task}/status', [TaskController::class, 'updateStatus'])->name('tasks.updateStatus');
     Route::resource('tasks', TaskController::class);
 
     // Group khusus Admin (Menggunakan alias middleware 'role' yang kita buat)

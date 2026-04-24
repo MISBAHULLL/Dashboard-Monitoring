@@ -114,4 +114,41 @@ class TaskController extends Controller
 
         return back()->with('success', 'Task berhasil dihapus.');
     }
+
+    public function kanban()
+    {
+        // Ambil semua task yang belum selesai
+        $activeTasks = Task::with(['client', 'assignee', 'product'])
+            ->where('status', '!=', 'completed')
+            ->get();
+            
+        // Ambil task yang sudah selesai dalam 7 hari terakhir
+        $completedTasks = Task::with(['client', 'assignee', 'product'])
+            ->where('status', 'completed')
+            ->where('completed_at', '>=', now()->subDays(7))
+            ->get();
+
+        $tasks = $activeTasks->merge($completedTasks);
+
+        return Inertia::render('Tasks/Kanban', [
+            'tasks' => $tasks
+        ]);
+    }
+
+    public function updateStatus(Request $request, Task $task)
+    {
+        $validated = $request->validate([
+            'status' => ['required', \Illuminate\Validation\Rule::in(['open', 'in_progress', 'revision', 'completed'])]
+        ]);
+
+        if ($validated['status'] === 'completed' && $task->status !== 'completed') {
+            $validated['completed_at'] = now();
+        } elseif ($validated['status'] !== 'completed') {
+            $validated['completed_at'] = null;
+        }
+
+        $task->update($validated);
+
+        return back();
+    }
 }

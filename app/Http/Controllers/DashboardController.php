@@ -26,8 +26,33 @@ class DashboardController extends Controller
 
         // 2. Jika user adalah admin, tampilkan AdminDashboard
         if ($user->isAdmin()) {
+            
+            // Data untuk Donut Chart (Status)
+            $chartDonut = [
+                $stats['open_tasks'],
+                $stats['in_progress_tasks'],
+                Task::where('status', 'revision')->count(),
+                $stats['completed_tasks']
+            ];
+
+            // Data untuk Area Chart (Tren pembuatan Task 7 hari terakhir)
+            $trendData = Task::selectRaw('DATE(created_at) as date, COUNT(*) as count')
+                ->where('created_at', '>=', now()->subDays(6))
+                ->groupBy('date')
+                ->orderBy('date')
+                ->pluck('count', 'date');
+                
+            $chartArea = ['categories' => [], 'data' => []];
+            for ($i = 6; $i >= 0; $i--) {
+                $dateStr = now()->subDays($i)->format('Y-m-d');
+                $chartArea['categories'][] = now()->subDays($i)->format('d M');
+                $chartArea['data'][] = $trendData->get($dateStr, 0);
+            }
+
             return Inertia::render('Dashboard/AdminDashboard', [
                 'stats' => $stats,
+                'chart_donut' => $chartDonut,
+                'chart_area' => $chartArea,
                 'recent_tasks' => Task::with(['client', 'product', 'assignee'])
                                     ->latest()
                                     ->take(5)

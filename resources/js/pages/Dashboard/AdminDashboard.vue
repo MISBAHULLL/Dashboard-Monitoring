@@ -2,9 +2,10 @@
 import { Head, Link } from '@inertiajs/vue3';
 import { dashboard } from '@/routes';
 import { Users, Building2, ListTodo, AlertCircle } from 'lucide-vue-next';
+import VueApexCharts from "vue3-apexcharts";
 
 // 1. Menerima data dari Controller
-defineProps<{
+const props = defineProps<{
     stats: {
         total_tasks: number;
         open_tasks: number;
@@ -13,8 +14,41 @@ defineProps<{
         total_clients: number;
         total_teams: number;
     };
+    chart_donut: number[];
+    chart_area: {
+        categories: string[];
+        data: number[];
+    };
     recent_tasks: any[];
 }>();
+
+// Konfigurasi Donut Chart
+const donutOptions = {
+    chart: { type: 'donut', fontFamily: 'inherit' },
+    labels: ['Open', 'In Progress', 'Revisi', 'Completed'],
+    colors: ['#f59e0b', '#3b82f6', '#ef4444', '#10b981'],
+    plotOptions: { pie: { donut: { size: '70%' } } },
+    dataLabels: { enabled: false },
+    legend: { position: 'bottom' }
+};
+const donutSeries = props.chart_donut;
+
+// Konfigurasi Area Chart
+const areaOptions = {
+    chart: { type: 'area', fontFamily: 'inherit', toolbar: { show: false } },
+    colors: ['#0ea5e9'],
+    dataLabels: { enabled: false },
+    stroke: { curve: 'smooth', width: 2 },
+    xaxis: { categories: props.chart_area.categories },
+    fill: {
+        type: 'gradient',
+        gradient: { shadeIntensity: 1, opacityFrom: 0.7, opacityTo: 0.1, stops: [0, 90, 100] }
+    }
+};
+const areaSeries = [{
+    name: 'Task Dibuat',
+    data: props.chart_area.data
+}];
 
 // 2. Mengatur Breadcrumbs (Navigasi Header)
 defineOptions({
@@ -95,7 +129,26 @@ defineOptions({
             </div>
         </div>
 
-        <!-- 4. Tabel 5 Task Terakhir -->
+        <!-- 4. Area Charts (Visualisasi Data) -->
+        <div class="grid gap-4 md:grid-cols-3">
+            <!-- Area Chart (Trend) -->
+            <div class="col-span-1 md:col-span-2 relative overflow-hidden rounded-xl border border-sidebar-border bg-card p-6 shadow-sm transition-all hover:shadow-md">
+                <h2 class="text-lg font-semibold text-primary mb-4">Tren Pembuatan Task (7 Hari Terakhir)</h2>
+                <div class="w-full">
+                    <VueApexCharts type="area" height="300" :options="areaOptions" :series="areaSeries" />
+                </div>
+            </div>
+
+            <!-- Donut Chart (Status) -->
+            <div class="col-span-1 relative overflow-hidden rounded-xl border border-sidebar-border bg-card p-6 shadow-sm transition-all hover:shadow-md">
+                <h2 class="text-lg font-semibold text-primary mb-4">Rasio Status Task</h2>
+                <div class="w-full flex justify-center">
+                    <VueApexCharts type="donut" height="320" :options="donutOptions" :series="donutSeries" />
+                </div>
+            </div>
+        </div>
+
+        <!-- 5. Tabel 5 Task Terakhir -->
         <div class="relative flex-1 rounded-xl border border-sidebar-border bg-card shadow-sm">
             <div class="p-6">
                 <h2 class="text-lg font-semibold text-primary">5 Task Terbaru</h2>

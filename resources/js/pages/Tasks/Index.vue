@@ -3,6 +3,7 @@ import { ref, watch } from 'vue';
 import { Head, Link, useForm, router } from '@inertiajs/vue3';
 import { ListTodo, Plus, Edit, Trash2, Filter, RotateCcw, ExternalLink, Lock, CheckCircle2, AlertCircle } from 'lucide-vue-next';
 import { dashboard } from '@/routes';
+import { show as showTask } from '@/actions/App/Http/Controllers/TaskController';
 
 // UI Components
 import { Button } from '@/components/ui/button';
@@ -18,6 +19,9 @@ const props = defineProps<{
         per_page: number;
     };
     filters: any;
+    permissions: {
+        can_create: boolean;
+    };
     clients: Array<any>;
     product_teams: Array<any>;
     engineer_teams: Array<any>;
@@ -121,7 +125,7 @@ const getAvatarColor = (name: string) => {
                 </h1>
                 <p class="text-sm text-slate-500 mt-2 ml-1">Kelola dan pantau tiket permintaan faskes dengan sistem filter cerdas.</p>
             </div>
-            <Link href="/tasks/create">
+            <Link v-if="permissions.can_create" href="/tasks/create">
                 <Button class="flex items-center gap-2 bg-gradient-to-r from-sky-600 to-blue-700 hover:from-sky-500 hover:to-blue-600 text-white shadow-lg shadow-sky-500/20 rounded-xl transition-all hover:-translate-y-0.5 border-0 h-10 px-5">
                     <Plus class="h-4 w-4" /> <span class="font-medium tracking-wide">Task Baru</span>
                 </Button>
@@ -260,10 +264,13 @@ const getAvatarColor = (name: string) => {
                             <td class="py-3 px-4">
                                 <div class="flex flex-col gap-1">
                                     <span class="font-bold text-slate-800 text-[13px] hover:text-sky-600 transition-colors cursor-pointer truncate max-w-[220px]" :title="task.title">
-                                        {{ task.title }}
+                                        <Link :href="showTask.url(task.id)">{{ task.title }}</Link>
                                     </span>
                                     <span v-if="task.modul" class="text-[11px] font-medium text-slate-500 flex items-center gap-1">
                                         <span class="w-1 h-1 rounded-full bg-slate-300"></span> {{ task.modul }}
+                                    </span>
+                                    <span class="text-[11px] font-medium text-slate-400">
+                                        {{ task.comments_count ?? 0 }} komentar
                                     </span>
                                 </div>
                             </td>
@@ -322,7 +329,11 @@ const getAvatarColor = (name: string) => {
 
                             <!-- 9. CEK (TOGGLE BUTTONS MODERN) -->
                             <td class="py-3 px-4">
-                                <div v-if="!task.task_url || task.task_url === '-'" 
+                                <div v-if="!task.can_update_status"
+                                     class="flex items-center justify-center h-7 w-full max-w-[120px] rounded-md bg-slate-100/80 text-slate-400 text-[9px] font-bold border border-slate-200 cursor-not-allowed mx-auto opacity-70">
+                                    NO AKSES
+                                </div>
+                                <div v-else-if="!task.task_url || task.task_url === '-'" 
                                      class="flex items-center justify-center h-7 w-full max-w-[120px] rounded-md bg-slate-100/80 text-slate-400 text-[9px] font-bold border border-slate-200 cursor-not-allowed mx-auto opacity-70">
                                     <Lock class="h-3 w-3 mr-1" /> URL KOSONG
                                 </div>
@@ -366,12 +377,12 @@ const getAvatarColor = (name: string) => {
                             <!-- 11. AKSI -->
                             <td class="py-3 px-4 text-center">
                                 <div class="flex items-center justify-center gap-1 opacity-50 group-hover:opacity-100 transition-opacity duration-200">
-                                    <Link :href="`/tasks/${task.id}/edit`">
+                                    <Link v-if="task.can_edit" :href="`/tasks/${task.id}/edit`">
                                         <Button variant="ghost" size="icon" class="h-7 w-7 rounded-lg text-blue-600 hover:text-blue-700 hover:bg-blue-100/80 transition-colors">
                                             <Edit class="h-3.5 w-3.5" />
                                         </Button>
                                     </Link>
-                                    <Button variant="ghost" size="icon" @click="deleteTask(task.id, task.title)" class="h-7 w-7 rounded-lg text-rose-500 hover:text-rose-600 hover:bg-rose-100/80 transition-colors">
+                                    <Button v-if="task.can_delete" variant="ghost" size="icon" @click="deleteTask(task.id, task.title)" class="h-7 w-7 rounded-lg text-rose-500 hover:text-rose-600 hover:bg-rose-100/80 transition-colors">
                                         <Trash2 class="h-3.5 w-3.5" />
                                     </Button>
                                 </div>

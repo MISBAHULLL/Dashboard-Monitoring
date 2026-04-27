@@ -4,17 +4,32 @@ namespace App\Http\Controllers;
 
 use App\Models\Task;
 use App\Models\Client;
+use App\Models\TaskComment;
 use App\Models\Team;
 use App\Models\User;
+use App\Services\ActivityLogger;
+use App\Services\NotificationService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Validation\Rule;
 
 class TaskController extends Controller
 {
+    public function __construct(
+        protected NotificationService $notificationService,
+    ) {
+    }
+
     public function index(Request $request)
     {
-        $query = Task::with(['client', 'product', 'engineer', 'assignee']);
+        $this->authorize('viewAny', Task::class);
+
+        $user = $request->user();
+        $query = Task::with(['client', 'product', 'engineer', 'assignee'])->withCount('comments');
+
+        if ($user->isMember()) {
+            $query->where('assigned_to', $user->id);
+        }
 
         // Menerapkan Filter Berjenjang
         if ($request->filled('product_id')) {
@@ -59,9 +74,23 @@ class TaskController extends Controller
             });
         }
         
+        $tasks = $query->latest()->paginate(10)->withQueryString();
+        $tasks->through(function (Task $task) use ($user) {
+            return [
+                ...$task->toArray(),
+                'comments_count' => $task->comments_count,
+                'can_edit' => $user->can('update', $task),
+                'can_delete' => $user->can('delete', $task),
+                'can_update_status' => $user->can('updateStatus', $task),
+            ];
+        });
+
         return Inertia::render('Tasks/Index', [
-            'tasks' => $query->latest()->paginate(10)->withQueryString(),
+            'tasks' => $tasks,
             'filters' => $request->all(['search', 'product_id', 'client_id', 'engineer_id', 'category', 'status', 'has_link', 'date_from', 'date_to']),
+            'permissions' => [
+                'can_create' => $user->can('create', Task::class),
+            ],
             
             // Kirim data master ke Vue untuk dropdown filter
             'clients' => Client::where('is_active', true)->get(['id', 'name']),
@@ -72,6 +101,8 @@ class TaskController extends Controller
 
     public function create()
     {
+        $this->authorize('create', Task::class);
+
         return Inertia::render('Tasks/Create', [
             // Kirim data master ke Vue untuk form pilihan Dropdown
             'clients' => Client::where('is_active', true)->get(['id', 'name']),
@@ -84,6 +115,8 @@ class TaskController extends Controller
 
     public function store(Request $request)
     {
+        $this->authorize('create', Task::class);
+
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'client_id' => 'required|exists:clients,id',
@@ -111,13 +144,20 @@ class TaskController extends Controller
             $validated['completed_at'] = now();
         }
 
-        Task::create($validated);
+        $task = Task::create($validated);
+        $task->loadMissing('client');
+
+        $this->notificationService->notifyTaskAssignment($task);
+
+        ActivityLogger::created('task', $task->id, $task->title, 'Membuat task baru', $validated);
 
         return redirect()->route('tasks.index')->with('success', 'Task berhasil dibuat.');
     }
 
     public function edit(Task $task)
     {
+        $this->authorize('update', $task);
+
         return Inertia::render('Tasks/Edit', [
             'task' => $task,
             'clients' => Client::where('is_active', true)->get(['id', 'name']),
@@ -128,8 +168,53 @@ class TaskController extends Controller
         ]);
     }
 
+    public function show(Task $task, Request $request)
+    {
+        $this->authorize('view', $task);
+
+        $task->load([
+            'client:id,name',
+            'product:id,name',
+            'engineer:id,name',
+            'assignee:id,name',
+            'creator:id,name',
+            'comments' => fn ($query) => $query
+                ->with('user:id,name')
+                ->latest(),
+        ]);
+
+        $user = $request->user();
+
+        return Inertia::render('Tasks/Show', [
+            'task' => [
+                ...$task->toArray(),
+                'comments' => $task->comments
+                    ->map(fn (TaskComment $comment) => [
+                        'id' => $comment->id,
+                        'body' => $comment->body,
+                        'is_pinned' => $comment->is_pinned,
+                        'created_at' => $comment->created_at?->toIso8601String(),
+                        'user' => $comment->user ? [
+                            'id' => $comment->user->id,
+                            'name' => $comment->user->name,
+                        ] : null,
+                        'can_delete' => $user->can('delete', $comment),
+                        'can_pin' => $user->can('pin', $comment),
+                    ])
+                    ->sortByDesc(fn (array $comment) => $comment['is_pinned'])
+                    ->values(),
+            ],
+            'permissions' => [
+                'can_edit' => $user->can('update', $task),
+                'can_comment' => $user->can('create', TaskComment::class),
+            ],
+        ]);
+    }
+
     public function update(Request $request, Task $task)
     {
+        $this->authorize('update', $task);
+
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'client_id' => 'required|exists:clients,id',
@@ -157,13 +242,28 @@ class TaskController extends Controller
             $validated['completed_at'] = null; // Reset jika status dikembalikan ke open/in_progress
         }
 
+        $oldValues = $task->getOriginal();
+        $previousAssigneeId = $task->assigned_to;
         $task->update($validated);
+        $task->loadMissing('client');
+
+        $this->notificationService->notifyTaskAssignment($task, $previousAssigneeId);
+
+        if ($validated['status'] !== ($oldValues['status'] ?? null)) {
+            ActivityLogger::statusChanged('task', $task->id, $task->title, $oldValues['status'] ?? 'open', $validated['status']);
+        }
+
+        ActivityLogger::updated('task', $task->id, $task->title, $oldValues, $task->fresh()->toArray(), 'Mengupdate task');
 
         return redirect()->route('tasks.index')->with('success', 'Task berhasil diperbarui.');
     }
 
     public function destroy(Task $task)
     {
+        $this->authorize('delete', $task);
+
+        ActivityLogger::deleted('task', $task->id, $task->title, "Menghapus task '{$task->title}'");
+
         $task->delete();
 
         return back()->with('success', 'Task berhasil dihapus.');
@@ -171,26 +271,56 @@ class TaskController extends Controller
 
     public function kanban()
     {
-        // Ambil semua task yang belum selesai
-        $activeTasks = Task::with(['client', 'assignee', 'product'])
-            ->where('status', '!=', 'completed')
-            ->get();
-            
-        // Ambil task yang sudah selesai dalam 7 hari terakhir
-        $completedTasks = Task::with(['client', 'assignee', 'product'])
-            ->where('status', 'completed')
-            ->where('completed_at', '>=', now()->subDays(7))
-            ->get();
+        $this->authorize('viewAny', Task::class);
 
-        $tasks = $activeTasks->merge($completedTasks);
+        $user = request()->user();
+        $completedWindowDays = 7;
+
+        // Ambil semua task yang belum selesai
+        $activeTasksQuery = Task::with(['client', 'assignee', 'product'])->withCount('comments')
+            ->where('status', '!=', 'completed');
+
+        // Ambil task yang sudah selesai dalam 7 hari terakhir
+        $completedTasksQuery = Task::with(['client', 'assignee', 'product'])->withCount('comments')
+            ->where('status', 'completed')
+            ->where('completed_at', '>=', now()->subDays($completedWindowDays));
+
+        if ($user->isMember()) {
+            $activeTasksQuery->where('assigned_to', $user->id);
+            $completedTasksQuery->where('assigned_to', $user->id);
+        }
+
+        $activeTasks = $activeTasksQuery->get();
+            
+        $completedTasks = $completedTasksQuery->get();
+
+        $tasks = $activeTasks->merge($completedTasks)->values()->map(function (Task $task) use ($user) {
+            return [
+                ...$task->toArray(),
+                'comments_count' => $task->comments_count,
+                'can_edit' => $user->can('update', $task),
+                'can_update_status' => $user->can('updateStatus', $task),
+            ];
+        });
 
         return Inertia::render('Tasks/Kanban', [
-            'tasks' => $tasks
+            'tasks' => $tasks,
+            'meta' => [
+                'completed_window_days' => $completedWindowDays,
+                'active_count' => $activeTasks->count(),
+                'recent_completed_count' => $completedTasks->count(),
+                'total_count' => $tasks->count(),
+            ],
+            'permissions' => [
+                'can_create' => $user->can('create', Task::class),
+            ],
         ]);
     }
 
     public function updateStatus(Request $request, Task $task)
     {
+        $this->authorize('updateStatus', $task);
+
         $validated = $request->validate([
             'status' => ['required', \Illuminate\Validation\Rule::in(['open', 'in_progress', 'revision', 'completed'])]
         ]);
@@ -201,7 +331,10 @@ class TaskController extends Controller
             $validated['completed_at'] = null;
         }
 
+        $oldStatus = $task->status;
         $task->update($validated);
+
+        ActivityLogger::statusChanged('task', $task->id, $task->title, $oldStatus, $validated['status']);
 
         return back();
     }

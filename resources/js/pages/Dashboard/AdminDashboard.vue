@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { Head, Link } from '@inertiajs/vue3';
+import { Head } from '@inertiajs/vue3';
 import { dashboard } from '@/routes';
-import { Users, Building2, ListTodo, AlertCircle } from 'lucide-vue-next';
+import { Users, Building2, ListTodo, AlertCircle, TriangleAlert, Clock3 } from 'lucide-vue-next';
 import VueApexCharts from "vue3-apexcharts";
+import type { ApexOptions } from 'apexcharts';
 
 // 1. Menerima data dari Controller
 const props = defineProps<{
@@ -19,11 +20,26 @@ const props = defineProps<{
         categories: string[];
         data: number[];
     };
+    overdue_count: number;
+    due_soon_count: number;
+    overdue_tasks: Array<any>;
+    due_soon_tasks: Array<any>;
+    team_performance: Array<{
+        id: number;
+        name: string;
+        total_tasks: number;
+        completed_tasks: number;
+        open_tasks: number;
+        in_progress_tasks: number;
+        revision_tasks: number;
+        overdue_tasks: number;
+        completion_rate: number;
+    }>;
     recent_tasks: any[];
 }>();
 
 // Konfigurasi Donut Chart
-const donutOptions = {
+const donutOptions: ApexOptions = {
     chart: { type: 'donut', fontFamily: 'inherit' },
     labels: ['Open', 'In Progress', 'Revisi', 'Completed'],
     colors: ['#f59e0b', '#3b82f6', '#ef4444', '#10b981'],
@@ -34,7 +50,7 @@ const donutOptions = {
 const donutSeries = props.chart_donut;
 
 // Konfigurasi Area Chart
-const areaOptions = {
+const areaOptions: ApexOptions = {
     chart: { type: 'area', fontFamily: 'inherit', toolbar: { show: false } },
     colors: ['#0ea5e9'],
     dataLabels: { enabled: false },
@@ -129,7 +145,58 @@ defineOptions({
             </div>
         </div>
 
-        <!-- 4. Area Charts (Visualisasi Data) -->
+        <!-- 4. Informasi Prioritas Deadline -->
+        <div class="grid gap-4 md:grid-cols-2">
+            <div class="relative overflow-hidden rounded-xl border border-red-200 bg-red-50/60 p-6 shadow-sm dark:border-red-900/40 dark:bg-red-950/20">
+                <div class="mb-4 flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-red-700 dark:text-red-300">Task Overdue</p>
+                        <p class="mt-2 text-3xl font-bold text-red-700 dark:text-red-300">{{ overdue_count }}</p>
+                    </div>
+                    <div class="rounded-full bg-red-100 p-3 dark:bg-red-900/40">
+                        <TriangleAlert class="h-6 w-6 text-red-600 dark:text-red-300" />
+                    </div>
+                </div>
+                <div class="space-y-2">
+                    <div v-for="task in overdue_tasks" :key="task.id" class="rounded-lg border border-red-200/80 bg-white p-3 dark:border-red-900/30 dark:bg-red-950/30">
+                        <p class="text-sm font-semibold text-slate-800 dark:text-slate-100">{{ task.title }}</p>
+                        <div class="mt-1 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
+                            <span>{{ task.client?.name || '-' }}</span>
+                            <span class="font-semibold text-red-600 dark:text-red-300">{{ task.release_date ? new Date(task.release_date).toLocaleDateString('id-ID') : '-' }}</span>
+                        </div>
+                    </div>
+                    <p v-if="overdue_tasks.length === 0" class="text-sm text-slate-500 dark:text-slate-400">
+                        Tidak ada task overdue.
+                    </p>
+                </div>
+            </div>
+
+            <div class="relative overflow-hidden rounded-xl border border-amber-200 bg-amber-50/60 p-6 shadow-sm dark:border-amber-900/40 dark:bg-amber-950/20">
+                <div class="mb-4 flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-amber-700 dark:text-amber-300">Task Due Soon (H-7)</p>
+                        <p class="mt-2 text-3xl font-bold text-amber-700 dark:text-amber-300">{{ due_soon_count }}</p>
+                    </div>
+                    <div class="rounded-full bg-amber-100 p-3 dark:bg-amber-900/40">
+                        <Clock3 class="h-6 w-6 text-amber-600 dark:text-amber-300" />
+                    </div>
+                </div>
+                <div class="space-y-2">
+                    <div v-for="task in due_soon_tasks" :key="task.id" class="rounded-lg border border-amber-200/80 bg-white p-3 dark:border-amber-900/30 dark:bg-amber-950/30">
+                        <p class="text-sm font-semibold text-slate-800 dark:text-slate-100">{{ task.title }}</p>
+                        <div class="mt-1 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
+                            <span>{{ task.client?.name || '-' }}</span>
+                            <span class="font-semibold text-amber-600 dark:text-amber-300">{{ task.release_date ? new Date(task.release_date).toLocaleDateString('id-ID') : '-' }}</span>
+                        </div>
+                    </div>
+                    <p v-if="due_soon_tasks.length === 0" class="text-sm text-slate-500 dark:text-slate-400">
+                        Tidak ada task due soon.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 5. Area Charts (Visualisasi Data) -->
         <div class="grid gap-4 md:grid-cols-3">
             <!-- Area Chart (Trend) -->
             <div class="col-span-1 md:col-span-2 relative overflow-hidden rounded-xl border border-sidebar-border bg-card p-6 shadow-sm transition-all hover:shadow-md">
@@ -148,7 +215,47 @@ defineOptions({
             </div>
         </div>
 
-        <!-- 5. Tabel 5 Task Terakhir -->
+        <!-- 6. Ringkasan Performa Tim -->
+        <div class="relative rounded-xl border border-sidebar-border bg-card shadow-sm">
+            <div class="p-6">
+                <h2 class="text-lg font-semibold text-primary">Ringkasan Performa Tim Product</h2>
+                <p class="text-sm text-muted-foreground mb-4">Progress task per tim berdasarkan total, selesai, dan overdue.</p>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-sm">
+                        <thead class="bg-muted/50 text-muted-foreground border-b border-border">
+                            <tr>
+                                <th class="py-3 px-4 font-medium">Tim</th>
+                                <th class="py-3 px-4 font-medium text-center">Total</th>
+                                <th class="py-3 px-4 font-medium text-center">Selesai</th>
+                                <th class="py-3 px-4 font-medium text-center">Overdue</th>
+                                <th class="py-3 px-4 font-medium text-center">Completion Rate</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr v-for="team in team_performance" :key="team.id" class="border-b border-border last:border-0 hover:bg-muted/30">
+                                <td class="py-3 px-4 font-medium">{{ team.name }}</td>
+                                <td class="py-3 px-4 text-center">{{ team.total_tasks }}</td>
+                                <td class="py-3 px-4 text-center text-emerald-600 dark:text-emerald-400">{{ team.completed_tasks }}</td>
+                                <td class="py-3 px-4 text-center text-red-600 dark:text-red-400">{{ team.overdue_tasks }}</td>
+                                <td class="py-3 px-4 text-center">
+                                    <span class="inline-flex items-center rounded-full bg-sky-100 px-2.5 py-0.5 text-xs font-semibold text-sky-700 dark:bg-sky-900/40 dark:text-sky-300">
+                                        {{ team.completion_rate }}%
+                                    </span>
+                                </td>
+                            </tr>
+                            <tr v-if="team_performance.length === 0">
+                                <td colspan="5" class="py-8 text-center text-muted-foreground">
+                                    Belum ada data performa tim.
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- 7. Tabel 5 Task Terakhir -->
         <div class="relative flex-1 rounded-xl border border-sidebar-border bg-card shadow-sm">
             <div class="p-6">
                 <h2 class="text-lg font-semibold text-primary">5 Task Terbaru</h2>

@@ -14,7 +14,7 @@ use Laravel\Fortify\TwoFactorAuthenticatable;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 
-#[Fillable(['name', 'email', 'password', 'role', 'team_id', 'is_active', 'ui_theme'])]
+#[Fillable(['name', 'email', 'password', 'role', 'team_id', 'is_active', 'theme'])]
 #[Hidden(['password', 'two_factor_secret', 'two_factor_recovery_codes', 'remember_token'])]
 class User extends Authenticatable
 {
@@ -89,4 +89,3 @@ class User extends Authenticatable
         return $this->role === 'member';
     }
 }
-

@@ -13,13 +13,10 @@ class SlaConfig extends Model
         'category',
         'max_days',
         'warning_days',
-        'description',
-        'is_active',
     ];
 
     protected $casts = [
         'max_days' => 'integer',
         'warning_days' => 'integer',
-        'is_active' => 'boolean',
     ];
 }

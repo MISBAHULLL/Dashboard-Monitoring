@@ -13,14 +13,16 @@ class Notification extends Model
     protected $fillable = [
         'user_id',
         'title',
-        'message',
+        'body',
         'type',
-        'target_url',
+        'link',
         'is_read',
     ];
 
     protected $casts = [
         'is_read' => 'boolean',
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
     ];
 
     public function user(): BelongsTo

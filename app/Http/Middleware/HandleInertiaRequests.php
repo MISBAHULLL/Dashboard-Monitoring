@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\Notification;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -33,18 +34,46 @@ class HandleInertiaRequests extends Middleware
      */
     public function share(Request $request): array
     {
+        $user = $request->user();
+
         return [
             ...parent::share($request),
             'auth' => [
-                'user' => $request->user() ? [
-                    'id' => $request->user()->id,
-                    'name' => $request->user()->name,
-                    'email' => $request->user()->email,
-                    'role' => $request->user()->role,
-                    'ui_theme' => $request->user()->ui_theme,
+                'user' => $user ? [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'email' => $user->email,
+                    'role' => $user->role,
+                    'theme' => $user->theme,
                     // Kita bisa tambahkan load() kalau butuh nama team
                     // 'team' => $request->user()->team?->name, 
                 ] : null,
+            ],
+            'notifications' => $user ? function () use ($user) {
+                return [
+                    'unread_count' => Notification::query()
+                        ->where('user_id', $user->id)
+                        ->where('is_read', false)
+                        ->count(),
+                    'items' => Notification::query()
+                        ->where('user_id', $user->id)
+                        ->latest()
+                        ->limit(8)
+                        ->get(['id', 'type', 'title', 'body', 'link', 'is_read', 'created_at'])
+                        ->map(fn (Notification $notification) => [
+                            'id' => $notification->id,
+                            'type' => $notification->type,
+                            'title' => $notification->title,
+                            'body' => $notification->body,
+                            'link' => $notification->link,
+                            'is_read' => $notification->is_read,
+                            'created_at' => $notification->created_at?->toIso8601String(),
+                        ])
+                        ->values(),
+                ];
+            } : [
+                'unread_count' => 0,
+                'items' => [],
             ],
             // Kita juga bisa kirim pesan flash session untuk Toast notifications nanti
             'flash' => [

@@ -37,6 +37,8 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/tasks/bulk-status', [TaskController::class, 'bulkUpdateStatus'])->name('tasks.bulkUpdateStatus');
     Route::post('/tasks/bulk-assign', [TaskController::class, 'bulkAssign'])->name('tasks.bulkAssign');
 
+    Route::get('/tasks/export', [TaskController::class, 'export'])->name('tasks.export');
+
     Route::get('/tasks-kanban', [TaskController::class, 'kanban'])->name('tasks.kanban');
     Route::patch('/tasks/{task}/status', [TaskController::class, 'updateStatus'])->name('tasks.updateStatus');
     Route::post('/tasks/{task}/comments', [TaskCommentController::class, 'store'])->name('tasks.comments.store');

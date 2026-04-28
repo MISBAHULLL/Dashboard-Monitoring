@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, watch, computed } from 'vue';
 import { Head, Link, useForm, router } from '@inertiajs/vue3';
-import { ListTodo, Plus, Edit, Trash2, Filter, RotateCcw, ExternalLink, Lock, CheckCircle2, AlertCircle } from 'lucide-vue-next';
+import { ListTodo, Plus, Edit, Trash2, Filter, RotateCcw, ExternalLink, Lock, CheckCircle2, AlertCircle, Download } from 'lucide-vue-next';
 import { dashboard } from '@/routes';
 import { show as showTask, bulkDestroy, bulkUpdateStatus, bulkAssign } from '@/actions/App/Http/Controllers/TaskController';
 
@@ -140,6 +140,16 @@ const toggleCekStatus = (task: any, newStatus: string) => {
     });
 };
 
+const exportUrl = computed(() => {
+    const params = new URLSearchParams();
+    for (const [key, value] of Object.entries(filterForm.value)) {
+        if (value) {
+            params.append(key, String(value));
+        }
+    }
+    return `/tasks/export?${params.toString()}`;
+});
+
 const deleteTask = (id: number, title: string) => {
     if (confirm(`Apakah Anda yakin ingin menghapus Task: "${title}"?`)) {
         useForm({}).delete(`/tasks/${id}`);
@@ -178,11 +188,16 @@ const getAvatarColor = (name: string) => {
                 </h1>
                 <p class="text-sm text-slate-500 mt-2 ml-1">Kelola dan pantau tiket permintaan faskes dengan sistem filter cerdas.</p>
             </div>
-            <Link v-if="permissions.can_create" href="/tasks/create">
-                <Button class="flex items-center gap-2 bg-gradient-to-r from-sky-600 to-blue-700 hover:from-sky-500 hover:to-blue-600 text-white shadow-lg shadow-sky-500/20 rounded-xl transition-all hover:-translate-y-0.5 border-0 h-10 px-5">
-                    <Plus class="h-4 w-4" /> <span class="font-medium tracking-wide">Task Baru</span>
-                </Button>
-            </Link>
+            <div class="flex items-center gap-3">
+                <a :href="exportUrl" target="_blank" class="flex items-center gap-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 shadow-sm rounded-xl transition-all hover:-translate-y-0.5 h-10 px-4">
+                    <Download class="h-4 w-4 text-emerald-600" /> <span class="font-medium tracking-wide text-sm">Export Excel</span>
+                </a>
+                <Link v-if="permissions.can_create" href="/tasks/create">
+                    <Button class="flex items-center gap-2 bg-gradient-to-r from-sky-600 to-blue-700 hover:from-sky-500 hover:to-blue-600 text-white shadow-lg shadow-sky-500/20 rounded-xl transition-all hover:-translate-y-0.5 border-0 h-10 px-5">
+                        <Plus class="h-4 w-4" /> <span class="font-medium tracking-wide">Task Baru</span>
+                    </Button>
+                </Link>
+            </div>
         </div>
 
         <!-- Filter Modern Glass Card -->

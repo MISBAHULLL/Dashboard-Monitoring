@@ -40,7 +40,7 @@ const mainNavItems = computed<NavItem[]>(() => {
         },
         {
             title: 'Tabel Task',
-            href: '/tasks',
+            href: tasksIndex.url(),
             icon: ListTodo,
         },
         {

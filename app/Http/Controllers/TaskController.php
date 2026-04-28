@@ -2,23 +2,24 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Task;
 use App\Models\Client;
+use App\Models\Task;
 use App\Models\TaskComment;
 use App\Models\Team;
 use App\Models\User;
 use App\Services\ActivityLogger;
 use App\Services\NotificationService;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
-use Inertia\Inertia;
 use Illuminate\Validation\Rule;
+use Inertia\Inertia;
+use Spatie\SimpleExcel\SimpleExcelWriter;
 
 class TaskController extends Controller
 {
     public function __construct(
         protected NotificationService $notificationService,
-    ) {
-    }
+    ) {}
 
     public function index(Request $request)
     {
@@ -50,13 +51,13 @@ class TaskController extends Controller
         if ($request->filled('has_link')) {
             if ($request->has_link === 'yes') {
                 $query->whereNotNull('task_url')
-                      ->where('task_url', '!=', '')
-                      ->where('task_url', '!=', '-');
+                    ->where('task_url', '!=', '')
+                    ->where('task_url', '!=', '-');
             } else {
-                $query->where(function($q) {
+                $query->where(function ($q) {
                     $q->whereNull('task_url')
-                      ->orWhere('task_url', '')
-                      ->orWhere('task_url', '-');
+                        ->orWhere('task_url', '')
+                        ->orWhere('task_url', '-');
                 });
             }
         }
@@ -68,12 +69,12 @@ class TaskController extends Controller
         }
         if ($request->filled('search')) {
             $search = $request->search;
-            $query->where(function($q) use ($search) {
+            $query->where(function ($q) use ($search) {
                 $q->where('title', 'like', "%{$search}%")
-                  ->orWhere('modul', 'like', "%{$search}%");
+                    ->orWhere('modul', 'like', "%{$search}%");
             });
         }
-        
+
         $tasks = $query->latest()->paginate(10)->withQueryString();
         $tasks->through(function (Task $task) use ($user) {
             return [
@@ -91,7 +92,7 @@ class TaskController extends Controller
             'permissions' => [
                 'can_create' => $user->can('create', Task::class),
             ],
-            
+
             // Kirim data master ke Vue untuk dropdown filter
             'clients' => Client::where('is_active', true)->get(['id', 'name']),
             'product_teams' => Team::where('type', 'PRODUCT')->where('is_active', true)->get(['id', 'name']),
@@ -292,7 +293,7 @@ class TaskController extends Controller
         }
 
         $activeTasks = $activeTasksQuery->get();
-            
+
         $completedTasks = $completedTasksQuery->get();
 
         $tasks = $activeTasks->merge($completedTasks)->values()->map(function (Task $task) use ($user) {
@@ -323,7 +324,7 @@ class TaskController extends Controller
         $this->authorize('updateStatus', $task);
 
         $validated = $request->validate([
-            'status' => ['required', \Illuminate\Validation\Rule::in(['open', 'in_progress', 'revision', 'completed'])]
+            'status' => ['required', Rule::in(['open', 'in_progress', 'revision', 'completed'])],
         ]);
 
         if ($validated['status'] === 'completed' && $task->status !== 'completed') {
@@ -364,7 +365,7 @@ class TaskController extends Controller
         $request->validate([
             'ids' => 'required|array',
             'ids.*' => 'exists:tasks,id',
-            'status' => ['required', \Illuminate\Validation\Rule::in(['open', 'in_progress', 'revision', 'completed'])]
+            'status' => ['required', Rule::in(['open', 'in_progress', 'revision', 'completed'])],
         ]);
 
         $tasks = Task::whereIn('id', $request->ids)->get();
@@ -402,14 +403,97 @@ class TaskController extends Controller
             if ($request->user()->can('update', $task)) {
                 $previousAssigneeId = $task->assigned_to;
                 $oldValues = $task->toArray();
-                
+
                 $task->update(['assigned_to' => $request->assigned_to]);
-                
+
                 $this->notificationService->notifyTaskAssignment($task, $previousAssigneeId);
                 ActivityLogger::updated('task', $task->id, $task->title, $oldValues, $task->fresh()->toArray(), 'Mengassign task secara massal');
             }
         }
 
         return back()->with('success', 'Task yang dipilih berhasil di-assign.');
+    }
+
+    public function export(Request $request)
+    {
+        $this->authorize('viewAny', Task::class);
+
+        $user = $request->user();
+        $query = Task::with(['client', 'product', 'engineer', 'assignee']);
+
+        if ($user->isMember()) {
+            $query->where('assigned_to', $user->id);
+        }
+
+        // Menerapkan Filter Berjenjang
+        if ($request->filled('product_id')) {
+            $query->where('product_id', $request->product_id);
+        }
+        if ($request->filled('client_id')) {
+            $query->where('client_id', $request->client_id);
+        }
+        if ($request->filled('engineer_id')) {
+            $query->where('engineer_id', $request->engineer_id);
+        }
+        if ($request->filled('category')) {
+            $query->where('category', $request->category);
+        }
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+        if ($request->filled('has_link')) {
+            if ($request->has_link === 'yes') {
+                $query->whereNotNull('task_url')
+                    ->where('task_url', '!=', '')
+                    ->where('task_url', '!=', '-');
+            } else {
+                $query->where(function ($q) {
+                    $q->whereNull('task_url')
+                        ->orWhere('task_url', '')
+                        ->orWhere('task_url', '-');
+                });
+            }
+        }
+        if ($request->filled('date_from')) {
+            $query->whereDate('release_date', '>=', $request->date_from);
+        }
+        if ($request->filled('date_to')) {
+            $query->whereDate('release_date', '<=', $request->date_to);
+        }
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('title', 'like', "%{$search}%")
+                    ->orWhere('modul', 'like', "%{$search}%");
+            });
+        }
+
+        $tasks = $query->latest()->get();
+
+        ActivityLogger::log('exported', 'task', null, 'Daftar Task', 'Mengunduh laporan excel daftar task');
+
+        $writer = SimpleExcelWriter::streamDownload('laporan_task_'.date('Y-m-d_His').'.xlsx');
+
+        foreach ($tasks as $task) {
+            $writer->addRow([
+                'ID' => $task->id,
+                'Judul Task' => $task->title,
+                'Deskripsi' => $task->description,
+                'Product' => $task->product?->name ?? '-',
+                'Client / Faskes' => $task->client?->name ?? '-',
+                'Modul / Fitur' => $task->modul ?? '-',
+                'URL' => $task->task_url === '-' ? '' : $task->task_url,
+                'Jenis' => $task->category,
+                'Prioritas' => $task->priority,
+                'Status' => $task->status,
+                'Engineer' => $task->engineer?->name ?? '-',
+                'Assignee' => $task->assignee?->name ?? '-',
+                'Tanggal Release' => $task->release_date ? Carbon::parse($task->release_date)->format('d M Y') : '-',
+                'Tanggal Selesai' => $task->completed_at ? Carbon::parse($task->completed_at)->format('d M Y') : '-',
+                'Dibuat Oleh' => $task->creator?->name ?? '-',
+            ]);
+        }
+
+        return $writer->toBrowser();
     }
 }

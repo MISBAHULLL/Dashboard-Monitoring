@@ -280,12 +280,14 @@ class TaskController extends Controller
 
         // Ambil semua task yang belum selesai
         $activeTasksQuery = Task::with(['client', 'assignee', 'product'])->withCount('comments')
-            ->where('status', '!=', 'completed');
+            ->where('status', '!=', 'completed')
+            ->orderBy('created_at', 'asc');
 
         // Ambil task yang sudah selesai dalam 7 hari terakhir
         $completedTasksQuery = Task::with(['client', 'assignee', 'product'])->withCount('comments')
             ->where('status', 'completed')
-            ->where('completed_at', '>=', now()->subDays($completedWindowDays));
+            ->where('completed_at', '>=', now()->subDays($completedWindowDays))
+            ->orderBy('created_at', 'asc');
 
         if ($user->isMember()) {
             $activeTasksQuery->where('assigned_to', $user->id);

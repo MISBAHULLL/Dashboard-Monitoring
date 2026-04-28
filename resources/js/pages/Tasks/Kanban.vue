@@ -195,7 +195,7 @@ const compareTasks = (left: TaskItem, right: TaskItem) => {
         return dueDateSort;
     }
 
-    return left.title.localeCompare(right.title);
+    return left.id - right.id;
 };
 
 // Memecah data dari Database ke dalam masing-masing kotak status

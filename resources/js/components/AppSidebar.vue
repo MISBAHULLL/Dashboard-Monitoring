@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Link, usePage } from '@inertiajs/vue3';
-import { LayoutGrid, ListTodo, Users, Building2, UsersRound, Settings, Columns3, Activity } from 'lucide-vue-next';
+import { LayoutGrid, ListTodo, Users, Building2, UsersRound, Settings, Columns3, Activity, FileText, Database } from 'lucide-vue-next';
 import AppLogo from '@/components/AppLogo.vue';
 import NavFooter from '@/components/NavFooter.vue';
 import NavMain from '@/components/NavMain.vue';
@@ -18,6 +18,7 @@ import {
 // Import route generator otomatis dari Laravel Wayfinder
 import { dashboard } from '@/routes';
 import { index as activityLogsIndex } from '@/actions/App/Http/Controllers/ActivityLogController';
+import { index as documentsIndex } from '@/actions/App/Http/Controllers/DocumentController';
 import { index as tasksIndex } from '@/actions/App/Http/Controllers/TaskController';
 import { index as usersIndex } from '@/actions/App/Http/Controllers/UserController';
 import { index as teamsIndex } from '@/actions/App/Http/Controllers/TeamController';
@@ -53,10 +54,17 @@ const mainNavItems = computed<NavItem[]>(() => {
             href: '/activity-logs',
             icon: Activity,
         },
+        {
+            title: 'Dokumen',
+            href: documentsIndex.url(),
+            icon: FileText,
+        },
     ];
 
     // Menu master data HANYA ditambahkan jika user adalah admin
     if (user.value?.role === 'admin') {
+        // Backup & Restore intentionally omitted from main sidebar;
+        // accessible via Settings layout only.
         items.push({
             title: 'Faskes / Client',
             href: clientsIndex.url(),

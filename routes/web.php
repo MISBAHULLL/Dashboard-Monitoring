@@ -10,6 +10,8 @@ use App\Http\Controllers\SearchController;
 use App\Http\Controllers\TaskController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\TaskCommentController;
+use App\Http\Controllers\DocumentController;
+use App\Http\Controllers\BackupController;
 
 Route::get('/', function () {
     return redirect()->route('login');
@@ -48,6 +50,10 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/task-templates', [\App\Http\Controllers\TaskTemplateController::class, 'store'])->name('task-templates.store');
     Route::delete('/task-templates/{taskTemplate}', [\App\Http\Controllers\TaskTemplateController::class, 'destroy'])->name('task-templates.destroy');
 
+    // Documents (File Versioning)
+    Route::resource('documents', DocumentController::class)->except(['create', 'edit']);
+
+
     // Group khusus Admin (Menggunakan alias middleware 'role' yang kita buat)
     Route::middleware(['role:admin'])->group(function () {
         
@@ -56,6 +62,11 @@ Route::middleware(['auth'])->group(function () {
         Route::resource('teams', TeamController::class)->except(['create', 'show', 'edit']);
         Route::resource('clients', ClientController::class)->except(['create', 'show', 'edit']);
         
+        // Backup & Restore
+        Route::post('/settings/backup/create', [BackupController::class, 'create'])->name('backup.create');
+        Route::get('/settings/backup/download', [BackupController::class, 'download'])->name('backup.download');
+        Route::delete('/settings/backup/delete', [BackupController::class, 'destroy'])->name('backup.destroy');
+        Route::post('/settings/backup/restore', [BackupController::class, 'restore'])->name('backup.restore');
     });
 });
 

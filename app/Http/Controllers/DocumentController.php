@@ -20,8 +20,11 @@ class DocumentController extends Controller
             ->latest()
             ->paginate(20);
 
+        $clients = Client::orderBy('name')->get(['id', 'name']);
+
         return Inertia::render('Documents/Index', [
             'documents' => $documents,
+            'clients'   => $clients,
         ]);
     }
 

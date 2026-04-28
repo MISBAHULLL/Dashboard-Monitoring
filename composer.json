@@ -15,6 +15,7 @@
         "laravel/framework": "^13.0",
         "laravel/tinker": "^3.0",
         "laravel/wayfinder": "^0.1.14",
+        "spatie/laravel-backup": "^10.2",
         "spatie/simple-excel": "^3.9"
     },
     "require-dev": {

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Link } from '@inertiajs/vue3';
+import { Link, usePage } from '@inertiajs/vue3';
 import Heading from '@/components/Heading.vue';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
@@ -8,22 +8,24 @@ import { toUrl } from '@/lib/utils';
 import { edit as editAppearance } from '@/routes/appearance';
 import { edit as editProfile } from '@/routes/profile';
 import { edit as editSecurity } from '@/routes/security';
+import { index as backupIndex } from '@/routes/backup';
 import type { NavItem } from '@/types';
+import type { Auth } from '@/types';
+import { computed } from 'vue';
 
-const sidebarNavItems: NavItem[] = [
-    {
-        title: 'Profile',
-        href: editProfile(),
-    },
-    {
-        title: 'Security',
-        href: editSecurity(),
-    },
-    {
-        title: 'Appearance',
-        href: editAppearance(),
-    },
+const page = usePage<{ auth: Auth }>();
+const isAdmin = computed(() => page.props.auth?.user?.role === 'admin');
+
+const baseNavItems: NavItem[] = [
+    { title: 'Profile', href: editProfile() },
+    { title: 'Security', href: editSecurity() },
+    { title: 'Appearance', href: editAppearance() },
 ];
+
+const sidebarNavItems = computed(() => [
+    ...baseNavItems,
+    ...(isAdmin.value ? [{ title: 'Backup & Restore', href: backupIndex() }] : []),
+]);
 
 const { isCurrentOrParentUrl } = useCurrentUrl();
 </script>
@@ -43,7 +45,7 @@ const { isCurrentOrParentUrl } = useCurrentUrl();
                 >
                     <Button
                         v-for="item in sidebarNavItems"
-                        :key="toUrl(item.href)"
+                        :key="toUrl(item.href as string)"
                         variant="ghost"
                         :class="[
                             'w-full justify-start',

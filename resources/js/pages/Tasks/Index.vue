@@ -323,6 +323,7 @@ const getAvatarColor = (name: string) => {
                             <th class="py-3 px-4">Engineer</th>
                             <th class="py-3 px-4 text-center">Dokumen</th>
                             <th class="py-3 px-4 text-center">Tanggal Release</th>
+                            <th class="py-3 px-4 text-center">SLA Status</th>
                             <th class="py-3 px-4 text-center">Cek</th>
                             <th class="py-3 px-4 text-center">Status</th>
                             <th class="py-3 px-4 text-center">Aksi</th>
@@ -430,6 +431,21 @@ const getAvatarColor = (name: string) => {
                             <td class="py-3 px-4 text-center">
                                 <span class="text-xs font-semibold text-slate-600">
                                     {{ task.release_date ? new Date(task.release_date).toLocaleDateString('id-ID', {day:'2-digit', month:'short', year:'numeric'}) : '-' }}
+                                </span>
+                            </td>
+
+                            <!-- 8.5. SLA STATUS -->
+                            <td class="py-3 px-4 text-center">
+                                <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold tracking-wide shadow-sm"
+                                    :class="{
+                                        'bg-emerald-100 text-emerald-700 border border-emerald-200': task.sla_status === 'completed_on_time',
+                                        'bg-amber-100 text-amber-700 border border-amber-200': task.sla_status === 'completed_late',
+                                        'bg-blue-100 text-blue-700 border border-blue-200': task.sla_status === 'on_track',
+                                        'bg-orange-100 text-orange-700 border border-orange-200': task.sla_status === 'warning',
+                                        'bg-red-100 text-red-700 border border-red-200': task.sla_status === 'overdue',
+                                        'bg-slate-100 text-slate-500 border border-slate-200': task.sla_status === 'unknown',
+                                    }" :title="'Batas waktu SLA: ' + (task.sla ? task.sla.max_days + ' hari' : 'tidak ada config')">
+                                    {{ task.sla_status.replace(/_/g, ' ').toUpperCase() }}
                                 </span>
                             </td>
 

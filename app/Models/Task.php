@@ -37,6 +37,8 @@ class Task extends Model
         'completed_at' => 'datetime',
     ];
 
+    protected $appends = ['sla_status'];
+
     // --- RELATIONS ---
 
     public function product(): BelongsTo
@@ -82,5 +84,46 @@ class Task extends Model
     public function tags(): BelongsToMany
     {
         return $this->belongsToMany(Tag::class, 'task_tags');
+    }
+
+    public function sla(): BelongsTo
+    {
+        return $this->belongsTo(SlaConfig::class, 'category', 'category');
+    }
+
+    public function getSlaStatusAttribute(): string
+    {
+        if (!$this->relationLoaded('sla') && !isset($this->sla)) {
+            // Jika relasi sla belum di-load, kita coba ambil config dari cache atau static collection agar tidak N+1
+            // Tapi untuk amannya kita anggap unknown jika tidak ada data SLA
+            return 'unknown';
+        }
+
+        if (!$this->sla) return 'unknown';
+
+        $maxDays = $this->sla->max_days;
+        $warningDays = $this->sla->warning_days;
+
+        $startDate = $this->created_at;
+        // Hitung deadline (created_at + max_days)
+        $dueDate = $startDate->copy()->addDays($maxDays);
+        $warningDate = $dueDate->copy()->subDays($warningDays);
+
+        if ($this->status === 'completed') {
+            if ($this->completed_at && $this->completed_at <= $dueDate) {
+                return 'completed_on_time';
+            } else {
+                return 'completed_late';
+            }
+        }
+
+        $now = now();
+        if ($now > $dueDate) {
+            return 'overdue';
+        } elseif ($now >= $warningDate) {
+            return 'warning';
+        }
+
+        return 'on_track';
     }
 }

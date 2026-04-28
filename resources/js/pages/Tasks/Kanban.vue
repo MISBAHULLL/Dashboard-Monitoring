@@ -49,6 +49,7 @@ type TaskItem = {
     comments_count?: number;
     can_edit: boolean;
     can_update_status: boolean;
+    sla_status?: string;
 };
 
 const props = defineProps<{
@@ -412,7 +413,7 @@ const onDrop = (e: DragEvent, newStatus: TaskStatus) => {
                             @dragend="onDragEnd"
                         >
                             <div class="mb-3 flex items-start justify-between gap-3">
-                                <div class="flex min-w-0 items-center gap-2">
+                                <div class="flex min-w-0 items-center gap-2 flex-wrap">
                                     <GripVertical
                                         class="h-4 w-4 shrink-0 text-slate-300"
                                         :class="task.can_update_status ? 'opacity-100' : 'opacity-40'"
@@ -420,6 +421,18 @@ const onDrop = (e: DragEvent, newStatus: TaskStatus) => {
                                     <Badge variant="outline" class="truncate rounded-full border-slate-200 bg-slate-50 text-[10px] font-semibold text-slate-600">
                                         {{ task.category }}
                                     </Badge>
+                                    <span v-if="task.sla_status" 
+                                        class="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold tracking-wide shadow-sm"
+                                        :class="{
+                                            'bg-emerald-100 text-emerald-700 border border-emerald-200': task.sla_status === 'completed_on_time',
+                                            'bg-amber-100 text-amber-700 border border-amber-200': task.sla_status === 'completed_late',
+                                            'bg-blue-100 text-blue-700 border border-blue-200': task.sla_status === 'on_track',
+                                            'bg-orange-100 text-orange-700 border border-orange-200': task.sla_status === 'warning',
+                                            'bg-red-100 text-red-700 border border-red-200': task.sla_status === 'overdue',
+                                            'bg-slate-100 text-slate-500 border border-slate-200': task.sla_status === 'unknown',
+                                        }" :title="'SLA: ' + task.sla_status">
+                                        {{ task.sla_status === 'on_track' ? 'ON TRACK' : task.sla_status === 'overdue' ? 'OVERDUE' : task.sla_status === 'warning' ? 'WARNING' : task.sla_status === 'completed_on_time' ? 'ON TIME' : task.sla_status === 'completed_late' ? 'LATE' : 'UNKNOWN' }}
+                                    </span>
                                 </div>
                                 <div class="flex items-center gap-2">
                                     <span

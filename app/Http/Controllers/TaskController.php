@@ -26,7 +26,7 @@ class TaskController extends Controller
         $this->authorize('viewAny', Task::class);
 
         $user = $request->user();
-        $query = Task::with(['client', 'product', 'engineer', 'assignee'])->withCount('comments');
+        $query = Task::with(['client', 'product', 'engineer', 'assignee', 'sla'])->withCount('comments');
 
         if ($user->isMember()) {
             $query->where('assigned_to', $user->id);
@@ -181,6 +181,7 @@ class TaskController extends Controller
             'engineer:id,name',
             'assignee:id,name',
             'creator:id,name',
+            'sla',
             'comments' => fn ($query) => $query
                 ->with('user:id,name')
                 ->latest(),
@@ -280,12 +281,12 @@ class TaskController extends Controller
         $completedWindowDays = 7;
 
         // Ambil semua task yang belum selesai
-        $activeTasksQuery = Task::with(['client', 'assignee', 'product'])->withCount('comments')
+        $activeTasksQuery = Task::with(['client', 'assignee', 'product', 'sla'])->withCount('comments')
             ->where('status', '!=', 'completed')
             ->orderBy('created_at', 'asc');
 
         // Ambil task yang sudah selesai dalam 7 hari terakhir
-        $completedTasksQuery = Task::with(['client', 'assignee', 'product'])->withCount('comments')
+        $completedTasksQuery = Task::with(['client', 'assignee', 'product', 'sla'])->withCount('comments')
             ->where('status', 'completed')
             ->where('completed_at', '>=', now()->subDays($completedWindowDays))
             ->orderBy('created_at', 'asc');
@@ -422,7 +423,7 @@ class TaskController extends Controller
         $this->authorize('viewAny', Task::class);
 
         $user = $request->user();
-        $query = Task::with(['client', 'product', 'engineer', 'assignee']);
+        $query = Task::with(['client', 'product', 'engineer', 'assignee', 'sla']);
 
         if ($user->isMember()) {
             $query->where('assigned_to', $user->id);
@@ -489,6 +490,7 @@ class TaskController extends Controller
                 'Jenis' => $task->category,
                 'Prioritas' => $task->priority,
                 'Status' => $task->status,
+                'SLA Status' => strtoupper(str_replace('_', ' ', $task->sla_status)),
                 'Engineer' => $task->engineer?->name ?? '-',
                 'Assignee' => $task->assignee?->name ?? '-',
                 'Tanggal Release' => $task->release_date ? Carbon::parse($task->release_date)->format('d M Y') : '-',

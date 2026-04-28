@@ -18,11 +18,14 @@ class DocumentVersion extends Model
         'version_number',
         'file_path',
         'doc_url',
+        'file_size',
+        'notes',
         'uploaded_by',
     ];
 
     protected $casts = [
         'version_number' => 'integer',
+        'file_size' => 'integer',
     ];
 
     public function document(): BelongsTo

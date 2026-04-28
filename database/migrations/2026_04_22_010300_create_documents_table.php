@@ -17,6 +17,13 @@ return new class extends Migration
         
         $table->string('title', 200);
         $table->enum('type', ['UAT', 'BAST']);
+        
+        // File information
+        $table->string('file_path')->nullable();
+        $table->string('file_name')->nullable();
+        $table->string('mime_type')->nullable();
+        $table->unsignedBigInteger('file_size')->nullable();
+        
         $table->unsignedInteger('current_version')->default(1);
 
         $table->foreignId('created_by')

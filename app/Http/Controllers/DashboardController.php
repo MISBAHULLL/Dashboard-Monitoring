@@ -13,6 +13,7 @@ class DashboardController extends Controller
 {
     public function index(Request $request)
     {
+        /** @var \App\Models\User $user */
         $user = $request->user();
 
         // 2. Jika user adalah admin, tampilkan AdminDashboard
@@ -83,7 +84,7 @@ class DashboardController extends Controller
                     'teams.name',
                     'teams.type',
                 ])
-                ->leftJoin('tasks', function ($join) {
+                ->leftJoin('tasks', function (\Illuminate\Database\Query\JoinClause $join) {
                     $join->on('tasks.product_id', '=', 'teams.id')
                         ->whereNull('tasks.deleted_at');
                 })
@@ -101,8 +102,8 @@ class DashboardController extends Controller
                 ->limit(10)
                 ->get()
                 ->map(function ($team) {
-                    $totalTasks = (int) $team->total_tasks;
-                    $completedTasks = (int) $team->completed_tasks;
+                    $totalTasks = (int) $team->getAttribute('total_tasks');
+                    $completedTasks = (int) $team->getAttribute('completed_tasks');
 
                     return [
                         'id' => $team->id,
@@ -110,10 +111,10 @@ class DashboardController extends Controller
                         'type' => $team->type,
                         'total_tasks' => $totalTasks,
                         'completed_tasks' => $completedTasks,
-                        'open_tasks' => (int) $team->open_tasks,
-                        'in_progress_tasks' => (int) $team->in_progress_tasks,
-                        'revision_tasks' => (int) $team->revision_tasks,
-                        'overdue_tasks' => (int) $team->overdue_tasks,
+                        'open_tasks' => (int) $team->getAttribute('open_tasks'),
+                        'in_progress_tasks' => (int) $team->getAttribute('in_progress_tasks'),
+                        'revision_tasks' => (int) $team->getAttribute('revision_tasks'),
+                        'overdue_tasks' => (int) $team->getAttribute('overdue_tasks'),
                         'completion_rate' => $totalTasks > 0 ? round(($completedTasks / $totalTasks) * 100, 1) : 0.0,
                     ];
                 })

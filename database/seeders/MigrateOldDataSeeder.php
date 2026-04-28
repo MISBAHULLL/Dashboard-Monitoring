@@ -126,8 +126,7 @@ class MigrateOldDataSeeder extends Seeder
 
     // Migrasi Documents
     $docCount = 0;
-    $hasDokumen = DB::connection('old_mtpo')
-            ->getSchemaBuilder()
+    $hasDokumen = \Illuminate\Support\Facades\Schema::connection('old_mtpo')
             ->hasTable('dokumen');
 
     if ($hasDokumen) {
@@ -192,8 +191,7 @@ class MigrateOldDataSeeder extends Seeder
 
         // Migrasi Release Date Logs
         $logCount = 0;
-        $hasLog = DB::connection('old_mtpo')
-            ->getSchemaBuilder()
+        $hasLog = \Illuminate\Support\Facades\Schema::connection('old_mtpo')
             ->hasTable('log_tgl_release');
         if ($hasLog) {
             $oldLogs = DB::connection('old_mtpo')->table('log_tgl_release')->get();

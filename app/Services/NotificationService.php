@@ -45,7 +45,7 @@ class NotificationService
             ->whereDate('release_date', '<=', $endDate)
             ->get();
 
-        return $tasks->reduce(function (int $count, Task $task) use ($today) {
+        return $tasks->reduce(function ($count, Task $task) use ($today) {
             if ($this->deadlineNotificationExistsForToday($task)) {
                 return $count;
             }

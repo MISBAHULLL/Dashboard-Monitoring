@@ -17,6 +17,7 @@ import {
 
 // Import route generator otomatis dari Laravel Wayfinder
 import { dashboard } from '@/routes';
+import { index as activityLogsIndex } from '@/actions/App/Http/Controllers/ActivityLogController';
 import { index as tasksIndex } from '@/actions/App/Http/Controllers/TaskController';
 import { index as usersIndex } from '@/actions/App/Http/Controllers/UserController';
 import { index as teamsIndex } from '@/actions/App/Http/Controllers/TeamController';

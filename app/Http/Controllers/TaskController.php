@@ -96,6 +96,7 @@ class TaskController extends Controller
             'clients' => Client::where('is_active', true)->get(['id', 'name']),
             'product_teams' => Team::where('type', 'PRODUCT')->where('is_active', true)->get(['id', 'name']),
             'engineer_teams' => Team::where('type', 'ENGINEER')->where('is_active', true)->get(['id', 'name']),
+            'users' => User::where('is_active', true)->get(['id', 'name']),
         ]);
     }
 
@@ -337,5 +338,78 @@ class TaskController extends Controller
         ActivityLogger::statusChanged('task', $task->id, $task->title, $oldStatus, $validated['status']);
 
         return back();
+    }
+
+    public function bulkDestroy(Request $request)
+    {
+        $request->validate([
+            'ids' => 'required|array',
+            'ids.*' => 'exists:tasks,id',
+        ]);
+
+        $tasks = Task::whereIn('id', $request->ids)->get();
+
+        foreach ($tasks as $task) {
+            if ($request->user()->can('delete', $task)) {
+                ActivityLogger::deleted('task', $task->id, $task->title, "Menghapus task '{$task->title}' secara massal");
+                $task->delete();
+            }
+        }
+
+        return back()->with('success', 'Task yang dipilih berhasil dihapus.');
+    }
+
+    public function bulkUpdateStatus(Request $request)
+    {
+        $request->validate([
+            'ids' => 'required|array',
+            'ids.*' => 'exists:tasks,id',
+            'status' => ['required', \Illuminate\Validation\Rule::in(['open', 'in_progress', 'revision', 'completed'])]
+        ]);
+
+        $tasks = Task::whereIn('id', $request->ids)->get();
+
+        foreach ($tasks as $task) {
+            if ($request->user()->can('updateStatus', $task) && $task->status !== $request->status) {
+                $oldStatus = $task->status;
+                $updateData = ['status' => $request->status];
+
+                if ($request->status === 'completed') {
+                    $updateData['completed_at'] = now();
+                } else {
+                    $updateData['completed_at'] = null;
+                }
+
+                $task->update($updateData);
+                ActivityLogger::statusChanged('task', $task->id, $task->title, $oldStatus, $request->status);
+            }
+        }
+
+        return back()->with('success', 'Status task yang dipilih berhasil diperbarui.');
+    }
+
+    public function bulkAssign(Request $request)
+    {
+        $request->validate([
+            'ids' => 'required|array',
+            'ids.*' => 'exists:tasks,id',
+            'assigned_to' => 'required|exists:users,id',
+        ]);
+
+        $tasks = Task::whereIn('id', $request->ids)->get();
+
+        foreach ($tasks as $task) {
+            if ($request->user()->can('update', $task)) {
+                $previousAssigneeId = $task->assigned_to;
+                $oldValues = $task->toArray();
+                
+                $task->update(['assigned_to' => $request->assigned_to]);
+                
+                $this->notificationService->notifyTaskAssignment($task, $previousAssigneeId);
+                ActivityLogger::updated('task', $task->id, $task->title, $oldValues, $task->fresh()->toArray(), 'Mengassign task secara massal');
+            }
+        }
+
+        return back()->with('success', 'Task yang dipilih berhasil di-assign.');
     }
 }

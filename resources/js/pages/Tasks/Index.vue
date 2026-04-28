@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue';
+import { ref, watch, computed } from 'vue';
 import { Head, Link, useForm, router } from '@inertiajs/vue3';
 import { ListTodo, Plus, Edit, Trash2, Filter, RotateCcw, ExternalLink, Lock, CheckCircle2, AlertCircle } from 'lucide-vue-next';
 import { dashboard } from '@/routes';
-import { show as showTask } from '@/actions/App/Http/Controllers/TaskController';
+import { show as showTask, bulkDestroy, bulkUpdateStatus, bulkAssign } from '@/actions/App/Http/Controllers/TaskController';
 
 // UI Components
 import { Button } from '@/components/ui/button';
@@ -25,6 +25,7 @@ const props = defineProps<{
     clients: Array<any>;
     product_teams: Array<any>;
     engineer_teams: Array<any>;
+    users: Array<any>;
 }>();
 
 // Setup Breadcrumbs
@@ -70,6 +71,58 @@ const resetFilter = () => {
         date_to: '',
     };
 };
+
+const selectedTasks = ref<number[]>([]);
+
+const selectAll = computed({
+    get: () => props.tasks.data.length > 0 && selectedTasks.value.length === props.tasks.data.length,
+    set: (val) => {
+        if (val) {
+            selectedTasks.value = props.tasks.data.map(t => t.id);
+        } else {
+            selectedTasks.value = [];
+        }
+    }
+});
+
+const bulkActionForm = useForm({
+    ids: [] as number[],
+    status: '',
+    assigned_to: '',
+});
+
+const handleBulkDelete = () => {
+    if (confirm(`Hapus ${selectedTasks.value.length} task secara massal?`)) {
+        bulkActionForm.ids = selectedTasks.value;
+        bulkActionForm.post(bulkDestroy.url(), {
+            preserveScroll: true,
+            onSuccess: () => selectedTasks.value = [],
+        });
+    }
+};
+
+const handleBulkStatus = (status: string) => {
+    bulkActionForm.ids = selectedTasks.value;
+    bulkActionForm.status = status;
+    bulkActionForm.post(bulkUpdateStatus.url(), {
+        preserveScroll: true,
+        onSuccess: () => selectedTasks.value = [],
+    });
+};
+
+const handleBulkAssign = (userId: string) => {
+    if (!userId) return;
+    bulkActionForm.ids = selectedTasks.value;
+    bulkActionForm.assigned_to = userId;
+    bulkActionForm.post(bulkAssign.url(), {
+        preserveScroll: true,
+        onSuccess: () => selectedTasks.value = [],
+    });
+};
+
+watch(() => props.tasks.data, () => {
+    selectedTasks.value = [];
+});
 
 const toggleCekStatus = (task: any, newStatus: string) => {
     if ((!task.task_url || task.task_url === '-') && (newStatus === 'completed' || newStatus === 'revision')) {
@@ -210,12 +263,43 @@ const getAvatarColor = (name: string) => {
             </div>
         </div>
 
+        <!-- Bulk Actions Toolbar -->
+        <div v-if="selectedTasks.length > 0" class="bg-sky-50 border border-sky-200 rounded-xl p-3 flex flex-wrap items-center justify-between gap-4 shadow-sm">
+            <div class="flex items-center gap-3">
+                <span class="bg-sky-600 text-white text-xs font-bold px-2 py-1 rounded-md">{{ selectedTasks.length }} terpilih</span>
+                <span class="text-sm font-semibold text-slate-700">Aksi Massal:</span>
+            </div>
+            <div class="flex items-center gap-3 flex-wrap">
+                <!-- Assign -->
+                <select @change="handleBulkAssign(($event.target as HTMLSelectElement).value); ($event.target as HTMLSelectElement).value = ''" class="text-xs border-0 ring-1 ring-inset ring-slate-200 focus:ring-2 focus:ring-inset focus:ring-sky-500 rounded-lg bg-white h-8 px-2 cursor-pointer text-slate-700 w-32">
+                    <option value="">Assign ke...</option>
+                    <option v-for="user in users" :key="user.id" :value="user.id">{{ user.name }}</option>
+                </select>
+
+                <!-- Status -->
+                <select @change="handleBulkStatus(($event.target as HTMLSelectElement).value); ($event.target as HTMLSelectElement).value = ''" class="text-xs border-0 ring-1 ring-inset ring-slate-200 focus:ring-2 focus:ring-inset focus:ring-sky-500 rounded-lg bg-white h-8 px-2 cursor-pointer text-slate-700 w-32">
+                    <option value="">Ubah Status...</option>
+                    <option value="open">Belum Di Cek</option>
+                    <option value="revision">Revisi</option>
+                    <option value="completed">Selesai</option>
+                </select>
+
+                <!-- Delete -->
+                <Button @click="handleBulkDelete" variant="destructive" size="sm" class="h-8 text-xs bg-rose-500 hover:bg-rose-600">
+                    <Trash2 class="h-3.5 w-3.5 mr-1.5" /> Hapus
+                </Button>
+            </div>
+        </div>
+
         <!-- Modern Data Grid with 11 Columns Parity -->
         <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex-1 flex flex-col">
             <div class="overflow-x-auto flex-1">
                 <table class="w-full text-left text-sm whitespace-nowrap">
                     <thead class="bg-slate-100 border-b border-slate-200">
                         <tr class="text-[11px] font-bold text-slate-600 uppercase tracking-wider">
+                            <th class="py-3 px-4 w-10 text-center">
+                                <input type="checkbox" v-model="selectAll" class="rounded border-slate-300 text-sky-600 focus:ring-sky-500 w-4 h-4 cursor-pointer" />
+                            </th>
                             <th class="py-3 px-4">Product</th>
                             <th class="py-3 px-4">Faskes</th>
                             <th class="py-3 px-4 min-w-[200px]">Fitur</th>
@@ -237,7 +321,7 @@ const getAvatarColor = (name: string) => {
                                 'bg-orange-50/40 hover:bg-orange-50/70': task.status === 'revision'
                             }">
                             
-                            <!-- 1. PRODUCT -->
+                            <!-- 0. CHECKBOX -->
                             <td class="py-3 px-4 relative">
                                 <!-- Aksen garis warna di sebelah kiri -->
                                 <div class="absolute left-0 top-0 bottom-0 w-1 transition-all duration-200" 
@@ -248,6 +332,13 @@ const getAvatarColor = (name: string) => {
                                     }">
                                 </div>
                                 
+                                <div class="flex justify-center items-center h-full">
+                                    <input type="checkbox" v-model="selectedTasks" :value="task.id" class="rounded border-slate-300 text-sky-600 focus:ring-sky-500 w-4 h-4 cursor-pointer" />
+                                </div>
+                            </td>
+
+                            <!-- 1. PRODUCT -->
+                            <td class="py-3 px-4 relative">
                                 <span class="font-bold text-slate-700 text-xs truncate max-w-[120px] block" :title="task.product?.name">
                                     {{ task.product?.name || '-' }}
                                 </span>
@@ -390,7 +481,7 @@ const getAvatarColor = (name: string) => {
                         </tr>
                         
                         <tr v-if="tasks.data.length === 0">
-                            <td colspan="11" class="py-20 text-center">
+                            <td colspan="12" class="py-20 text-center">
                                 <div class="flex flex-col items-center justify-center text-slate-400">
                                     <div class="h-16 w-16 bg-slate-50 rounded-2xl flex items-center justify-center mb-4 border border-slate-100 shadow-sm rotate-3">
                                         <ListTodo class="h-8 w-8 text-slate-300 -rotate-3" />

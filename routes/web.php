@@ -32,6 +32,11 @@ Route::middleware(['auth'])->group(function () {
     Route::patch('/notifications/{notification}/read', [NotificationController::class, 'markAsRead'])->name('notifications.read');
 
     // Tasks (Bisa diakses oleh semua user yang login)
+    // Tasks Bulk Actions
+    Route::post('/tasks/bulk-delete', [TaskController::class, 'bulkDestroy'])->name('tasks.bulkDestroy');
+    Route::post('/tasks/bulk-status', [TaskController::class, 'bulkUpdateStatus'])->name('tasks.bulkUpdateStatus');
+    Route::post('/tasks/bulk-assign', [TaskController::class, 'bulkAssign'])->name('tasks.bulkAssign');
+
     Route::get('/tasks-kanban', [TaskController::class, 'kanban'])->name('tasks.kanban');
     Route::patch('/tasks/{task}/status', [TaskController::class, 'updateStatus'])->name('tasks.updateStatus');
     Route::post('/tasks/{task}/comments', [TaskCommentController::class, 'store'])->name('tasks.comments.store');

@@ -45,6 +45,8 @@ Route::middleware(['auth'])->group(function () {
     Route::delete('/tasks/{task}/comments/{comment}', [TaskCommentController::class, 'destroy'])->name('tasks.comments.destroy');
     Route::patch('/tasks/{task}/comments/{comment}/pin', [TaskCommentController::class, 'togglePin'])->name('tasks.comments.pin');
     Route::resource('tasks', TaskController::class);
+    Route::post('/task-templates', [\App\Http\Controllers\TaskTemplateController::class, 'store'])->name('task-templates.store');
+    Route::delete('/task-templates/{taskTemplate}', [\App\Http\Controllers\TaskTemplateController::class, 'destroy'])->name('task-templates.destroy');
 
     // Group khusus Admin (Menggunakan alias middleware 'role' yang kita buat)
     Route::middleware(['role:admin'])->group(function () {

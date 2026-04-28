@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import { Head, Link, useForm } from '@inertiajs/vue3';
-import { ArrowLeft, Save } from 'lucide-vue-next';
+import { Head, Link, useForm, router } from '@inertiajs/vue3';
+import { ArrowLeft, Save, BookmarkPlus } from 'lucide-vue-next';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { store as taskTemplatesStore } from '@/actions/App/Http/Controllers/TaskTemplateController';
 
 const props = defineProps<{
     clients: Array<{ id: number; name: string }>;
@@ -13,6 +14,7 @@ const props = defineProps<{
     engineer_teams: Array<{ id: number; name: string }>;
     users: Array<{ id: number; name: string }>;
     existing_modules: Array<string>;
+    task_templates: Array<any>;
 }>();
 
 // Inertia Form State
@@ -34,6 +36,49 @@ const form = useForm({
 const submitForm = () => {
     form.post('/tasks');
 };
+
+const applyTemplate = (templateId: number) => {
+    const template = props.task_templates.find(t => t.id === templateId);
+    if (template) {
+        if (template.client_id) form.client_id = template.client_id;
+        if (template.product_id) form.product_id = template.product_id;
+        if (template.engineer_id) form.engineer_id = template.engineer_id;
+        if (template.category) form.category = template.category;
+        if (template.priority) form.priority = template.priority;
+        if (template.description) form.description = template.description;
+    }
+};
+
+const saveAsTemplate = () => {
+    const name = prompt('Masukkan nama template untuk pola form ini:');
+    if (!name) return;
+
+    router.post(taskTemplatesStore.url(), {
+        name,
+        client_id: form.client_id,
+        product_id: form.product_id,
+        engineer_id: form.engineer_id,
+        description: form.description,
+        category: form.category,
+        priority: form.priority,
+    }, {
+        preserveScroll: true,
+        preserveState: true,
+        onSuccess: () => alert('Template berhasil disimpan dan bisa digunakan!'),
+        onError: (err) => {
+            alert('Gagal menyimpan template. Pastikan Faskes dan Divisi Produk sudah diisi.');
+        }
+    });
+};
+
+const deleteTemplate = (id: number) => {
+    if (confirm('Apakah Anda yakin ingin menghapus template ini?')) {
+        router.delete(`/task-templates/${id}`, {
+            preserveScroll: true,
+            preserveState: true,
+        });
+    }
+};
 </script>
 
 <template>
@@ -48,9 +93,31 @@ const submitForm = () => {
                     <ArrowLeft class="h-5 w-5" />
                 </Button>
             </Link>
-            <div>
+            <div class="flex-1">
                 <h1 class="text-2xl font-bold tracking-tight text-primary">Buat Tiket Task Baru</h1>
                 <p class="text-sm text-muted-foreground mt-1">Isi rincian informasi di bawah untuk mendaftarkan task ke sistem.</p>
+            </div>
+            <div>
+                <Button type="button" @click="saveAsTemplate" variant="outline" class="flex items-center gap-2 h-10 border-sky-200 text-sky-700 bg-sky-50 hover:bg-sky-100">
+                    <BookmarkPlus class="h-4 w-4" />
+                    Simpan Sebagai Template
+                </Button>
+            </div>
+        </div>
+
+        <!-- Pilihan Template -->
+        <div v-if="task_templates.length > 0" class="max-w-5xl bg-slate-50 border border-slate-200 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center gap-4 shadow-sm">
+            <div class="text-sm font-semibold text-slate-700 whitespace-nowrap">Pilih Template Cepat:</div>
+            <div class="flex gap-2 flex-wrap">
+                <div v-for="template in task_templates" :key="template.id" class="flex items-center bg-white border border-slate-200 rounded-full pl-3 pr-1 shadow-sm hover:border-slate-300 transition-all">
+                    <button type="button" @click="applyTemplate(template.id)" class="text-xs font-medium text-slate-700 hover:text-sky-600 outline-none">
+                        {{ template.name }}
+                    </button>
+                    <div class="w-px h-3 bg-slate-200 mx-2"></div>
+                    <button type="button" @click="deleteTemplate(template.id)" class="text-slate-400 hover:text-red-500 rounded-full p-1 hover:bg-red-50 transition-colors" title="Hapus template">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                    </button>
+                </div>
             </div>
         </div>
 

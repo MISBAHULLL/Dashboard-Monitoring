@@ -112,6 +112,7 @@ class TaskController extends Controller
             'engineer_teams' => Team::where('type', 'ENGINEER')->where('is_active', true)->get(['id', 'name']),
             'users' => User::where('is_active', true)->get(['id', 'name']),
             'existing_modules' => Task::select('modul')->whereNotNull('modul')->where('modul', '!=', '')->distinct()->pluck('modul'),
+            'task_templates' => \App\Models\TaskTemplate::where('created_by', request()->user()->id)->get(),
         ]);
     }
 

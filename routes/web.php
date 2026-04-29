@@ -51,6 +51,7 @@ Route::middleware(['auth'])->group(function () {
     Route::delete('/task-templates/{taskTemplate}', [\App\Http\Controllers\TaskTemplateController::class, 'destroy'])->name('task-templates.destroy');
 
     // Documents (File Versioning)
+    Route::post('/documents/{document}/sync-tasks', [DocumentController::class, 'syncTasks'])->name('documents.syncTasks');
     Route::resource('documents', DocumentController::class)->except(['create', 'edit']);
 
 

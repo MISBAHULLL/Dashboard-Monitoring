@@ -66,6 +66,12 @@ class Task extends Model
         return $this->belongsTo(User::class, 'assigned_to');
     }
 
+    // Many-to-many: 1 task bisa terhubung ke banyak dokumen
+    public function documents(): BelongsToMany
+    {
+        return $this->belongsToMany(Document::class, 'document_task')->withTimestamps();
+    }
+
     public function document(): BelongsTo
     {
         return $this->belongsTo(Document::class);

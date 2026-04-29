@@ -31,6 +31,7 @@ interface PaginatedDocuments {
 const props = defineProps<{
     documents: PaginatedDocuments;
     clients?: Array<{ id: number; name: string }>;
+    documentTypes: string[];
 }>();
 
 const breadcrumbs = [
@@ -226,8 +227,12 @@ function formatDate(iso: string): string {
                     </div>
                     <div>
                         <label class="mb-1 block text-sm font-medium">Tipe <span class="text-red-500">*</span></label>
-                        <input v-model="form.type" type="text" required placeholder="Contoh: Kontrak, SOP, MOU"
+                        <input v-model="form.type" type="text" required list="doc-type-list"
+                            placeholder="Pilih atau ketik tipe baru..."
                             class="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary dark:border-slate-600 dark:bg-slate-800" />
+                        <datalist id="doc-type-list">
+                            <option v-for="t in documentTypes" :key="t" :value="t" />
+                        </datalist>
                         <p v-if="form.errors.type" class="mt-1 text-xs text-red-500">{{ form.errors.type }}</p>
                     </div>
                     <div>

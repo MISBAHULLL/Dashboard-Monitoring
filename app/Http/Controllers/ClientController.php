@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Client;
 use App\Services\ActivityLogger;
+use App\Models\DocumentType;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Validation\Rule;
@@ -15,8 +16,8 @@ class ClientController extends Controller
         $this->authorize('viewAny', Client::class);
 
         return Inertia::render('Clients/Index', [
-            // withCount('tasks') berguna untuk menampilkan total project si client
-            'clients' => Client::withCount('tasks')->latest()->get(),
+            'clients'       => Client::withCount(['tasks', 'documents'])->latest()->get(),
+            'documentTypes' => DocumentType::orderBy('name')->pluck('name'),
         ]);
     }
 

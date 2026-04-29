@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
-import { Head, useForm } from '@inertiajs/vue3';
-import { Building2, Plus, Edit, Trash2, CheckCircle, XCircle, Search, ChevronLeft, ChevronRight } from 'lucide-vue-next';
+import { Head, useForm, router } from '@inertiajs/vue3';
+import { Building2, Plus, Edit, Trash2, CheckCircle, XCircle, Search, ChevronLeft, ChevronRight, Eye, FilePlus, FileText } from 'lucide-vue-next';
 import { dashboard } from '@/routes';
 
 // Import komponen UI dari shadcn-vue
@@ -37,8 +37,10 @@ const props = defineProps<{
         pic_phone: string | null;
         is_active: boolean;
         tasks_count: number;
+        documents_count: number;
         created_at: string;
     }>;
+    documentTypes: string[];
 }>();
 
 // 2. Setup Breadcrumbs Navigasi
@@ -161,6 +163,38 @@ const deleteClient = (id: number, name: string) => {
         useForm({}).delete(`/clients/${id}`);
     }
 };
+
+// === DOKUMEN ===
+const isDocModalOpen = ref(false);
+const selectedClientName = ref('');
+
+const docForm = useForm({
+    client_id: '' as string,
+    title: '',
+    type: '',
+    file: null as File | null,
+    notes: '',
+});
+
+const openDocModal = (client: { id: number; name: string }) => {
+    docForm.reset();
+    docForm.clearErrors();
+    docForm.client_id = String(client.id);
+    selectedClientName.value = client.name;
+    isDocModalOpen.value = true;
+};
+
+const handleFileChange = (event: Event) => {
+    const target = event.target as HTMLInputElement;
+    if (target.files?.[0]) docForm.file = target.files[0];
+};
+
+const submitDoc = () => {
+    docForm.post('/documents', {
+        forceFormData: true,
+        onSuccess: () => { isDocModalOpen.value = false; },
+    });
+};
 </script>
 
 <template>
@@ -258,6 +292,7 @@ const deleteClient = (id: number, name: string) => {
                             <th class="py-3 px-4 font-medium">PIC</th>
                             <th class="py-3 px-4 font-medium">Telp PIC</th>
                             <th class="py-3 px-4 font-medium">Tasks</th>
+                            <th class="py-3 px-4 font-medium">Dokumen</th>
                             <th class="py-3 px-4 font-medium">Status</th>
                             <th class="py-3 px-4 font-medium text-right">Aksi</th>
                         </tr>
@@ -278,6 +313,17 @@ const deleteClient = (id: number, name: string) => {
                             <td class="py-3 px-4">{{ client.pic_phone || '-' }}</td>
                             <td class="py-3 px-4 text-center">{{ client.tasks_count }}</td>
                             <td class="py-3 px-4">
+                                <div class="flex items-center gap-1">
+                                    <span class="text-sm font-medium mr-1">{{ client.documents_count }}</span>
+                                    <Button variant="ghost" size="sm" class="h-7 w-7 p-0 text-sky-600 hover:bg-sky-50" @click="router.visit(`/documents?client_id=${client.id}`)" title="Lihat Dokumen">
+                                        <Eye class="h-3.5 w-3.5" />
+                                    </Button>
+                                    <Button variant="ghost" size="sm" class="h-7 w-7 p-0 text-emerald-600 hover:bg-emerald-50" @click="openDocModal(client)" title="Tambah Dokumen">
+                                        <FilePlus class="h-3.5 w-3.5" />
+                                    </Button>
+                                </div>
+                            </td>
+                            <td class="py-3 px-4">
                                 <span v-if="client.is_active" class="inline-flex items-center gap-1 text-emerald-600 text-xs font-medium">
                                     <CheckCircle class="h-3.5 w-3.5" /> Aktif
                                 </span>
@@ -295,7 +341,7 @@ const deleteClient = (id: number, name: string) => {
                             </td>
                         </tr>
                         <tr v-if="filteredClients.length === 0">
-                            <td colspan="9" class="py-8 text-center text-muted-foreground">
+                            <td colspan="10" class="py-8 text-center text-muted-foreground">
                                 <Search class="h-8 w-8 mx-auto mb-2 opacity-30" />
                                 {{ clients.length === 0 ? 'Belum ada data Faskes.' : 'Tidak ada data yang sesuai filter.' }}
                             </td>
@@ -406,6 +452,59 @@ const deleteClient = (id: number, name: string) => {
                         <Button type="button" variant="outline" @click="isModalOpen = false">Batal</Button>
                         <Button type="submit" :disabled="form.processing" class="bg-emerald-600 hover:bg-emerald-700">
                             {{ form.processing ? 'Menyimpan...' : (isEditing ? 'Simpan Perubahan' : 'Simpan Faskes') }}
+                        </Button>
+                    </DialogFooter>
+                </form>
+            </DialogContent>
+        </Dialog>
+        <!-- MODAL TAMBAH DOKUMEN -->
+        <Dialog :open="isDocModalOpen" @update:open="isDocModalOpen = $event">
+            <DialogContent class="sm:max-w-[480px]">
+                <DialogHeader>
+                    <DialogTitle class="flex items-center gap-2">
+                        <FileText class="h-5 w-5 text-sky-600" />
+                        Tambah Dokumen
+                    </DialogTitle>
+                    <DialogDescription>
+                        Faskes: <span class="font-semibold text-foreground">{{ selectedClientName }}</span>
+                    </DialogDescription>
+                </DialogHeader>
+
+                <form @submit.prevent="submitDoc" class="space-y-4 py-4">
+                    <div class="space-y-2">
+                        <Label for="doc_title">Judul Dokumen <span class="text-red-500">*</span></Label>
+                        <Input id="doc_title" v-model="docForm.title" placeholder="Contoh: Kontrak Kerjasama 2025" :class="{ 'border-red-500': docForm.errors.title }" />
+                        <p v-if="docForm.errors.title" class="text-sm text-red-500">{{ docForm.errors.title }}</p>
+                    </div>
+
+                    <div class="space-y-2">
+                        <Label for="doc_type">Tipe Dokumen <span class="text-red-500">*</span></Label>
+                        <input id="doc_type" v-model="docForm.type" type="text" required list="client-doc-type-list"
+                            placeholder="Pilih atau ketik tipe baru..."
+                            class="w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs focus:outline-none focus:ring-2 focus:ring-ring"
+                            :class="{ 'border-red-500': docForm.errors.type }" />
+                        <datalist id="client-doc-type-list">
+                            <option v-for="t in documentTypes" :key="t" :value="t" />
+                        </datalist>
+                        <p v-if="docForm.errors.type" class="text-sm text-red-500">{{ docForm.errors.type }}</p>
+                    </div>
+
+                    <div class="space-y-2">
+                        <Label>File Dokumen</Label>
+                        <input type="file" @change="handleFileChange"
+                            class="block w-full text-sm text-muted-foreground file:mr-4 file:rounded-md file:border-0 file:bg-muted file:px-3 file:py-1.5 file:text-sm file:font-medium hover:file:bg-muted/80" />
+                        <p v-if="docForm.errors.file" class="text-sm text-red-500">{{ docForm.errors.file }}</p>
+                    </div>
+
+                    <div class="space-y-2">
+                        <Label for="doc_notes">Catatan Versi</Label>
+                        <Input id="doc_notes" v-model="docForm.notes" placeholder="Contoh: Versi awal" />
+                    </div>
+
+                    <DialogFooter class="pt-2">
+                        <Button type="button" variant="outline" @click="isDocModalOpen = false">Batal</Button>
+                        <Button type="submit" :disabled="docForm.processing" class="bg-sky-600 hover:bg-sky-700">
+                            {{ docForm.processing ? 'Menyimpan...' : 'Simpan Dokumen' }}
                         </Button>
                     </DialogFooter>
                 </form>

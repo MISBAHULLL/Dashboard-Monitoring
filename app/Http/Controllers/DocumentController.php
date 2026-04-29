@@ -4,7 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Models\Document;
 use App\Models\DocumentVersion;
+use App\Models\DocumentType;
 use App\Models\Client;
+use App\Models\Task;
 use App\Services\ActivityLogger;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -16,15 +18,22 @@ class DocumentController extends Controller
 {
     public function index(): Response
     {
-        $documents = Document::with(['client:id,name', 'creator:id,name'])
-            ->latest()
-            ->paginate(20);
+        $query = Document::with(['client:id,name', 'creator:id,name'])->latest();
 
-        $clients = Client::orderBy('name')->get(['id', 'name']);
+        if (request('client_id')) {
+            $query->where('client_id', request('client_id'));
+        }
+
+        $documents = $query->paginate(20)->withQueryString();
+
+        $clients       = Client::orderBy('name')->get(['id', 'name']);
+        $documentTypes = DocumentType::orderBy('name')->pluck('name');
 
         return Inertia::render('Documents/Index', [
-            'documents' => $documents,
-            'clients'   => $clients,
+            'documents'      => $documents,
+            'clients'        => $clients,
+            'documentTypes'  => $documentTypes,
+            'activeClientId' => request('client_id') ? (int) request('client_id') : null,
         ]);
     }
 
@@ -32,18 +41,23 @@ class DocumentController extends Controller
     {
         $validated = $request->validate([
             'client_id' => 'required|exists:clients,id',
-            'title' => 'required|string|max:255',
-            'type' => 'required|string|max:100',
-            'file' => 'nullable|file|max:10240',
-            'notes' => 'nullable|string|max:500',
+            'title'     => 'required|string|max:255',
+            'type'      => 'required|string|max:100',
+            'doc_url'   => 'nullable|url|max:500',
+            'file'      => 'nullable|file|max:10240',
+            'notes'     => 'nullable|string|max:500',
         ]);
 
+        DocumentType::firstOrCreate(['name' => strtoupper(trim($validated['type']))]);
+        $validated['type'] = strtoupper(trim($validated['type']));
+
         $data = [
-            'client_id' => $validated['client_id'],
-            'title' => $validated['title'],
-            'type' => $validated['type'],
+            'client_id'       => $validated['client_id'],
+            'title'           => $validated['title'],
+            'type'            => $validated['type'],
+            'doc_url'         => $validated['doc_url'] ?? null,
             'current_version' => 1,
-            'created_by' => Auth::id(),
+            'created_by'      => Auth::id(),
         ];
 
         if ($request->hasFile('file')) {
@@ -79,18 +93,23 @@ class DocumentController extends Controller
     {
         $validated = $request->validate([
             'client_id' => 'required|exists:clients,id',
-            'title' => 'required|string|max:255',
-            'type' => 'required|string|max:100',
-            'file' => 'nullable|file|max:10240',
-            'notes' => 'nullable|string|max:500',
+            'title'     => 'required|string|max:255',
+            'type'      => 'required|string|max:100',
+            'doc_url'   => 'nullable|url|max:500',
+            'file'      => 'nullable|file|max:10240',
+            'notes'     => 'nullable|string|max:500',
         ]);
+
+        DocumentType::firstOrCreate(['name' => strtoupper(trim($validated['type']))]);
+        $validated['type'] = strtoupper(trim($validated['type']));
 
         $oldValues = $document->getOriginal();
 
         $data = [
             'client_id' => $validated['client_id'],
-            'title' => $validated['title'],
-            'type' => $validated['type'],
+            'title'     => $validated['title'],
+            'type'      => $validated['type'],
+            'doc_url'   => $validated['doc_url'] ?? null,
         ];
 
         // HANYA jika ada file baru yang diupload
@@ -132,11 +151,63 @@ class DocumentController extends Controller
 
     public function show(Document $document): Response
     {
-        $document->load(['client:id,name', 'creator:id,name', 'versions.uploader:id,name']);
+        $document->load([
+            'client:id,name,city',
+            'creator:id,name',
+            'tasks:id,title,category,status',
+        ]);
+
+        $clientDocuments = Document::with([
+                'tasks' => fn($q) => $q->select('tasks.id','tasks.title','tasks.category','tasks.status')
+            ])
+            ->where('client_id', $document->client_id)
+            ->latest()
+            ->get();
+
+        // Task milik client yang:
+        // (1) belum punya dokumen sama sekali, ATAU
+        // (2) sudah terhubung ke dokumen yang sedang dibuka
+        // Dan statusnya bukan completed
+        $linkedTaskIds = $document->tasks->pluck('id');
+
+        $clientTasks = Task::where('client_id', $document->client_id)
+            ->where('status', '!=', 'completed')
+            ->where(function ($q) use ($document, $linkedTaskIds) {
+                $q->whereDoesntHave('documents')
+                  ->orWhereIn('id', $linkedTaskIds);
+            })
+            ->select('id', 'title', 'category', 'status')
+            ->latest()
+            ->get();
+
+        $documentTypes = DocumentType::orderBy('name')->pluck('name');
 
         return Inertia::render('Documents/Show', [
-            'document' => $document,
+            'document'        => $document,
+            'clientDocuments' => $clientDocuments,
+            'clientTasks'     => $clientTasks,
+            'documentTypes'   => $documentTypes,
         ]);
+    }
+
+    public function syncTasks(Request $request, Document $document)
+    {
+        $request->validate([
+            'tasks'          => 'array',
+            'tasks.*.id'     => 'required|exists:tasks,id',
+            'tasks.*.status' => 'nullable|in:revision,completed',
+        ]);
+
+        // Bangun array [task_id => ['status' => ...]] untuk sync dengan pivot
+        $syncData = collect($request->tasks ?? [])
+            ->mapWithKeys(fn($t) => [$t['id'] => ['status' => $t['status'] ?? null]])
+            ->toArray();
+
+        // Reset semua relasi lama, set ulang yang dicentang (sesuai project lama)
+        $document->tasks()->sync($syncData);
+
+        return redirect()->route('documents.show', $document)
+            ->with('success', 'Relasi task berhasil diperbarui.');
     }
 
     public function destroy(Document $document)

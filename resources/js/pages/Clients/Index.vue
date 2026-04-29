@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { Head, useForm } from '@inertiajs/vue3';
-import { Building2, Plus, Edit, Trash2 } from 'lucide-vue-next';
+import { Building2, Plus, Edit, Trash2, CheckCircle, XCircle } from 'lucide-vue-next';
 import { dashboard } from '@/routes';
 
 // Import komponen UI dari shadcn-vue
@@ -17,14 +17,26 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 // 1. Menerima data daftar client dari ClientController@index
 const props = defineProps<{
     clients: Array<{
         id: number;
         name: string;
-        address: string;
-        phone: string;
+        address: string | null;
+        city: string | null;
+        type: 'A' | 'B' | 'C' | 'PRATAMA' | null;
+        pic_name: string | null;
+        pic_phone: string | null;
+        is_active: boolean;
+        tasks_count: number;
         created_at: string;
     }>;
 }>();
@@ -48,7 +60,11 @@ const editingId = ref<number | null>(null);
 const form = useForm({
     name: '',
     address: '',
-    phone: '',
+    city: '',
+    type: '' as 'A' | 'B' | 'C' | 'PRATAMA' | '',
+    pic_name: '',
+    pic_phone: '',
+    is_active: true,
 });
 
 // Fungsi membuka modal untuk Tambah Data
@@ -66,7 +82,11 @@ const openEditModal = (client: any) => {
     editingId.value = client.id;
     form.name = client.name;
     form.address = client.address || '';
-    form.phone = client.phone || '';
+    form.city = client.city || '';
+    form.type = client.type || '';
+    form.pic_name = client.pic_name || '';
+    form.pic_phone = client.pic_phone || '';
+    form.is_active = client.is_active;
     form.clearErrors();
     isModalOpen.value = true;
 };
@@ -125,17 +145,38 @@ const deleteClient = (id: number, name: string) => {
                         <tr>
                             <th class="py-3 px-4 font-medium">No</th>
                             <th class="py-3 px-4 font-medium">Nama Faskes</th>
-                            <th class="py-3 px-4 font-medium">Alamat</th>
-                            <th class="py-3 px-4 font-medium">Telepon</th>
+                            <th class="py-3 px-4 font-medium">Kota</th>
+                            <th class="py-3 px-4 font-medium">Tipe</th>
+                            <th class="py-3 px-4 font-medium">PIC</th>
+                            <th class="py-3 px-4 font-medium">Telp PIC</th>
+                            <th class="py-3 px-4 font-medium">Tasks</th>
+                            <th class="py-3 px-4 font-medium">Status</th>
                             <th class="py-3 px-4 font-medium text-right">Aksi</th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr v-for="(client, index) in clients" :key="client.id" class="border-b border-border last:border-0 hover:bg-muted/30">
                             <td class="py-3 px-4">{{ index + 1 }}</td>
-                            <td class="py-3 px-4 font-bold text-primary">{{ client.name }}</td>
-                            <td class="py-3 px-4">{{ client.address || '-' }}</td>
-                            <td class="py-3 px-4">{{ client.phone || '-' }}</td>
+                            <td class="py-3 px-4">
+                                <div class="font-bold text-primary">{{ client.name }}</div>
+                                <div class="text-xs text-muted-foreground">{{ client.address || '-' }}</div>
+                            </td>
+                            <td class="py-3 px-4">{{ client.city || '-' }}</td>
+                            <td class="py-3 px-4">
+                                <span v-if="client.type" class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-blue-100 text-blue-700">{{ client.type }}</span>
+                                <span v-else class="text-muted-foreground">-</span>
+                            </td>
+                            <td class="py-3 px-4">{{ client.pic_name || '-' }}</td>
+                            <td class="py-3 px-4">{{ client.pic_phone || '-' }}</td>
+                            <td class="py-3 px-4 text-center">{{ client.tasks_count }}</td>
+                            <td class="py-3 px-4">
+                                <span v-if="client.is_active" class="inline-flex items-center gap-1 text-emerald-600 text-xs font-medium">
+                                    <CheckCircle class="h-3.5 w-3.5" /> Aktif
+                                </span>
+                                <span v-else class="inline-flex items-center gap-1 text-red-500 text-xs font-medium">
+                                    <XCircle class="h-3.5 w-3.5" /> Nonaktif
+                                </span>
+                            </td>
                             <td class="py-3 px-4 text-right space-x-2">
                                 <Button variant="outline" size="sm" @click="openEditModal(client)" class="h-8 px-2 text-blue-600 border-blue-200 hover:bg-blue-50">
                                     <Edit class="h-4 w-4" />
@@ -146,7 +187,7 @@ const deleteClient = (id: number, name: string) => {
                             </td>
                         </tr>
                         <tr v-if="clients.length === 0">
-                            <td colspan="5" class="py-8 text-center text-muted-foreground">
+                            <td colspan="9" class="py-8 text-center text-muted-foreground">
                                 Belum ada data Faskes. Klik tombol "Tambah Faskes" untuk memulai.
                             </td>
                         </tr>
@@ -157,7 +198,7 @@ const deleteClient = (id: number, name: string) => {
 
         <!-- MODAL / DIALOG (Akan muncul jika isModalOpen = true) -->
         <Dialog :open="isModalOpen" @update:open="isModalOpen = $event">
-            <DialogContent class="sm:max-w-[425px]">
+            <DialogContent class="sm:max-w-[560px]">
                 <DialogHeader>
                     <DialogTitle>{{ isEditing ? 'Edit Faskes' : 'Tambah Faskes Baru' }}</DialogTitle>
                     <DialogDescription>
@@ -173,11 +214,42 @@ const deleteClient = (id: number, name: string) => {
                         <p v-if="form.errors.name" class="text-sm text-red-500">{{ form.errors.name }}</p>
                     </div>
 
-                    <!-- Input Nomor Telepon -->
-                    <div class="space-y-2">
-                        <Label for="phone">Nomor Telepon</Label>
-                        <Input id="phone" v-model="form.phone" placeholder="Contoh: 031-123456" :class="{ 'border-red-500': form.errors.phone }" />
-                        <p v-if="form.errors.phone" class="text-sm text-red-500">{{ form.errors.phone }}</p>
+                    <!-- Input Kota & Tipe (2 kolom) -->
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="space-y-2">
+                            <Label for="city">Kota</Label>
+                            <Input id="city" v-model="form.city" placeholder="Contoh: Surabaya" :class="{ 'border-red-500': form.errors.city }" />
+                            <p v-if="form.errors.city" class="text-sm text-red-500">{{ form.errors.city }}</p>
+                        </div>
+                        <div class="space-y-2">
+                            <Label>Tipe Faskes</Label>
+                            <Select v-model="form.type">
+                                <SelectTrigger :class="{ 'border-red-500': form.errors.type }">
+                                    <SelectValue placeholder="Pilih tipe" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="PRATAMA">PRATAMA</SelectItem>
+                                    <SelectItem value="A">Tipe A</SelectItem>
+                                    <SelectItem value="B">Tipe B</SelectItem>
+                                    <SelectItem value="C">Tipe C</SelectItem>
+                                </SelectContent>
+                            </Select>
+                            <p v-if="form.errors.type" class="text-sm text-red-500">{{ form.errors.type }}</p>
+                        </div>
+                    </div>
+
+                    <!-- Input PIC -->
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="space-y-2">
+                            <Label for="pic_name">Nama PIC</Label>
+                            <Input id="pic_name" v-model="form.pic_name" placeholder="Nama penanggung jawab" :class="{ 'border-red-500': form.errors.pic_name }" />
+                            <p v-if="form.errors.pic_name" class="text-sm text-red-500">{{ form.errors.pic_name }}</p>
+                        </div>
+                        <div class="space-y-2">
+                            <Label for="pic_phone">Telepon PIC</Label>
+                            <Input id="pic_phone" v-model="form.pic_phone" placeholder="Contoh: 08123456789" :class="{ 'border-red-500': form.errors.pic_phone }" />
+                            <p v-if="form.errors.pic_phone" class="text-sm text-red-500">{{ form.errors.pic_phone }}</p>
+                        </div>
                     </div>
 
                     <!-- Input Alamat -->
@@ -185,6 +257,12 @@ const deleteClient = (id: number, name: string) => {
                         <Label for="address">Alamat Lengkap</Label>
                         <Textarea id="address" v-model="form.address" placeholder="Masukkan alamat lengkap" class="resize-none" :class="{ 'border-red-500': form.errors.address }" />
                         <p v-if="form.errors.address" class="text-sm text-red-500">{{ form.errors.address }}</p>
+                    </div>
+
+                    <!-- Toggle Status Aktif -->
+                    <div class="flex items-center gap-3">
+                        <input type="checkbox" id="is_active" v-model="form.is_active" class="h-4 w-4 rounded border-gray-300 text-emerald-600" />
+                        <Label for="is_active" class="cursor-pointer">Faskes Aktif</Label>
                     </div>
 
                     <DialogFooter class="pt-4">

@@ -424,7 +424,20 @@ const getAvatarColor = (name: string) => {
                             
                             <!-- 7. DOKUMEN -->
                             <td class="py-3 px-4 text-center">
-                                <span class="text-[10px] font-medium text-slate-400 bg-slate-50 px-2 py-1 rounded-md border border-slate-100">Belum ada</span>
+                                <div v-if="task.documents && task.documents.length > 0" class="flex flex-col items-center gap-1">
+                                    <span class="text-[10px] font-bold text-sky-700 bg-sky-50 border border-sky-200 px-2 py-0.5 rounded-full">
+                                        {{ task.documents.length }} dok
+                                    </span>
+                                    <div class="flex flex-wrap justify-center gap-1 max-w-[100px]">
+                                        <span v-for="doc in task.documents.slice(0, 2)" :key="doc.id"
+                                            class="text-[9px] font-bold px-1.5 py-0.5 rounded"
+                                            :class="doc.type === 'UAT' ? 'bg-orange-100 text-orange-700' : doc.type === 'MOM' ? 'bg-purple-100 text-purple-700' : 'bg-teal-100 text-teal-700'">
+                                            {{ doc.type }}
+                                        </span>
+                                        <span v-if="task.documents.length > 2" class="text-[9px] text-slate-400">+{{ task.documents.length - 2 }}</span>
+                                    </div>
+                                </div>
+                                <span v-else class="text-[10px] font-medium text-slate-400 bg-slate-50 px-2 py-1 rounded-md border border-slate-100">Belum ada</span>
                             </td>
 
                             <!-- 8. TANGGAL RELEASE -->

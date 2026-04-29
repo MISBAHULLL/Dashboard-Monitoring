@@ -26,7 +26,7 @@ class TaskController extends Controller
         $this->authorize('viewAny', Task::class);
 
         $user = $request->user();
-        $query = Task::with(['client', 'product', 'engineer', 'assignee', 'sla'])->withCount('comments');
+        $query = Task::with(['client', 'product', 'engineer', 'assignee', 'sla', 'documents:id,title,type'])->withCount('comments');
 
         if ($user->isMember()) {
             $query->where('assigned_to', $user->id);

@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import { Head, useForm } from '@inertiajs/vue3';
-import { Building2, Plus, Edit, Trash2, CheckCircle, XCircle } from 'lucide-vue-next';
+import { Building2, Plus, Edit, Trash2, CheckCircle, XCircle, Search, ChevronLeft, ChevronRight } from 'lucide-vue-next';
 import { dashboard } from '@/routes';
 
 // Import komponen UI dari shadcn-vue
@@ -55,6 +55,51 @@ defineOptions({
 const isModalOpen = ref(false);
 const isEditing = ref(false);
 const editingId = ref<number | null>(null);
+
+// Filter & Pagination
+const filterCity = ref('all');
+const filterType = ref('all');
+const filterPic = ref('all');
+const filterStatus = ref('all');
+const currentPage = ref(1);
+const perPage = 10;
+
+const uniqueCities = computed(() =>
+    [...new Set(props.clients.map(c => c.city).filter(Boolean))] as string[]
+);
+
+const uniquePics = computed(() =>
+    [...new Set(props.clients.map(c => c.pic_name).filter(Boolean))] as string[]
+);
+
+const filteredClients = computed(() => {
+    return props.clients.filter(c => {
+        if (filterCity.value !== 'all' && c.city !== filterCity.value) return false;
+        if (filterType.value !== 'all' && c.type !== filterType.value) return false;
+        if (filterPic.value !== 'all' && c.pic_name !== filterPic.value) return false;
+        if (filterStatus.value === 'aktif' && !c.is_active) return false;
+        if (filterStatus.value === 'nonaktif' && c.is_active) return false;
+        return true;
+    });
+});
+
+const totalPages = computed(() => Math.ceil(filteredClients.value.length / perPage));
+
+const paginatedClients = computed(() => {
+    const start = (currentPage.value - 1) * perPage;
+    return filteredClients.value.slice(start, start + perPage);
+});
+
+const resetFilters = () => {
+    filterCity.value = 'all';
+    filterType.value = 'all';
+    filterPic.value = 'all';
+    filterStatus.value = 'all';
+    currentPage.value = 1;
+};
+
+// Reset ke halaman 1 saat filter berubah
+const applyFilter = () => { currentPage.value = 1; };
 
 // 4. Inertia Form (Untuk binding input & submit data)
 const form = useForm({
@@ -137,6 +182,69 @@ const deleteClient = (id: number, name: string) => {
             </Button>
         </div>
 
+        <!-- Filter Bar -->
+        <div class="rounded-xl border border-sidebar-border bg-card shadow-sm p-4">
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <!-- Filter Kota -->
+                <Select v-model="filterCity" @update:modelValue="applyFilter">
+                    <SelectTrigger class="h-9 text-sm">
+                        <SelectValue placeholder="Semua Kota" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="all">Semua Kota</SelectItem>
+                        <SelectItem v-for="city in uniqueCities" :key="city" :value="city">{{ city }}</SelectItem>
+                    </SelectContent>
+                </Select>
+
+                <!-- Filter Tipe -->
+                <Select v-model="filterType" @update:modelValue="applyFilter">
+                    <SelectTrigger class="h-9 text-sm">
+                        <SelectValue placeholder="Semua Tipe" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="all">Semua Tipe</SelectItem>
+                        <SelectItem value="PRATAMA">PRATAMA</SelectItem>
+                        <SelectItem value="A">Tipe A</SelectItem>
+                        <SelectItem value="B">Tipe B</SelectItem>
+                        <SelectItem value="C">Tipe C</SelectItem>
+                    </SelectContent>
+                </Select>
+
+                <!-- Filter PIC -->
+                <Select v-model="filterPic" @update:modelValue="applyFilter">
+                    <SelectTrigger class="h-9 text-sm">
+                        <SelectValue placeholder="Semua PIC" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="all">Semua PIC</SelectItem>
+                        <SelectItem v-for="pic in uniquePics" :key="pic" :value="pic">{{ pic }}</SelectItem>
+                    </SelectContent>
+                </Select>
+
+                <!-- Filter Status -->
+                <Select v-model="filterStatus" @update:modelValue="applyFilter">
+                    <SelectTrigger class="h-9 text-sm">
+                        <SelectValue placeholder="Semua Status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="all">Semua Status</SelectItem>
+                        <SelectItem value="aktif">Aktif</SelectItem>
+                        <SelectItem value="nonaktif">Nonaktif</SelectItem>
+                    </SelectContent>
+                </Select>
+            </div>
+
+            <!-- Info hasil filter + tombol reset -->
+            <div class="flex items-center justify-between mt-3">
+                <p class="text-xs text-muted-foreground">
+                    Menampilkan <span class="font-semibold text-foreground">{{ filteredClients.length }}</span> dari <span class="font-semibold text-foreground">{{ clients.length }}</span> data
+                </p>
+                <Button v-if="filterCity !== 'all' || filterType !== 'all' || filterPic !== 'all' || filterStatus !== 'all'" variant="ghost" size="sm" @click="resetFilters" class="h-7 text-xs text-muted-foreground hover:text-foreground">
+                    Reset Filter
+                </Button>
+            </div>
+        </div>
+
         <!-- Tabel Data -->
         <div class="relative flex-1 rounded-xl border border-sidebar-border bg-card shadow-sm">
             <div class="overflow-x-auto p-4">
@@ -155,8 +263,8 @@ const deleteClient = (id: number, name: string) => {
                         </tr>
                     </thead>
                     <tbody>
-                        <tr v-for="(client, index) in clients" :key="client.id" class="border-b border-border last:border-0 hover:bg-muted/30">
-                            <td class="py-3 px-4">{{ index + 1 }}</td>
+                        <tr v-for="(client, index) in paginatedClients" :key="client.id" class="border-b border-border last:border-0 hover:bg-muted/30">
+                            <td class="py-3 px-4">{{ (currentPage - 1) * 10 + index + 1 }}</td>
                             <td class="py-3 px-4">
                                 <div class="font-bold text-primary">{{ client.name }}</div>
                                 <div class="text-xs text-muted-foreground">{{ client.address || '-' }}</div>
@@ -186,13 +294,42 @@ const deleteClient = (id: number, name: string) => {
                                 </Button>
                             </td>
                         </tr>
-                        <tr v-if="clients.length === 0">
+                        <tr v-if="filteredClients.length === 0">
                             <td colspan="9" class="py-8 text-center text-muted-foreground">
-                                Belum ada data Faskes. Klik tombol "Tambah Faskes" untuk memulai.
+                                <Search class="h-8 w-8 mx-auto mb-2 opacity-30" />
+                                {{ clients.length === 0 ? 'Belum ada data Faskes.' : 'Tidak ada data yang sesuai filter.' }}
                             </td>
                         </tr>
                     </tbody>
                 </table>
+            </div>
+
+            <!-- Pagination -->
+            <div v-if="totalPages > 1" class="flex items-center justify-between border-t border-border px-4 py-3">
+                <p class="text-xs text-muted-foreground">
+                    Halaman {{ currentPage }} dari {{ totalPages }}
+                </p>
+                <div class="flex items-center gap-1">
+                    <Button variant="outline" size="sm" class="h-8 w-8 p-0" :disabled="currentPage === 1" @click="currentPage--">
+                        <ChevronLeft class="h-4 w-4" />
+                    </Button>
+                    <template v-for="page in totalPages" :key="page">
+                        <Button
+                            v-if="page === 1 || page === totalPages || Math.abs(page - currentPage) <= 1"
+                            variant="outline"
+                            size="sm"
+                            class="h-8 w-8 p-0"
+                            :class="{ 'bg-emerald-600 text-white border-emerald-600 hover:bg-emerald-700': page === currentPage }"
+                            @click="currentPage = page"
+                        >
+                            {{ page }}
+                        </Button>
+                        <span v-else-if="page === currentPage - 2 || page === currentPage + 2" class="px-1 text-muted-foreground text-sm">…</span>
+                    </template>
+                    <Button variant="outline" size="sm" class="h-8 w-8 p-0" :disabled="currentPage === totalPages" @click="currentPage++">
+                        <ChevronRight class="h-4 w-4" />
+                    </Button>
+                </div>
             </div>
         </div>
 

@@ -12,6 +12,7 @@ use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\TaskCommentController;
 use App\Http\Controllers\DocumentController;
 use App\Http\Controllers\BackupController;
+use App\Http\Controllers\SlaConfigController;
 
 Route::get('/', function () {
     return redirect()->route('login');
@@ -68,6 +69,10 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/settings/backup/download', [BackupController::class, 'download'])->name('backup.download');
         Route::delete('/settings/backup/delete', [BackupController::class, 'destroy'])->name('backup.destroy');
         Route::post('/settings/backup/restore', [BackupController::class, 'restore'])->name('backup.restore');
+
+        // SLA Config
+        Route::get('/settings/sla-config', [SlaConfigController::class, 'index'])->name('sla-config.index');
+        Route::post('/settings/sla-config', [SlaConfigController::class, 'upsert'])->name('sla-config.upsert');
     });
 });
 

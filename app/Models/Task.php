@@ -4,11 +4,34 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Carbon;
 
+/**
+ * @property int $id
+ * @property int|null $product_id
+ * @property int|null $client_id
+ * @property int|null $engineer_id
+ * @property int|null $document_id
+ * @property int|null $template_id
+ * @property int|null $created_by
+ * @property int|null $assigned_to
+ * @property string $title
+ * @property string|null $description
+ * @property string|null $modul
+ * @property string|null $task_url
+ * @property string $category
+ * @property string $priority
+ * @property string $status
+ * @property Carbon|null $release_date
+ * @property Carbon|null $completed_at
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
+ * @property string $sla_status
+ */
 class Task extends Model
 {
     use HasFactory, SoftDeletes;
@@ -99,13 +122,15 @@ class Task extends Model
 
     public function getSlaStatusAttribute(): string
     {
-        if (!$this->relationLoaded('sla') && !isset($this->sla)) {
+        if (! $this->relationLoaded('sla') && ! isset($this->sla)) {
             // Jika relasi sla belum di-load, kita coba ambil config dari cache atau static collection agar tidak N+1
             // Tapi untuk amannya kita anggap unknown jika tidak ada data SLA
             return 'unknown';
         }
 
-        if (!$this->sla) return 'unknown';
+        if (! $this->sla) {
+            return 'unknown';
+        }
 
         $maxDays = $this->sla->max_days;
         $warningDays = $this->sla->warning_days;

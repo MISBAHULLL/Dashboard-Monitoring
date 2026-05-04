@@ -19,6 +19,7 @@ class TaskCommentController extends Controller
             'body' => ['required', 'string', 'max:5000'],
         ]);
 
+        /** @var TaskComment $comment */
         $comment = $task->comments()->create([
             'user_id' => auth()->id(),
             'body' => $validated['body'],
@@ -61,7 +62,7 @@ class TaskCommentController extends Controller
         $previousPinnedState = $comment->is_pinned;
 
         $comment->update([
-            'is_pinned' => !$previousPinnedState,
+            'is_pinned' => ! $previousPinnedState,
         ]);
 
         ActivityLogger::updated(

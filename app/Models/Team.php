@@ -6,6 +6,14 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * @property int $id
+ * @property string $name
+ * @property string $type
+ * @property string|null $phone
+ * @property string|null $address
+ * @property bool $is_active
+ */
 class Team extends Model
 {
     use HasFactory;
@@ -21,7 +29,7 @@ class Team extends Model
     protected $casts = [
         'is_active' => 'boolean',
     ];
-    
+
     public function users(): HasMany
     {
         return $this->hasMany(User::class);

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Client;
 use App\Models\Task;
 use App\Models\TaskComment;
+use App\Models\TaskTemplate;
 use App\Models\Team;
 use App\Models\User;
 use App\Services\ActivityLogger;
@@ -25,6 +26,7 @@ class TaskController extends Controller
     {
         $this->authorize('viewAny', Task::class);
 
+        /** @var User $user */
         $user = $request->user();
         $query = Task::with(['client', 'product', 'engineer', 'assignee', 'sla', 'documents:id,title,type'])->withCount('comments');
 
@@ -105,6 +107,9 @@ class TaskController extends Controller
     {
         $this->authorize('create', Task::class);
 
+        /** @var User $currentUser */
+        $currentUser = request()->user();
+
         return Inertia::render('Tasks/Create', [
             // Kirim data master ke Vue untuk form pilihan Dropdown
             'clients' => Client::where('is_active', true)->get(['id', 'name']),
@@ -112,7 +117,7 @@ class TaskController extends Controller
             'engineer_teams' => Team::where('type', 'ENGINEER')->where('is_active', true)->get(['id', 'name']),
             'users' => User::where('is_active', true)->get(['id', 'name']),
             'existing_modules' => Task::select('modul')->whereNotNull('modul')->where('modul', '!=', '')->distinct()->pluck('modul'),
-            'task_templates' => \App\Models\TaskTemplate::where('created_by', request()->user()->id)->get(),
+            'task_templates' => TaskTemplate::where('created_by', $currentUser->id)->get(),
         ]);
     }
 
@@ -135,7 +140,9 @@ class TaskController extends Controller
             'release_date' => 'nullable|date',
         ]);
 
-        $validated['created_by'] = $request->user()->id;
+        /** @var User $user */
+        $user = $request->user();
+        $validated['created_by'] = $user->id;
 
         // Cegah error SQL "Column task_url cannot be null" karena database lama mewajibkan isi
         if (empty($validated['task_url'])) {
@@ -187,6 +194,7 @@ class TaskController extends Controller
                 ->latest(),
         ]);
 
+        /** @var User $user */
         $user = $request->user();
 
         return Inertia::render('Tasks/Show', [
@@ -277,6 +285,7 @@ class TaskController extends Controller
     {
         $this->authorize('viewAny', Task::class);
 
+        /** @var User $user */
         $user = request()->user();
         $completedWindowDays = 7;
 
@@ -354,8 +363,11 @@ class TaskController extends Controller
 
         $tasks = Task::whereIn('id', $request->ids)->get();
 
+        /** @var User $user */
+        $user = $request->user();
+
         foreach ($tasks as $task) {
-            if ($request->user()->can('delete', $task)) {
+            if ($user->can('delete', $task)) {
                 ActivityLogger::deleted('task', $task->id, $task->title, "Menghapus task '{$task->title}' secara massal");
                 $task->delete();
             }
@@ -374,8 +386,11 @@ class TaskController extends Controller
 
         $tasks = Task::whereIn('id', $request->ids)->get();
 
+        /** @var User $user */
+        $user = $request->user();
+
         foreach ($tasks as $task) {
-            if ($request->user()->can('updateStatus', $task) && $task->status !== $request->status) {
+            if ($user->can('updateStatus', $task) && $task->status !== $request->status) {
                 $oldStatus = $task->status;
                 $updateData = ['status' => $request->status];
 
@@ -403,8 +418,11 @@ class TaskController extends Controller
 
         $tasks = Task::whereIn('id', $request->ids)->get();
 
+        /** @var User $user */
+        $user = $request->user();
+
         foreach ($tasks as $task) {
-            if ($request->user()->can('update', $task)) {
+            if ($user->can('update', $task)) {
                 $previousAssigneeId = $task->assigned_to;
                 $oldValues = $task->toArray();
 
@@ -422,6 +440,7 @@ class TaskController extends Controller
     {
         $this->authorize('viewAny', Task::class);
 
+        /** @var User $user */
         $user = $request->user();
         $query = Task::with(['client', 'product', 'engineer', 'assignee', 'sla']);
 

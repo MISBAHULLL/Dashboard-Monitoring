@@ -7,7 +7,23 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Carbon;
 
+/**
+ * @property int $id
+ * @property int|null $client_id
+ * @property string $title
+ * @property string $type
+ * @property string|null $doc_url
+ * @property string|null $file_path
+ * @property string|null $file_name
+ * @property string|null $mime_type
+ * @property int|null $file_size
+ * @property int $current_version
+ * @property int|null $created_by
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
+ */
 class Document extends Model
 {
     use HasFactory;

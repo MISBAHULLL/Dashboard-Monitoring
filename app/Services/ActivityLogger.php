@@ -30,7 +30,7 @@ class ActivityLogger
         ]);
     }
 
-    public static function created(string $module, int $targetId, string $targetTitle, ?string $description = null, ?array $values = null): void
+    public static function created(string $module, ?int $targetId, string $targetTitle, ?string $description = null, ?array $values = null): void
     {
         self::log('created', $module, $targetId, $targetTitle, $description ?? "Membuat {$module} baru", null, $values);
     }
@@ -40,7 +40,7 @@ class ActivityLogger
         self::log('updated', $module, $targetId, $targetTitle, $description ?? "Mengupdate {$module}", $oldValues, $newValues);
     }
 
-    public static function deleted(string $module, int $targetId, string $targetTitle, ?string $description = null): void
+    public static function deleted(string $module, ?int $targetId, string $targetTitle, ?string $description = null): void
     {
         self::log('deleted', $module, $targetId, $targetTitle, $description ?? "Menghapus {$module}", null, null);
     }

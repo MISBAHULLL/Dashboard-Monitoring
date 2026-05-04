@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\TaskTemplate;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
@@ -20,7 +21,9 @@ class TaskTemplateController extends Controller
             'priority' => ['required', Rule::in(['urgent', 'high', 'medium', 'low'])],
         ]);
 
-        $validated['created_by'] = $request->user()->id;
+        /** @var User $user */
+        $user = $request->user();
+        $validated['created_by'] = $user->id;
 
         TaskTemplate::create($validated);
 
@@ -29,8 +32,11 @@ class TaskTemplateController extends Controller
 
     public function destroy(TaskTemplate $taskTemplate)
     {
+        /** @var User $user */
+        $user = request()->user();
+
         // Pastikan hanya pembuatnya yang bisa menghapus
-        if ($taskTemplate->created_by !== request()->user()->id) {
+        if ($taskTemplate->created_by !== $user->id) {
             abort(403);
         }
 

@@ -6,6 +6,7 @@ use App\Models\Client;
 use App\Models\Document;
 use App\Models\Task;
 use App\Models\Team;
+use App\Models\User;
 use Illuminate\Http\Request;
 
 class SearchController extends Controller
@@ -18,6 +19,7 @@ class SearchController extends Controller
             return response()->json([]);
         }
 
+        /** @var User $user */
         $user = $request->user();
         $searchTerm = "%{$query}%";
         $results = [];

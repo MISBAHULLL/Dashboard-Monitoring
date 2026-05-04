@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use App\Models\Notification;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -27,13 +28,14 @@ class HandleInertiaRequests extends Middleware
         return parent::version($request);
     }
 
-        /**
+    /**
      * Define the props that are shared by default.
      *
      * @return array<string, mixed>
      */
     public function share(Request $request): array
     {
+        /** @var User|null $user */
         $user = $request->user();
 
         return [
@@ -46,7 +48,7 @@ class HandleInertiaRequests extends Middleware
                     'role' => $user->role,
                     'theme' => $user->theme,
                     // Kita bisa tambahkan load() kalau butuh nama team
-                    // 'team' => $request->user()->team?->name, 
+                    // 'team' => $request->user()->team?->name,
                 ] : null,
             ],
             'notifications' => $user ? function () use ($user) {

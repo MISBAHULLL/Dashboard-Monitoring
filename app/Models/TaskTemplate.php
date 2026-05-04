@@ -6,6 +6,17 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * @property int $id
+ * @property string $name
+ * @property int|null $product_id
+ * @property int|null $client_id
+ * @property int|null $engineer_id
+ * @property string|null $category
+ * @property string|null $priority
+ * @property string|null $description
+ * @property int|null $created_by
+ */
 class TaskTemplate extends Model
 {
     use HasFactory;

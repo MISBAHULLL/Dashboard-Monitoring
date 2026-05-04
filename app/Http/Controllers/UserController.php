@@ -2,13 +2,13 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\User;
 use App\Models\Team;
+use App\Models\User;
 use App\Services\ActivityLogger;
 use Illuminate\Http\Request;
-use Inertia\Inertia;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
+use Inertia\Inertia;
 
 class UserController extends Controller
 {
@@ -36,7 +36,7 @@ class UserController extends Controller
         ]);
 
         $validated['password'] = Hash::make($validated['password']);
-        
+
         $user = User::create($validated);
 
         ActivityLogger::created('user', $user->id, $user->name, "Menambahkan user '{$user->name}'", $validated);
@@ -72,7 +72,10 @@ class UserController extends Controller
     {
         $this->authorize('delete', $user);
 
-        if ($user->id === request()->user()->id) {
+        /** @var User $currentUser */
+        $currentUser = request()->user();
+
+        if ($user->id === $currentUser->id) {
             return back()->with('error', 'Anda tidak bisa menghapus akun sendiri.');
         }
 

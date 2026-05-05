@@ -13,7 +13,7 @@ export { default as StatCard } from './StatCard.vue'
 export { default as ChartCard } from './ChartCard.vue'
 // export { default as TeamPerformanceCard } from './TeamPerformanceCard.vue'
 // export { default as TaskListCard } from './TaskListCard.vue'
-// export { default as ErrorState } from './ErrorState.vue'
+export { default as ErrorState } from './ErrorState.vue'
 
 // Re-export types for convenience
 export type {

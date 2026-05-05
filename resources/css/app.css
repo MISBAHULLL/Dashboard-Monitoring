@@ -9,7 +9,7 @@
 
 @theme inline {
     --font-sans:
-        Instrument Sans, ui-sans-serif, system-ui, sans-serif,
+        'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif,
         'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol',
         'Noto Color Emoji';
 
@@ -45,12 +45,14 @@
     --color-input: var(--input);
     --color-ring: var(--ring);
 
+    /* Chart colors — menggunakan brand palette */
     --color-chart-1: var(--chart-1);
     --color-chart-2: var(--chart-2);
     --color-chart-3: var(--chart-3);
     --color-chart-4: var(--chart-4);
     --color-chart-5: var(--chart-5);
 
+    /* Sidebar tokens */
     --color-sidebar: var(--sidebar-background);
     --color-sidebar-foreground: var(--sidebar-foreground);
     --color-sidebar-primary: var(--sidebar-primary);
@@ -59,23 +61,161 @@
     --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
     --color-sidebar-border: var(--sidebar-border);
     --color-sidebar-ring: var(--sidebar-ring);
+
+    /* ─── Trustmedis custom tokens ─── */
+
+    /* Navy scale (dari logo) */
+    --color-tm-navy-darkest:   #112548;  /* sidebar bg */
+    --color-tm-navy:           #1B3A6B;  /* primary brand */
+    --color-tm-navy-medium:    #2D5090;  /* hover, link */
+    --color-tm-navy-pale:      #E8EEF8;  /* badge bg, active nav */
+
+    /* Green scale (dari logo) */
+    --color-tm-green:          #2BAE6E;  /* success, CTA, accent */
+    --color-tm-green-dark:     #1E8A54;  /* CTA hover */
+    --color-tm-green-pale:     #E4F7ED;  /* badge success bg */
+
+    /* Semantic */
+    --color-tm-danger:         #E84545;  /* overdue, error, kritis */
+    --color-tm-danger-pale:    #FDEAEA;  /* badge danger bg */
+    --color-tm-warning:        #F59E0B;  /* due soon, in-progress */
+    --color-tm-warning-pale:   #FEF3DC;  /* badge warning bg */
+
+    /* Surface */
+    --color-tm-page:           #F0F3F7;  /* page background */
+    --color-tm-border:         #DDE3EC;  /* card/tabel border */
+
+    /* Typography */
+    --color-tm-text:           #1B3A6B;  /* heading, nilai metrik */
+    --color-tm-text-secondary: #5C6B7A;  /* label, deskripsi */
+    --color-tm-text-muted:     #9AAAB8;  /* placeholder, hint */
 }
 
-/*
-  The default border color has changed to `currentColor` in Tailwind CSS v4,
-  so we've added these compatibility styles to make sure everything still
-  looks the same as it did with Tailwind CSS v3.
+/* ─────────────────────────────────────────────────────────────
+   :root  — Light mode (tema utama)
+   Navy sidebar + white content — Enterprise SaaS style
+───────────────────────────────────────────────────────────── */
+:root {
+    /* Surface */
+    --background:              hsl(213 24% 96%);   /* #F0F3F7 — page bg */
+    --foreground:              hsl(217 59% 26%);   /* #1B3A6B — text utama */
 
-  If we ever want to remove these styles, we need to add an explicit border
-  color utility to any element that depends on these defaults.
-*/
+    /* Card */
+    --card:                    hsl(0 0% 100%);     /* #FFFFFF — card/tabel */
+    --card-foreground:         hsl(217 59% 26%);   /* #1B3A6B */
+
+    /* Popover / dropdown */
+    --popover:                 hsl(0 0% 100%);
+    --popover-foreground:      hsl(217 59% 26%);
+
+    /* Primary = navy brand */
+    --primary:                 hsl(217 59% 26%);   /* #1B3A6B */
+    --primary-foreground:      hsl(0 0% 100%);
+
+    /* Secondary = navy pale */
+    --secondary:               hsl(213 52% 94%);   /* #E8EEF8 */
+    --secondary-foreground:    hsl(217 59% 26%);   /* #1B3A6B */
+
+    /* Muted = abu netral */
+    --muted:                   hsl(213 24% 96%);   /* #F0F3F7 */
+    --muted-foreground:        hsl(207 15% 42%);   /* #5C6B7A */
+
+    /* Accent = green brand */
+    --accent:                  hsl(151 59% 43%);   /* #2BAE6E */
+    --accent-foreground:       hsl(0 0% 100%);
+
+    /* Destructive = merah danger */
+    --destructive:             hsl(0 79% 60%);     /* #E84545 */
+    --destructive-foreground:  hsl(0 0% 100%);
+
+    /* Border & input */
+    --border:                  hsl(213 22% 89%);   /* #DDE3EC */
+    --input:                   hsl(213 22% 89%);   /* #DDE3EC */
+    --ring:                    hsl(151 59% 43%);   /* #2BAE6E — focus ring */
+
+    /* Chart — navy + green palette */
+    --chart-1:                 hsl(217 59% 26%);   /* navy   — data seri 1 */
+    --chart-2:                 hsl(151 59% 43%);   /* green  — data seri 2 */
+    --chart-3:                 hsl(219 52% 37%);   /* navy medium */
+    --chart-4:                 hsl(38 92% 50%);    /* amber  — warning */
+    --chart-5:                 hsl(0 79% 60%);     /* red    — danger */
+
+    --radius: 0.5rem;
+
+    /* ── Sidebar — navy gelap ── */
+    --sidebar-background:             hsl(214 66% 18%);   /* #112548 */
+    --sidebar-foreground:             hsl(213 52% 94%);   /* #E8EEF8 teks terang */
+    --sidebar-primary:                hsl(151 59% 43%);   /* #2BAE6E active item */
+    --sidebar-primary-foreground:     hsl(0 0% 100%);
+    --sidebar-accent:                 hsl(217 59% 26%);   /* #1B3A6B hover item */
+    --sidebar-accent-foreground:      hsl(213 52% 94%);   /* #E8EEF8 */
+    --sidebar-border:                 hsl(217 50% 22%);   /* pembatas nav tipis */
+    --sidebar-ring:                   hsl(151 59% 43%);   /* #2BAE6E */
+    --sidebar:                        hsl(214 66% 18%);   /* #112548 */
+}
+
+/* ─────────────────────────────────────────────────────────────
+   .dark  — Dark mode
+   Background gelap tapi tetap nuansa navy, bukan hitam murni
+───────────────────────────────────────────────────────────── */
+.dark {
+    --background:              hsl(217 50% 10%);   /* navy very dark */
+    --foreground:              hsl(213 52% 94%);   /* #E8EEF8 */
+
+    --card:                    hsl(217 50% 14%);   /* card sedikit lebih terang */
+    --card-foreground:         hsl(213 52% 94%);
+
+    --popover:                 hsl(217 50% 14%);
+    --popover-foreground:      hsl(213 52% 94%);
+
+    --primary:                 hsl(151 59% 43%);   /* green jadi primary di dark */
+    --primary-foreground:      hsl(0 0% 100%);
+
+    --secondary:               hsl(217 50% 20%);
+    --secondary-foreground:    hsl(213 52% 94%);
+
+    --muted:                   hsl(217 50% 16%);
+    --muted-foreground:        hsl(207 17% 66%);   /* #9AAAB8 */
+
+    --accent:                  hsl(151 59% 43%);   /* #2BAE6E */
+    --accent-foreground:       hsl(0 0% 100%);
+
+    --destructive:             hsl(0 79% 60%);
+    --destructive-foreground:  hsl(0 0% 100%);
+
+    --border:                  hsl(217 50% 22%);
+    --input:                   hsl(217 50% 22%);
+    --ring:                    hsl(151 59% 43%);
+
+    /* Chart dark */
+    --chart-1:                 hsl(213 52% 75%);   /* navy pale */
+    --chart-2:                 hsl(151 59% 55%);   /* green lebih terang */
+    --chart-3:                 hsl(219 52% 60%);
+    --chart-4:                 hsl(38 92% 60%);
+    --chart-5:                 hsl(0 79% 65%);
+
+    /* Sidebar dark — lebih gelap dari bg */
+    --sidebar-background:             hsl(214 70% 10%);
+    --sidebar-foreground:             hsl(213 52% 90%);
+    --sidebar-primary:                hsl(151 59% 43%);
+    --sidebar-primary-foreground:     hsl(0 0% 100%);
+    --sidebar-accent:                 hsl(217 59% 18%);
+    --sidebar-accent-foreground:      hsl(213 52% 90%);
+    --sidebar-border:                 hsl(217 50% 16%);
+    --sidebar-ring:                   hsl(151 59% 43%);
+    --sidebar:                        hsl(214 70% 10%);
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Base & compatibility
+───────────────────────────────────────────────────────────── */
 @layer base {
     *,
     ::after,
     ::before,
     ::backdrop,
     ::file-selector-button {
-        border-color: var(--color-gray-200, currentColor);
+        border-color: var(--color-border, currentColor);
     }
 }
 
@@ -83,83 +223,10 @@
     body,
     html {
         --font-sans:
-            'Instrument Sans', ui-sans-serif, system-ui, sans-serif,
+            'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif,
             'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol',
             'Noto Color Emoji';
     }
-}
-
-:root {
-    --background: hsl(0 0% 100%);
-    --foreground: hsl(0 0% 3.9%);
-    --card: hsl(0 0% 100%);
-    --card-foreground: hsl(0 0% 3.9%);
-    --popover: hsl(0 0% 100%);
-    --popover-foreground: hsl(0 0% 3.9%);
-    --primary: hsl(0 0% 9%);
-    --primary-foreground: hsl(0 0% 98%);
-    --secondary: hsl(0 0% 92.1%);
-    --secondary-foreground: hsl(0 0% 9%);
-    --muted: hsl(0 0% 96.1%);
-    --muted-foreground: hsl(0 0% 45.1%);
-    --accent: hsl(0 0% 96.1%);
-    --accent-foreground: hsl(0 0% 9%);
-    --destructive: hsl(0 84.2% 60.2%);
-    --destructive-foreground: hsl(0 0% 98%);
-    --border: hsl(0 0% 92.8%);
-    --input: hsl(0 0% 89.8%);
-    --ring: hsl(0 0% 3.9%);
-    --chart-1: hsl(12 76% 61%);
-    --chart-2: hsl(173 58% 39%);
-    --chart-3: hsl(197 37% 24%);
-    --chart-4: hsl(43 74% 66%);
-    --chart-5: hsl(27 87% 67%);
-    --radius: 0.5rem;
-    --sidebar-background: hsl(0 0% 98%);
-    --sidebar-foreground: hsl(240 5.3% 26.1%);
-    --sidebar-primary: hsl(0 0% 10%);
-    --sidebar-primary-foreground: hsl(0 0% 98%);
-    --sidebar-accent: hsl(0 0% 94%);
-    --sidebar-accent-foreground: hsl(0 0% 30%);
-    --sidebar-border: hsl(0 0% 91%);
-    --sidebar-ring: hsl(217.2 91.2% 59.8%);
-    --sidebar: hsl(0 0% 98%);
-}
-
-.dark {
-    --background: hsl(0 0% 3.9%);
-    --foreground: hsl(0 0% 98%);
-    --card: hsl(0 0% 3.9%);
-    --card-foreground: hsl(0 0% 98%);
-    --popover: hsl(0 0% 3.9%);
-    --popover-foreground: hsl(0 0% 98%);
-    --primary: hsl(0 0% 98%);
-    --primary-foreground: hsl(0 0% 9%);
-    --secondary: hsl(0 0% 14.9%);
-    --secondary-foreground: hsl(0 0% 98%);
-    --muted: hsl(0 0% 16.08%);
-    --muted-foreground: hsl(0 0% 63.9%);
-    --accent: hsl(0 0% 14.9%);
-    --accent-foreground: hsl(0 0% 98%);
-    --destructive: hsl(0 84% 60%);
-    --destructive-foreground: hsl(0 0% 98%);
-    --border: hsl(0 0% 14.9%);
-    --input: hsl(0 0% 14.9%);
-    --ring: hsl(0 0% 83.1%);
-    --chart-1: hsl(220 70% 50%);
-    --chart-2: hsl(160 60% 45%);
-    --chart-3: hsl(30 80% 55%);
-    --chart-4: hsl(280 65% 60%);
-    --chart-5: hsl(340 75% 55%);
-    --sidebar-background: hsl(0 0% 7%);
-    --sidebar-foreground: hsl(0 0% 95.9%);
-    --sidebar-primary: hsl(360, 100%, 100%);
-    --sidebar-primary-foreground: hsl(0 0% 100%);
-    --sidebar-accent: hsl(0 0% 15.9%);
-    --sidebar-accent-foreground: hsl(240 4.8% 95.9%);
-    --sidebar-border: hsl(0 0% 15.9%);
-    --sidebar-ring: hsl(217.2 91.2% 59.8%);
-    --sidebar: hsl(240 5.9% 10%);
 }
 
 @layer base {
@@ -168,5 +235,116 @@
     }
     body {
         @apply bg-background text-foreground;
+    }
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Badge utilities — semantic status Trustmedis
+   Pakai class langsung di template Vue: badge-overdue, badge-done, dst.
+───────────────────────────────────────────────────────────── */
+@layer utilities {
+    .badge-overdue {
+        background-color: #FDEAEA;
+        color: #A32D2D;
+        @apply text-xs px-2.5 py-0.5 rounded-full font-medium;
+    }
+    .badge-done {
+        background-color: #E4F7ED;
+        color: #1E8A54;
+        @apply text-xs px-2.5 py-0.5 rounded-full font-medium;
+    }
+    .badge-open {
+        background-color: #E8EEF8;
+        color: #1B3A6B;
+        @apply text-xs px-2.5 py-0.5 rounded-full font-medium;
+    }
+    .badge-progress {
+        background-color: #FEF3DC;
+        color: #92610A;
+        @apply text-xs px-2.5 py-0.5 rounded-full font-medium;
+    }
+    .badge-revisi {
+        background-color: #F3E8FF;
+        color: #6B21A8;
+        @apply text-xs px-2.5 py-0.5 rounded-full font-medium;
+    }
+
+    /* Metric accent bar — strip warna di atas card */
+    .metric-accent-navy  { @apply h-0.5 w-full rounded-full bg-[#1B3A6B] mb-3; }
+    .metric-accent-green { @apply h-0.5 w-full rounded-full bg-[#2BAE6E] mb-3; }
+    .metric-accent-red   { @apply h-0.5 w-full rounded-full bg-[#E84545] mb-3; }
+    .metric-accent-amber { @apply h-0.5 w-full rounded-full bg-[#F59E0B] mb-3; }
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Bento Grid Neo-Brutalism Utilities
+   Modern card styling with bold borders and subtle shadows
+───────────────────────────────────────────────────────────── */
+@layer utilities {
+    /* Base bento card styling */
+    .bento-card {
+        @apply relative overflow-hidden rounded-xl border-[1.5px] p-6;
+        @apply shadow-[2px_2px_0_0_rgba(0,0,0,0.08)];
+        @apply transition-all duration-200 ease-out;
+        @apply hover:shadow-[4px_4px_0_0_rgba(0,0,0,0.1)];
+        @apply hover:-translate-y-0.5;
+    }
+
+    /* Dark mode shadow adjustment */
+    .dark .bento-card {
+        @apply shadow-[2px_2px_0_0_rgba(255,255,255,0.05)];
+        @apply hover:shadow-[4px_4px_0_0_rgba(255,255,255,0.08)];
+    }
+
+    /* Color theme variants */
+    .bento-card-navy {
+        @apply bg-tm-navy-pale dark:bg-tm-navy/20;
+        @apply border-tm-navy;
+    }
+
+    .bento-card-green {
+        @apply bg-tm-green-pale dark:bg-tm-green/20;
+        @apply border-tm-green;
+    }
+
+    .bento-card-red {
+        @apply bg-tm-danger-pale dark:bg-tm-danger/20;
+        @apply border-tm-danger;
+    }
+
+    .bento-card-amber {
+        @apply bg-tm-warning-pale dark:bg-tm-warning/20;
+        @apply border-tm-warning;
+    }
+
+    .bento-card-neutral {
+        @apply bg-card border-border;
+    }
+
+    /* Responsive span utilities for Bento Grid */
+    .bento-span-small {
+        @apply col-span-1;
+    }
+
+    .bento-span-medium {
+        @apply col-span-1 md:col-span-2;
+    }
+
+    .bento-span-large {
+        @apply col-span-1 md:col-span-2 lg:col-span-3;
+    }
+
+    .bento-span-full {
+        @apply col-span-full;
+    }
+
+    /* Icon container with neo-brutalism styling */
+    .bento-icon-container {
+        @apply rounded-xl p-3 border-[1.5px];
+    }
+
+    /* Loading skeleton for bento cards */
+    .bento-skeleton {
+        @apply animate-pulse rounded bg-muted/50;
     }
 }

@@ -6,8 +6,8 @@
  */
 
 // Components will be added as they are implemented
-// export { default as BentoGrid } from './BentoGrid.vue'
-// export { default as BentoGridItem } from './BentoGridItem.vue'
+export { default as BentoGrid } from './BentoGrid.vue'
+export { default as BentoGridItem } from './BentoGridItem.vue'
 // export { default as StatCard } from './StatCard.vue'
 // export { default as DeadlineAlertCard } from './DeadlineAlertCard.vue'
 // export { default as ChartCard } from './ChartCard.vue'

@@ -10,6 +10,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property int $id
  * @property int $task_id
  * @property bool $is_pinned
+ *
+ * @method bool|null delete()
  */
 class TaskComment extends Model
 {

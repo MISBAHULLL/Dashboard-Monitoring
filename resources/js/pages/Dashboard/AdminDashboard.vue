@@ -1,9 +1,18 @@
 <script setup lang="ts">
 import { Head } from '@inertiajs/vue3';
 import { dashboard } from '@/routes';
-import { Users, Building2, ListTodo, AlertCircle, TriangleAlert, Clock3 } from 'lucide-vue-next';
-import VueApexCharts from "vue3-apexcharts";
+import { index as tasksIndex } from '@/routes/tasks';
+import { Users, Building2, ListTodo, AlertCircle } from 'lucide-vue-next';
 import type { ApexOptions } from 'apexcharts';
+
+// Import Bento Grid components
+import BentoGrid from '@/components/dashboard/BentoGrid.vue';
+import BentoGridItem from '@/components/dashboard/BentoGridItem.vue';
+import StatCard from '@/components/dashboard/StatCard.vue';
+import DeadlineAlertCard from '@/components/dashboard/DeadlineAlertCard.vue';
+import ChartCard from '@/components/dashboard/ChartCard.vue';
+import TeamPerformanceCard from '@/components/dashboard/TeamPerformanceCard.vue';
+import TaskListCard from '@/components/dashboard/TaskListCard.vue';
 
 // 1. Menerima data dari Controller
 const props = defineProps<{
@@ -22,8 +31,18 @@ const props = defineProps<{
     };
     overdue_count: number;
     due_soon_count: number;
-    overdue_tasks: Array<any>;
-    due_soon_tasks: Array<any>;
+    overdue_tasks: Array<{
+        id: number;
+        title: string;
+        client?: { name: string };
+        release_date?: string;
+    }>;
+    due_soon_tasks: Array<{
+        id: number;
+        title: string;
+        client?: { name: string };
+        release_date?: string;
+    }>;
     team_performance: Array<{
         id: number;
         name: string;
@@ -35,7 +54,14 @@ const props = defineProps<{
         overdue_tasks: number;
         completion_rate: number;
     }>;
-    recent_tasks: any[];
+    recent_tasks: Array<{
+        id: number;
+        title: string;
+        modul?: string;
+        status: 'open' | 'in_progress' | 'revision' | 'completed';
+        client?: { name: string };
+        created_at: string;
+    }>;
 }>();
 
 // Konfigurasi Donut Chart
@@ -90,219 +116,97 @@ defineOptions({
             <p class="text-muted-foreground mt-1">Pantau seluruh aktivitas task dan performa tim di satu tempat.</p>
         </div>
 
-        <!-- 3. Kartu Statistik Utama (Menggunakan Grid Tailwind) -->
-        <div class="grid auto-rows-min gap-4 md:grid-cols-4">
-            <!-- Total Tasks -->
-            <div class="relative overflow-hidden rounded-xl border border-sidebar-border bg-card p-6 shadow-sm transition-all hover:shadow-md">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-sm font-medium text-muted-foreground">Total Tasks</p>
-                        <p class="mt-2 text-3xl font-bold">{{ stats.total_tasks }}</p>
-                    </div>
-                    <div class="rounded-full bg-blue-100 p-3 dark:bg-blue-900/30">
-                        <ListTodo class="h-6 w-6 text-blue-600 dark:text-blue-400" />
-                    </div>
-                </div>
-            </div>
+        <!-- Bento Grid Layout -->
+        <BentoGrid :columns="{ default: 1, md: 2, lg: 4 }">
+            
+            <!-- Row 1: Stats (4 small cards) -->
+            <BentoGridItem :span="{ default: 'col-span-1', md: 'col-span-1', lg: 'col-span-1' }">
+                <StatCard 
+                    label="Total Tasks" 
+                    :value="stats.total_tasks" 
+                    :icon="ListTodo" 
+                    colorTheme="neutral" 
+                />
+            </BentoGridItem>
 
-            <!-- Open Tasks -->
-            <div class="relative overflow-hidden rounded-xl border border-sidebar-border bg-card p-6 shadow-sm transition-all hover:shadow-md">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-sm font-medium text-muted-foreground">Menunggu Dikerjakan</p>
-                        <p class="mt-2 text-3xl font-bold text-amber-600 dark:text-amber-500">{{ stats.open_tasks }}</p>
-                    </div>
-                    <div class="rounded-full bg-amber-100 p-3 dark:bg-amber-900/30">
-                        <AlertCircle class="h-6 w-6 text-amber-600 dark:text-amber-500" />
-                    </div>
-                </div>
-            </div>
+            <BentoGridItem :span="{ default: 'col-span-1', md: 'col-span-1', lg: 'col-span-1' }">
+                <StatCard 
+                    label="Menunggu Dikerjakan" 
+                    :value="stats.open_tasks" 
+                    :icon="AlertCircle" 
+                    colorTheme="amber" 
+                />
+            </BentoGridItem>
 
-            <!-- Total Clients -->
-            <div class="relative overflow-hidden rounded-xl border border-sidebar-border bg-card p-6 shadow-sm transition-all hover:shadow-md">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-sm font-medium text-muted-foreground">Total Faskes</p>
-                        <p class="mt-2 text-3xl font-bold">{{ stats.total_clients }}</p>
-                    </div>
-                    <div class="rounded-full bg-emerald-100 p-3 dark:bg-emerald-900/30">
-                        <Building2 class="h-6 w-6 text-emerald-600 dark:text-emerald-400" />
-                    </div>
-                </div>
-            </div>
+            <BentoGridItem :span="{ default: 'col-span-1', md: 'col-span-1', lg: 'col-span-1' }">
+                <StatCard 
+                    label="Total Faskes" 
+                    :value="stats.total_clients" 
+                    :icon="Building2" 
+                    colorTheme="green" 
+                />
+            </BentoGridItem>
 
-            <!-- Total Teams -->
-            <div class="relative overflow-hidden rounded-xl border border-sidebar-border bg-card p-6 shadow-sm transition-all hover:shadow-md">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-sm font-medium text-muted-foreground">Total Tim</p>
-                        <p class="mt-2 text-3xl font-bold">{{ stats.total_teams }}</p>
-                    </div>
-                    <div class="rounded-full bg-indigo-100 p-3 dark:bg-indigo-900/30">
-                        <Users class="h-6 w-6 text-indigo-600 dark:text-indigo-400" />
-                    </div>
-                </div>
-            </div>
-        </div>
+            <BentoGridItem :span="{ default: 'col-span-1', md: 'col-span-1', lg: 'col-span-1' }">
+                <StatCard 
+                    label="Total Tim" 
+                    :value="stats.total_teams" 
+                    :icon="Users" 
+                    colorTheme="navy" 
+                />
+            </BentoGridItem>
 
-        <!-- 4. Informasi Prioritas Deadline -->
-        <div class="grid gap-4 md:grid-cols-2">
-            <div class="relative overflow-hidden rounded-xl border border-red-200 bg-red-50/60 p-6 shadow-sm dark:border-red-900/40 dark:bg-red-950/20">
-                <div class="mb-4 flex items-center justify-between">
-                    <div>
-                        <p class="text-sm font-medium text-red-700 dark:text-red-300">Task Overdue</p>
-                        <p class="mt-2 text-3xl font-bold text-red-700 dark:text-red-300">{{ overdue_count }}</p>
-                    </div>
-                    <div class="rounded-full bg-red-100 p-3 dark:bg-red-900/40">
-                        <TriangleAlert class="h-6 w-6 text-red-600 dark:text-red-300" />
-                    </div>
-                </div>
-                <div class="space-y-2">
-                    <div v-for="task in overdue_tasks" :key="task.id" class="rounded-lg border border-red-200/80 bg-white p-3 dark:border-red-900/30 dark:bg-red-950/30">
-                        <p class="text-sm font-semibold text-slate-800 dark:text-slate-100">{{ task.title }}</p>
-                        <div class="mt-1 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
-                            <span>{{ task.client?.name || '-' }}</span>
-                            <span class="font-semibold text-red-600 dark:text-red-300">{{ task.release_date ? new Date(task.release_date).toLocaleDateString('id-ID') : '-' }}</span>
-                        </div>
-                    </div>
-                    <p v-if="overdue_tasks.length === 0" class="text-sm text-slate-500 dark:text-slate-400">
-                        Tidak ada task overdue.
-                    </p>
-                </div>
-            </div>
+            <!-- Row 2: Deadline Alerts (2 medium cards) -->
+            <BentoGridItem :span="{ default: 'col-span-1', md: 'col-span-1', lg: 'col-span-2' }">
+                <DeadlineAlertCard 
+                    type="overdue" 
+                    :count="overdue_count" 
+                    :tasks="overdue_tasks"
+                    :view-all-link="overdue_tasks.length > 10 ? tasksIndex({ query: { status: 'overdue' } }).url : undefined"
+                />
+            </BentoGridItem>
 
-            <div class="relative overflow-hidden rounded-xl border border-amber-200 bg-amber-50/60 p-6 shadow-sm dark:border-amber-900/40 dark:bg-amber-950/20">
-                <div class="mb-4 flex items-center justify-between">
-                    <div>
-                        <p class="text-sm font-medium text-amber-700 dark:text-amber-300">Task Due Soon (H-7)</p>
-                        <p class="mt-2 text-3xl font-bold text-amber-700 dark:text-amber-300">{{ due_soon_count }}</p>
-                    </div>
-                    <div class="rounded-full bg-amber-100 p-3 dark:bg-amber-900/40">
-                        <Clock3 class="h-6 w-6 text-amber-600 dark:text-amber-300" />
-                    </div>
-                </div>
-                <div class="space-y-2">
-                    <div v-for="task in due_soon_tasks" :key="task.id" class="rounded-lg border border-amber-200/80 bg-white p-3 dark:border-amber-900/30 dark:bg-amber-950/30">
-                        <p class="text-sm font-semibold text-slate-800 dark:text-slate-100">{{ task.title }}</p>
-                        <div class="mt-1 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
-                            <span>{{ task.client?.name || '-' }}</span>
-                            <span class="font-semibold text-amber-600 dark:text-amber-300">{{ task.release_date ? new Date(task.release_date).toLocaleDateString('id-ID') : '-' }}</span>
-                        </div>
-                    </div>
-                    <p v-if="due_soon_tasks.length === 0" class="text-sm text-slate-500 dark:text-slate-400">
-                        Tidak ada task due soon.
-                    </p>
-                </div>
-            </div>
-        </div>
+            <BentoGridItem :span="{ default: 'col-span-1', md: 'col-span-1', lg: 'col-span-2' }">
+                <DeadlineAlertCard 
+                    type="due_soon" 
+                    :count="due_soon_count" 
+                    :tasks="due_soon_tasks"
+                    :view-all-link="due_soon_tasks.length > 10 ? tasksIndex({ query: { status: 'due_soon' } }).url : undefined"
+                />
+            </BentoGridItem>
 
-        <!-- 5. Area Charts (Visualisasi Data) -->
-        <div class="grid gap-4 md:grid-cols-3">
-            <!-- Area Chart (Trend) -->
-            <div class="col-span-1 md:col-span-2 relative overflow-hidden rounded-xl border border-sidebar-border bg-card p-6 shadow-sm transition-all hover:shadow-md">
-                <h2 class="text-lg font-semibold text-primary mb-4">Tren Pembuatan Task (7 Hari Terakhir)</h2>
-                <div class="w-full">
-                    <VueApexCharts type="area" height="300" :options="areaOptions" :series="areaSeries" />
-                </div>
-            </div>
+            <!-- Row 3: Charts (1 large + 1 small) -->
+            <BentoGridItem :span="{ default: 'col-span-1', md: 'col-span-2', lg: 'col-span-3' }">
+                <ChartCard 
+                    title="Tren Pembuatan Task (7 Hari Terakhir)" 
+                    chartType="area" 
+                    :options="areaOptions" 
+                    :series="areaSeries"
+                    :height="300"
+                />
+            </BentoGridItem>
 
-            <!-- Donut Chart (Status) -->
-            <div class="col-span-1 relative overflow-hidden rounded-xl border border-sidebar-border bg-card p-6 shadow-sm transition-all hover:shadow-md">
-                <h2 class="text-lg font-semibold text-primary mb-4">Rasio Status Task</h2>
-                <div class="w-full flex justify-center">
-                    <VueApexCharts type="donut" height="320" :options="donutOptions" :series="donutSeries" />
-                </div>
-            </div>
-        </div>
+            <BentoGridItem :span="{ default: 'col-span-1', md: 'col-span-1', lg: 'col-span-1' }">
+                <ChartCard 
+                    title="Rasio Status Task" 
+                    chartType="donut" 
+                    :options="donutOptions" 
+                    :series="donutSeries"
+                    :height="320"
+                />
+            </BentoGridItem>
 
-        <!-- 6. Ringkasan Performa Tim -->
-        <div class="relative rounded-xl border border-sidebar-border bg-card shadow-sm">
-            <div class="p-6">
-                <h2 class="text-lg font-semibold text-primary">Ringkasan Performa Tim Product</h2>
-                <p class="text-sm text-muted-foreground mb-4">Progress task per tim berdasarkan total, selesai, dan overdue.</p>
+            <!-- Row 4: Team Performance (full width) -->
+            <BentoGridItem :span="{ default: 'col-span-full' }">
+                <TeamPerformanceCard :teams="team_performance" />
+            </BentoGridItem>
 
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left text-sm">
-                        <thead class="bg-muted/50 text-muted-foreground border-b border-border">
-                            <tr>
-                                <th class="py-3 px-4 font-medium">Tim</th>
-                                <th class="py-3 px-4 font-medium text-center">Total</th>
-                                <th class="py-3 px-4 font-medium text-center">Selesai</th>
-                                <th class="py-3 px-4 font-medium text-center">Overdue</th>
-                                <th class="py-3 px-4 font-medium text-center">Completion Rate</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr v-for="team in team_performance" :key="team.id" class="border-b border-border last:border-0 hover:bg-muted/30">
-                                <td class="py-3 px-4 font-medium">{{ team.name }}</td>
-                                <td class="py-3 px-4 text-center">{{ team.total_tasks }}</td>
-                                <td class="py-3 px-4 text-center text-emerald-600 dark:text-emerald-400">{{ team.completed_tasks }}</td>
-                                <td class="py-3 px-4 text-center text-red-600 dark:text-red-400">{{ team.overdue_tasks }}</td>
-                                <td class="py-3 px-4 text-center">
-                                    <span class="inline-flex items-center rounded-full bg-sky-100 px-2.5 py-0.5 text-xs font-semibold text-sky-700 dark:bg-sky-900/40 dark:text-sky-300">
-                                        {{ team.completion_rate }}%
-                                    </span>
-                                </td>
-                            </tr>
-                            <tr v-if="team_performance.length === 0">
-                                <td colspan="5" class="py-8 text-center text-muted-foreground">
-                                    Belum ada data performa tim.
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
+            <!-- Row 5: Recent Tasks (full width) -->
+            <BentoGridItem :span="{ default: 'col-span-full' }">
+                <TaskListCard variant="recent" :tasks="recent_tasks" />
+            </BentoGridItem>
 
-        <!-- 7. Tabel 5 Task Terakhir -->
-        <div class="relative flex-1 rounded-xl border border-sidebar-border bg-card shadow-sm">
-            <div class="p-6">
-                <h2 class="text-lg font-semibold text-primary">5 Task Terbaru</h2>
-                <p class="text-sm text-muted-foreground mb-4">Task yang baru saja dibuat ke dalam sistem.</p>
-                
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left text-sm">
-                        <thead class="bg-muted/50 text-muted-foreground border-b border-border">
-                            <tr>
-                                <th class="py-3 px-4 font-medium">Faskes / Client</th>
-                                <th class="py-3 px-4 font-medium">Judul Task</th>
-                                <th class="py-3 px-4 font-medium">Modul</th>
-                                <th class="py-3 px-4 font-medium">Status</th>
-                                <th class="py-3 px-4 font-medium">Tanggal Dibuat</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <!-- Looping data dari Controller -->
-                            <tr v-for="task in recent_tasks" :key="task.id" class="border-b border-border last:border-0 hover:bg-muted/30">
-                                <td class="py-3 px-4">{{ task.client?.name }}</td>
-                                <td class="py-3 px-4 font-medium">{{ task.title }}</td>
-                                <td class="py-3 px-4">{{ task.modul || '-' }}</td>
-                                <td class="py-3 px-4">
-                                    <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold capitalize"
-                                        :class="{
-                                            'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400': task.status === 'open',
-                                            'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400': task.status === 'in_progress',
-                                            'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400': task.status === 'revision',
-                                            'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400': task.status === 'completed'
-                                        }">
-                                        {{ task.status.replace('_', ' ') }}
-                                    </span>
-                                </td>
-                                <td class="py-3 px-4">{{ new Date(task.created_at).toLocaleDateString('id-ID') }}</td>
-                            </tr>
-                            
-                            <!-- State jika data kosong -->
-                            <tr v-if="recent_tasks.length === 0">
-                                <td colspan="5" class="py-8 text-center text-muted-foreground">
-                                    Belum ada task yang dibuat.
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
+        </BentoGrid>
 
     </div>
 </template>

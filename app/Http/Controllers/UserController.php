@@ -39,7 +39,7 @@ class UserController extends Controller
 
         $user = User::create($validated);
 
-        ActivityLogger::created('user', $user->id, $user->name, "Menambahkan user '{$user->name}'", $validated);
+        ActivityLogger::created('user', $user->id, $user->name, "Menambahkan user '{$user->name}'", collect($validated)->except('password')->toArray());
 
         return back()->with('success', 'User berhasil ditambahkan.');
     }

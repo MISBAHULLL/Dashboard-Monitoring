@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Document;
-use App\Models\DocumentVersion;
-use App\Models\DocumentType;
 use App\Models\Client;
+use App\Models\Document;
+use App\Models\DocumentType;
+use App\Models\DocumentVersion;
 use App\Models\Task;
 use App\Services\ActivityLogger;
 use Illuminate\Http\Request;
@@ -18,6 +18,8 @@ class DocumentController extends Controller
 {
     public function index(): Response
     {
+        $this->authorize('viewAny', Document::class);
+
         $query = Document::with(['client:id,name', 'creator:id,name'])->latest();
 
         if (request('client_id')) {
@@ -26,38 +28,40 @@ class DocumentController extends Controller
 
         $documents = $query->paginate(20)->withQueryString();
 
-        $clients       = Client::orderBy('name')->get(['id', 'name']);
+        $clients = Client::orderBy('name')->get(['id', 'name']);
         $documentTypes = DocumentType::orderBy('name')->pluck('name');
 
         return Inertia::render('Documents/Index', [
-            'documents'      => $documents,
-            'clients'        => $clients,
-            'documentTypes'  => $documentTypes,
+            'documents' => $documents,
+            'clients' => $clients,
+            'documentTypes' => $documentTypes,
             'activeClientId' => request('client_id') ? (int) request('client_id') : null,
         ]);
     }
 
     public function store(Request $request)
     {
+        $this->authorize('create', Document::class);
+
         $validated = $request->validate([
             'client_id' => 'required|exists:clients,id',
-            'title'     => 'required|string|max:255',
-            'type'      => 'required|string|max:100',
-            'doc_url'   => 'nullable|url|max:500',
-            'file'      => 'nullable|file|max:10240',
-            'notes'     => 'nullable|string|max:500',
+            'title' => 'required|string|max:255',
+            'type' => 'required|string|max:100',
+            'doc_url' => 'nullable|url|max:500',
+            'file' => 'nullable|file|max:10240',
+            'notes' => 'nullable|string|max:500',
         ]);
 
         DocumentType::firstOrCreate(['name' => strtoupper(trim($validated['type']))]);
         $validated['type'] = strtoupper(trim($validated['type']));
 
         $data = [
-            'client_id'       => $validated['client_id'],
-            'title'           => $validated['title'],
-            'type'            => $validated['type'],
-            'doc_url'         => $validated['doc_url'] ?? null,
+            'client_id' => $validated['client_id'],
+            'title' => $validated['title'],
+            'type' => $validated['type'],
+            'doc_url' => $validated['doc_url'] ?? null,
             'current_version' => 1,
-            'created_by'      => Auth::id(),
+            'created_by' => Auth::id(),
         ];
 
         if ($request->hasFile('file')) {
@@ -91,13 +95,15 @@ class DocumentController extends Controller
 
     public function update(Request $request, Document $document)
     {
+        $this->authorize('update', $document);
+
         $validated = $request->validate([
             'client_id' => 'required|exists:clients,id',
-            'title'     => 'required|string|max:255',
-            'type'      => 'required|string|max:100',
-            'doc_url'   => 'nullable|url|max:500',
-            'file'      => 'nullable|file|max:10240',
-            'notes'     => 'nullable|string|max:500',
+            'title' => 'required|string|max:255',
+            'type' => 'required|string|max:100',
+            'doc_url' => 'nullable|url|max:500',
+            'file' => 'nullable|file|max:10240',
+            'notes' => 'nullable|string|max:500',
         ]);
 
         DocumentType::firstOrCreate(['name' => strtoupper(trim($validated['type']))]);
@@ -107,28 +113,28 @@ class DocumentController extends Controller
 
         $data = [
             'client_id' => $validated['client_id'],
-            'title'     => $validated['title'],
-            'type'      => $validated['type'],
-            'doc_url'   => $validated['doc_url'] ?? null,
+            'title' => $validated['title'],
+            'type' => $validated['type'],
+            'doc_url' => $validated['doc_url'] ?? null,
         ];
 
         // HANYA jika ada file baru yang diupload
         if ($request->hasFile('file')) {
             $file = $request->file('file');
             $path = $file->store('documents', 'public');
-            
+
             // Increment version
             $newVersion = $document->current_version + 1;
-            
+
             // Update document dengan file baru
             $data['file_path'] = $path;
             $data['file_name'] = $file->getClientOriginalName();
             $data['mime_type'] = $file->getMimeType();
             $data['file_size'] = $file->getSize();
             $data['current_version'] = $newVersion;
-            
+
             $document->update($data);
-            
+
             // Buat SATU record DocumentVersion untuk versi baru
             DocumentVersion::create([
                 'document_id' => $document->id,
@@ -151,6 +157,8 @@ class DocumentController extends Controller
 
     public function show(Document $document): Response
     {
+        $this->authorize('view', $document);
+
         $document->load([
             'client:id,name,city',
             'creator:id,name',
@@ -158,8 +166,8 @@ class DocumentController extends Controller
         ]);
 
         $clientDocuments = Document::with([
-                'tasks' => fn($q) => $q->select('tasks.id','tasks.title','tasks.category','tasks.status')
-            ])
+            'tasks' => fn ($q) => $q->select('tasks.id', 'tasks.title', 'tasks.category', 'tasks.status'),
+        ])
             ->where('client_id', $document->client_id)
             ->latest()
             ->get();
@@ -172,9 +180,9 @@ class DocumentController extends Controller
 
         $clientTasks = Task::where('client_id', $document->client_id)
             ->where('status', '!=', 'completed')
-            ->where(function ($q) use ($document, $linkedTaskIds) {
+            ->where(function ($q) use ($linkedTaskIds) {
                 $q->whereDoesntHave('documents')
-                  ->orWhereIn('id', $linkedTaskIds);
+                    ->orWhereIn('id', $linkedTaskIds);
             })
             ->select('id', 'title', 'category', 'status')
             ->latest()
@@ -183,24 +191,26 @@ class DocumentController extends Controller
         $documentTypes = DocumentType::orderBy('name')->pluck('name');
 
         return Inertia::render('Documents/Show', [
-            'document'        => $document,
+            'document' => $document,
             'clientDocuments' => $clientDocuments,
-            'clientTasks'     => $clientTasks,
-            'documentTypes'   => $documentTypes,
+            'clientTasks' => $clientTasks,
+            'documentTypes' => $documentTypes,
         ]);
     }
 
     public function syncTasks(Request $request, Document $document)
     {
+        $this->authorize('update', $document);
+
         $request->validate([
-            'tasks'          => 'array',
-            'tasks.*.id'     => 'required|exists:tasks,id',
+            'tasks' => 'array',
+            'tasks.*.id' => 'required|exists:tasks,id',
             'tasks.*.status' => 'nullable|in:revision,completed',
         ]);
 
         // Bangun array [task_id => ['status' => ...]] untuk sync dengan pivot
         $syncData = collect($request->tasks ?? [])
-            ->mapWithKeys(fn($t) => [$t['id'] => ['status' => $t['status'] ?? null]])
+            ->mapWithKeys(fn ($t) => [$t['id'] => ['status' => $t['status'] ?? null]])
             ->toArray();
 
         // Reset semua relasi lama, set ulang yang dicentang (sesuai project lama)
@@ -212,6 +222,8 @@ class DocumentController extends Controller
 
     public function destroy(Document $document)
     {
+        $this->authorize('delete', $document);
+
         ActivityLogger::deleted('document', $document->id, $document->title, "Menghapus dokumen '{$document->title}'");
 
         if ($document->file_path) {

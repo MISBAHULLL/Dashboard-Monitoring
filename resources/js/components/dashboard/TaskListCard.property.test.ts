@@ -93,6 +93,7 @@ const taskStatusArbitrary = fc.constantFrom(...VALID_STATUSES)
 
 /**
  * Arbitrary for generating tasks with random status
+ * Note: fc.date() can generate invalid dates in some environments, so we generate ISO strings directly
  */
 const taskWithStatusArbitrary = fc.record({
   id: fc.integer({ min: 1, max: 10000 }),
@@ -103,7 +104,11 @@ const taskWithStatusArbitrary = fc.record({
     id: fc.integer({ min: 1, max: 1000 }),
     name: fc.string({ minLength: 1, maxLength: 50 }),
   }),
-  created_at: fc.date().map(d => d.toISOString()),
+  created_at: fc.tuple(
+    fc.integer({ min: 2020, max: 2025 }),
+    fc.integer({ min: 1, max: 12 }),
+    fc.integer({ min: 1, max: 28 })
+  ).map(([year, month, day]) => `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}T00:00:00.000Z`),
 }) as fc.Arbitrary<Task>
 
 /**
@@ -958,7 +963,11 @@ describe('TaskListCard Property-Based Tests', () => {
           id: fc.integer({ min: 1, max: 1000 }),
           name: fc.string({ minLength: 1, maxLength: 50 }),
         }),
-        created_at: fc.date().map(d => d.toISOString()),
+        created_at: fc.tuple(
+          fc.integer({ min: 2020, max: 2025 }),
+          fc.integer({ min: 1, max: 12 }),
+          fc.integer({ min: 1, max: 28 })
+        ).map(([year, month, day]) => `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}T00:00:00.000Z`),
       }) as fc.Arbitrary<Task>
 
       const taskArrayWithPrioritiesArbitrary = fc.array(taskWithPriorityArbitrary, {

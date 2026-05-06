@@ -108,13 +108,18 @@ defineOptions({
 <template>
     <Head title="Admin Dashboard" />
 
-    <div class="flex h-full flex-1 flex-col gap-6 overflow-x-auto rounded-xl p-4 md:p-8">
+    <div 
+        id="main-content"
+        class="flex h-full flex-1 flex-col gap-6 overflow-x-auto rounded-xl p-4 md:p-8"
+        role="main"
+        aria-label="Dashboard Admin"
+    >
         
         <!-- Header -->
-        <div>
+        <header>
             <h1 class="text-3xl font-bold tracking-tight text-primary">Dashboard Admin</h1>
             <p class="text-muted-foreground mt-1">Pantau seluruh aktivitas task dan performa tim di satu tempat.</p>
-        </div>
+        </header>
 
         <!-- Bento Grid Layout -->
         <BentoGrid :columns="{ default: 1, md: 2, lg: 4 }">

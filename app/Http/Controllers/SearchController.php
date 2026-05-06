@@ -74,7 +74,7 @@ class SearchController extends Controller
                         'subtitle' => $client->city ?? '-',
                         'meta' => $client->type,
                         'type' => 'client',
-                        'url' => '/clients',
+                        'url' => route('clients.index'),
                     ])->toArray(),
                 ];
             }
@@ -96,7 +96,7 @@ class SearchController extends Controller
                         'subtitle' => $team->type,
                         'meta' => null,
                         'type' => 'team',
-                        'url' => '/teams',
+                        'url' => route('teams.index'),
                     ])->toArray(),
                 ];
             }
@@ -119,7 +119,7 @@ class SearchController extends Controller
                         'subtitle' => $doc->client?->name ?? '-',
                         'meta' => $doc->type,
                         'type' => 'document',
-                        'url' => '/clients',
+                        'url' => route('documents.show', $doc->id),
                     ])->toArray(),
                 ];
             }

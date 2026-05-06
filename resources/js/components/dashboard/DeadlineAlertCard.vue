@@ -171,10 +171,15 @@ const ariaLabel = computed(() => `${config.value.label}: ${props.count} tasks`);
       </div>
 
       <!-- Task list -->
-      <div class="space-y-2">
+      <div 
+        class="space-y-2"
+        role="list"
+        :aria-label="`${config.label} list`"
+      >
         <div
           v-for="task in displayTasks"
           :key="task.id"
+          role="listitem"
           :class="[
             'rounded-lg border-[1.5px] bg-white p-3 dark:bg-card',
             'transition-colors duration-200',
@@ -210,7 +215,7 @@ const ariaLabel = computed(() => `${config.value.label}: ${props.count} tasks`);
       <Link
         v-if="showViewAllLink"
         :href="viewAllLink!"
-        class="mt-4 inline-flex items-center text-sm font-medium text-primary hover:text-primary/80 transition-colors"
+        class="mt-4 inline-flex items-center text-sm font-medium text-primary hover:text-primary/80 transition-colors focus:outline-none focus:ring-2 focus:ring-primary/50 focus:ring-offset-2 rounded"
       >
         Lihat Semua
         <svg
@@ -218,6 +223,7 @@ const ariaLabel = computed(() => `${config.value.label}: ${props.count} tasks`);
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
+          aria-hidden="true"
         >
           <path
             stroke-linecap="round"

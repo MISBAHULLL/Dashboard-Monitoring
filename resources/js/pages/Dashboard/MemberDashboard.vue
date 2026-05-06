@@ -36,13 +36,18 @@ defineOptions({
 <template>
     <Head title="Member Dashboard" />
 
-    <div class="flex h-full flex-1 flex-col gap-6 overflow-x-auto rounded-xl p-4 md:p-8">
+    <div 
+        id="main-content"
+        class="flex h-full flex-1 flex-col gap-6 overflow-x-auto rounded-xl p-4 md:p-8"
+        role="main"
+        aria-label="Dashboard Member"
+    >
         
         <!-- Header -->
-        <div>
+        <header>
             <h1 class="text-3xl font-bold tracking-tight text-primary">Selamat Datang!</h1>
             <p class="text-muted-foreground mt-1">Berikut adalah ringkasan task yang ditugaskan kepada Anda.</p>
-        </div>
+        </header>
 
         <!-- Bento Grid Layout -->
         <BentoGrid :columns="{ default: 1, md: 3, lg: 3 }">

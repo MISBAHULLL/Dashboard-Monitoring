@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Carbon;
 
 /**
@@ -26,19 +27,24 @@ use Illuminate\Support\Carbon;
  */
 class Document extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes;
 
     protected $fillable = [
         'client_id',
         'title',
         'type',
         'doc_url',
+        'file_path',
+        'file_name',
+        'mime_type',
+        'file_size',
         'current_version',
         'created_by',
     ];
 
     protected $casts = [
         'current_version' => 'integer',
+        'file_size' => 'integer',
     ];
 
     public function client(): BelongsTo

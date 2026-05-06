@@ -18,7 +18,7 @@ import type { TeamPerformance } from '@/types/dashboard';
  * - Responsive design with horizontal scroll on mobile
  * - Automatically sorts by total_tasks descending and limits to 10 teams
  *
- * @see Requirements: 6.1-6.5, 16.1-16.5
+ * @see 
  */
 
 interface Props {
@@ -78,7 +78,10 @@ const displayedTeams = computed(() => {
 
       <!-- Content -->
       <div v-else class="overflow-x-auto">
-        <table class="w-full text-left text-sm">
+        <table class="w-full text-left text-sm" aria-label="Ringkasan performa tim product">
+          <caption class="sr-only">
+            Tabel performa tim menampilkan nama tim, total task, task selesai, task overdue, dan tingkat penyelesaian
+          </caption>
           <thead class="bg-muted/50 text-muted-foreground border-b border-border">
             <tr>
               <th class="py-3 px-4 font-medium">Tim</th>

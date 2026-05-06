@@ -4,11 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Services\ActivityLogger;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -21,7 +20,7 @@ class BackupController extends Controller
     {
         // Get list of existing backups
         $backups = collect(Storage::disk('local')->files('backups'))
-            ->filter(fn($file) => str_ends_with($file, '.sql'))
+            ->filter(fn ($file) => str_ends_with($file, '.sql'))
             ->map(function ($file) {
                 return [
                     'name' => basename($file),
@@ -45,11 +44,11 @@ class BackupController extends Controller
     {
         try {
             // Generate backup filename with timestamp
-            $filename = 'backup_' . now()->format('Y-m-d_His') . '.sql';
-            $backupPath = storage_path('app/backups/' . $filename);
+            $filename = 'backup_'.now()->format('Y-m-d_His').'.sql';
+            $backupPath = storage_path('app/backups/'.$filename);
 
             // Ensure backups directory exists on the configured disk
-            if (!Storage::disk('local')->exists('backups')) {
+            if (! Storage::disk('local')->exists('backups')) {
                 Storage::disk('local')->makeDirectory('backups');
             }
 
@@ -67,17 +66,17 @@ class BackupController extends Controller
 
             // Use Laravel's DB facade to get all tables and export data
             $tables = DB::select('SHOW TABLES');
-            $tableKey = 'Tables_in_' . $database;
-            
+            $tableKey = 'Tables_in_'.$database;
+
             $header = "-- MySQL Database Backup\n";
-            $header .= "-- Generated: " . now()->toDateTimeString() . "\n";
+            $header .= '-- Generated: '.now()->toDateTimeString()."\n";
             $header .= "-- Database: {$database}\n\n";
             $header .= "SET FOREIGN_KEY_CHECKS=0;\n\n";
 
             $pdo = DB::getPdo();
 
             // Stream output to file to avoid building a huge string in memory
-            $storagePath = Storage::disk('local')->path('backups/' . $filename);
+            $storagePath = Storage::disk('local')->path('backups/'.$filename);
             $handle = fopen($storagePath, 'w');
             if ($handle === false) {
                 throw new \Exception('Gagal membuka file backup untuk ditulis');
@@ -92,33 +91,33 @@ class BackupController extends Controller
 
             foreach ($tables as $table) {
                 $tableName = $table->$tableKey;
-                
+
                 // Get CREATE TABLE statement
                 $createTable = DB::select("SHOW CREATE TABLE `{$tableName}`");
                 $tableHeader = "-- Table: {$tableName}\n";
                 $tableHeader .= "DROP TABLE IF EXISTS `{$tableName}`;\n";
-                $tableHeader .= $createTable[0]->{'Create Table'} . ";\n\n";
+                $tableHeader .= $createTable[0]->{'Create Table'}.";\n\n";
                 fwrite($handle, $tableHeader);
-                
+
                 // Get table data
                 $rows = DB::table($tableName)->get();
-                
+
                 if ($rows->count() > 0) {
                     fwrite($handle, "-- Data for table {$tableName}\n");
 
                     foreach ($rows as $row) {
-                            $values = [];
-                            foreach ((array)$row as $value) {
-                                if (is_null($value)) {
-                                    $values[] = 'NULL';
-                                } else {
-                                    $values[] = $pdo->quote($value);
-                                }
+                        $values = [];
+                        foreach ((array) $row as $value) {
+                            if (is_null($value)) {
+                                $values[] = 'NULL';
+                            } else {
+                                $values[] = $pdo->quote($value);
                             }
-
-                            $columns = implode('`, `', array_keys((array)$row));
-                            fwrite($handle, "INSERT INTO `{$tableName}` (`{$columns}`) VALUES (" . implode(', ', $values) . ");\n");
                         }
+
+                        $columns = implode('`, `', array_keys((array) $row));
+                        fwrite($handle, "INSERT INTO `{$tableName}` (`{$columns}`) VALUES (".implode(', ', $values).");\n");
+                    }
 
                     fwrite($handle, "\n");
                     // log progress for large tables optionally
@@ -142,14 +141,14 @@ class BackupController extends Controller
                 "Admin membuat backup database: {$filename}"
             );
 
-            return back()->with('success', 'Backup berhasil dibuat: ' . $filename);
+            return back()->with('success', 'Backup berhasil dibuat: '.$filename);
         } catch (\Exception $e) {
             Log::error('Backup create failed', [
                 'error' => $e->getMessage(),
                 'exception' => $e,
             ]);
 
-            return back()->with('error', 'Gagal membuat backup: ' . $e->getMessage());
+            return back()->with('error', 'Gagal membuat backup: '.$e->getMessage());
         }
     }
 
@@ -159,12 +158,12 @@ class BackupController extends Controller
     public function download(Request $request)
     {
         $filename = $request->input('filename');
-        
+
         // Sanitize filename to prevent path traversal
         $filename = basename($filename);
-        $filePath = 'backups/' . $filename;
+        $filePath = 'backups/'.$filename;
 
-        if (!Storage::disk('local')->exists($filePath)) {
+        if (! Storage::disk('local')->exists($filePath)) {
             Log::warning('Backup download: file not found', ['file' => $filePath]);
             abort(404, 'File backup tidak ditemukan.');
         }
@@ -188,10 +187,11 @@ class BackupController extends Controller
     public function destroy(Request $request)
     {
         $filename = $request->input('filename');
-        $filePath = 'backups/' . $filename;
+        $filePath = 'backups/'.$filename;
 
-        if (!Storage::disk('local')->exists($filePath)) {
+        if (! Storage::disk('local')->exists($filePath)) {
             Log::warning('Backup delete: file not found', ['file' => $filePath]);
+
             return back()->with('error', 'File backup tidak ditemukan.');
         }
 
@@ -224,9 +224,9 @@ class BackupController extends Controller
             $file = $request->file('backup_file');
             Log::info('Backup restore: received upload', ['original_name' => $file->getClientOriginalName(), 'size' => $file->getSize()]);
             $tempPath = $file->store('temp');
-            $fullPath = storage_path('app/' . $tempPath);
+            $fullPath = storage_path('app/'.$tempPath);
 
-            if (!file_exists($fullPath) || filesize($fullPath) === 0) {
+            if (! file_exists($fullPath) || filesize($fullPath) === 0) {
                 // Clean up temp file
                 Storage::disk('local')->delete($tempPath);
                 Log::error('Backup restore: uploaded file empty or missing', ['path' => $fullPath]);
@@ -269,6 +269,9 @@ class BackupController extends Controller
 
             fclose($handle);
 
+            // Re-enable foreign key checks after successful restore
+            DB::statement('SET FOREIGN_KEY_CHECKS=1');
+
             // Clean up temp file
             Storage::disk('local')->delete($tempPath);
 
@@ -290,8 +293,8 @@ class BackupController extends Controller
             } catch (\Exception $ignored) {
                 // Ignore if connection is lost
             }
-            
-            return back()->with('error', 'Gagal restore database: ' . $e->getMessage());
+
+            return back()->with('error', 'Gagal restore database: '.$e->getMessage());
         }
     }
 }

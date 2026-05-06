@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Client;
+use App\Models\ReleaseDateLog;
 use App\Models\Task;
 use App\Models\TaskComment;
 use App\Models\TaskTemplate;
@@ -11,6 +12,7 @@ use App\Models\User;
 use App\Services\ActivityLogger;
 use App\Services\NotificationService;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
@@ -34,48 +36,7 @@ class TaskController extends Controller
             $query->where('assigned_to', $user->id);
         }
 
-        // Menerapkan Filter Berjenjang
-        if ($request->filled('product_id')) {
-            $query->where('product_id', $request->product_id);
-        }
-        if ($request->filled('client_id')) {
-            $query->where('client_id', $request->client_id);
-        }
-        if ($request->filled('engineer_id')) {
-            $query->where('engineer_id', $request->engineer_id);
-        }
-        if ($request->filled('category')) {
-            $query->where('category', $request->category);
-        }
-        if ($request->filled('status')) {
-            $query->where('status', $request->status);
-        }
-        if ($request->filled('has_link')) {
-            if ($request->has_link === 'yes') {
-                $query->whereNotNull('task_url')
-                    ->where('task_url', '!=', '')
-                    ->where('task_url', '!=', '-');
-            } else {
-                $query->where(function ($q) {
-                    $q->whereNull('task_url')
-                        ->orWhere('task_url', '')
-                        ->orWhere('task_url', '-');
-                });
-            }
-        }
-        if ($request->filled('date_from')) {
-            $query->whereDate('release_date', '>=', $request->date_from);
-        }
-        if ($request->filled('date_to')) {
-            $query->whereDate('release_date', '<=', $request->date_to);
-        }
-        if ($request->filled('search')) {
-            $search = $request->search;
-            $query->where(function ($q) use ($search) {
-                $q->where('title', 'like', "%{$search}%")
-                    ->orWhere('modul', 'like', "%{$search}%");
-            });
-        }
+        $this->applyTaskFilters($query, $request);
 
         $tasks = $query->latest()->paginate(10)->withQueryString();
         $tasks->through(function (Task $task) use ($user) {
@@ -256,6 +217,22 @@ class TaskController extends Controller
 
         $oldValues = $task->getOriginal();
         $previousAssigneeId = $task->assigned_to;
+
+        // Log perubahan release_date jika berubah
+        $oldReleaseDate = $task->release_date?->toDateString();
+        $newReleaseDate = $validated['release_date'] ?? null;
+        if ($oldReleaseDate !== $newReleaseDate) {
+            /** @var User $user */
+            $user = $request->user();
+            ReleaseDateLog::create([
+                'task_id' => $task->id,
+                'changed_by' => $user->id,
+                'old_date' => $oldReleaseDate,
+                'new_date' => $newReleaseDate,
+                'reason' => $request->input('release_date_reason'),
+            ]);
+        }
+
         $task->update($validated);
         $task->loadMissing('client');
 
@@ -442,13 +419,51 @@ class TaskController extends Controller
 
         /** @var User $user */
         $user = $request->user();
-        $query = Task::with(['client', 'product', 'engineer', 'assignee', 'sla']);
+        $query = Task::with(['client', 'product', 'engineer', 'assignee', 'creator', 'sla']);
 
         if ($user->isMember()) {
             $query->where('assigned_to', $user->id);
         }
 
-        // Menerapkan Filter Berjenjang
+        $this->applyTaskFilters($query, $request);
+
+        $tasks = $query->latest()->get();
+
+        ActivityLogger::log('exported', 'task', null, 'Daftar Task', 'Mengunduh laporan excel daftar task');
+
+        $writer = SimpleExcelWriter::streamDownload('laporan_task_'.date('Y-m-d_His').'.xlsx');
+
+        foreach ($tasks as $task) {
+            $writer->addRow([
+                'ID' => $task->id,
+                'Judul Task' => $task->title,
+                'Deskripsi' => $task->description,
+                'Product' => $task->product?->name ?? '-',
+                'Client / Faskes' => $task->client?->name ?? '-',
+                'Modul / Fitur' => $task->modul ?? '-',
+                'URL' => $task->task_url === '-' ? '' : $task->task_url,
+                'Jenis' => $task->category,
+                'Prioritas' => $task->priority,
+                'Status' => $task->status,
+                'SLA Status' => strtoupper(str_replace('_', ' ', $task->sla_status)),
+                'Engineer' => $task->engineer?->name ?? '-',
+                'Assignee' => $task->assignee?->name ?? '-',
+                'Tanggal Release' => $task->release_date ? Carbon::parse($task->release_date)->format('d M Y') : '-',
+                'Tanggal Selesai' => $task->completed_at ? Carbon::parse($task->completed_at)->format('d M Y') : '-',
+                'Dibuat Oleh' => $task->creator?->name ?? '-',
+            ]);
+        }
+
+        return $writer->toBrowser();
+    }
+
+    /**
+     * Apply shared task filters to a query builder.
+     *
+     * @param  Builder<Task>  $query
+     */
+    private function applyTaskFilters($query, Request $request): void
+    {
         if ($request->filled('product_id')) {
             $query->where('product_id', $request->product_id);
         }
@@ -490,34 +505,5 @@ class TaskController extends Controller
                     ->orWhere('modul', 'like', "%{$search}%");
             });
         }
-
-        $tasks = $query->latest()->get();
-
-        ActivityLogger::log('exported', 'task', null, 'Daftar Task', 'Mengunduh laporan excel daftar task');
-
-        $writer = SimpleExcelWriter::streamDownload('laporan_task_'.date('Y-m-d_His').'.xlsx');
-
-        foreach ($tasks as $task) {
-            $writer->addRow([
-                'ID' => $task->id,
-                'Judul Task' => $task->title,
-                'Deskripsi' => $task->description,
-                'Product' => $task->product?->name ?? '-',
-                'Client / Faskes' => $task->client?->name ?? '-',
-                'Modul / Fitur' => $task->modul ?? '-',
-                'URL' => $task->task_url === '-' ? '' : $task->task_url,
-                'Jenis' => $task->category,
-                'Prioritas' => $task->priority,
-                'Status' => $task->status,
-                'SLA Status' => strtoupper(str_replace('_', ' ', $task->sla_status)),
-                'Engineer' => $task->engineer?->name ?? '-',
-                'Assignee' => $task->assignee?->name ?? '-',
-                'Tanggal Release' => $task->release_date ? Carbon::parse($task->release_date)->format('d M Y') : '-',
-                'Tanggal Selesai' => $task->completed_at ? Carbon::parse($task->completed_at)->format('d M Y') : '-',
-                'Dibuat Oleh' => $task->creator?->name ?? '-',
-            ]);
-        }
-
-        return $writer->toBrowser();
     }
 }

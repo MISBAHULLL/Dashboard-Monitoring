@@ -176,7 +176,13 @@ const getPriorityClasses = (priority: TaskPriority): string => {
 
       <!-- Content -->
       <div v-else class="overflow-x-auto">
-        <table class="w-full text-left text-sm">
+        <table 
+          class="w-full text-left text-sm"
+          :aria-label="config.title"
+        >
+          <caption class="sr-only">
+            {{ config.description }}
+          </caption>
           <thead class="bg-muted/50 text-muted-foreground border-b border-border">
             <tr>
               <th class="py-3 px-4 font-medium">Faskes / Client</th>

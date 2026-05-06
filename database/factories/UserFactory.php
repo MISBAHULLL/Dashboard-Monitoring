@@ -29,6 +29,8 @@ class UserFactory extends Factory
             'email' => fake()->unique()->safeEmail(),
             'email_verified_at' => now(),
             'password' => static::$password ??= Hash::make('password'),
+            'role' => 'admin',
+            'is_active' => true,
             'remember_token' => Str::random(10),
             'two_factor_secret' => null,
             'two_factor_recovery_codes' => null,
@@ -55,6 +57,26 @@ class UserFactory extends Factory
             'two_factor_secret' => encrypt('secret'),
             'two_factor_recovery_codes' => encrypt(json_encode(['recovery-code-1'])),
             'two_factor_confirmed_at' => now(),
+        ]);
+    }
+
+    /**
+     * Create user with admin role.
+     */
+    public function admin(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'role' => 'admin',
+        ]);
+    }
+
+    /**
+     * Create user with member role.
+     */
+    public function member(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'role' => 'member',
         ]);
     }
 }

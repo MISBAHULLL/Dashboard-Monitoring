@@ -16,6 +16,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
+use Spatie\SimpleExcel\SimpleExcelReader;
 use Spatie\SimpleExcel\SimpleExcelWriter;
 
 class TaskController extends Controller
@@ -239,6 +240,9 @@ class TaskController extends Controller
         $this->notificationService->notifyTaskAssignment($task, $previousAssigneeId);
 
         if ($validated['status'] !== ($oldValues['status'] ?? null)) {
+            /** @var User $currentUser */
+            $currentUser = $request->user();
+            $this->notificationService->notifyStatusChanged($task, $oldValues['status'] ?? 'open', $validated['status'], $currentUser);
             ActivityLogger::statusChanged('task', $task->id, $task->title, $oldValues['status'] ?? 'open', $validated['status']);
         }
 
@@ -326,6 +330,10 @@ class TaskController extends Controller
         $oldStatus = $task->status;
         $task->update($validated);
 
+        /** @var User $user */
+        $user = $request->user();
+        $this->notificationService->notifyStatusChanged($task, $oldStatus, $validated['status'], $user);
+
         ActivityLogger::statusChanged('task', $task->id, $task->title, $oldStatus, $validated['status']);
 
         return back();
@@ -378,6 +386,7 @@ class TaskController extends Controller
                 }
 
                 $task->update($updateData);
+                $this->notificationService->notifyStatusChanged($task, $oldStatus, $request->status, $user);
                 ActivityLogger::statusChanged('task', $task->id, $task->title, $oldStatus, $request->status);
             }
         }
@@ -505,5 +514,137 @@ class TaskController extends Controller
                     ->orWhere('modul', 'like', "%{$search}%");
             });
         }
+    }
+
+    /**
+     * Import tasks from an Excel/CSV file.
+     */
+    public function import(Request $request)
+    {
+        $this->authorize('create', Task::class);
+
+        $request->validate([
+            'file' => ['required', 'file', 'mimes:xlsx,xls,csv', 'max:5120'],
+        ]);
+
+        /** @var User $user */
+        $user = $request->user();
+
+        $file = $request->file('file');
+        $path = $file->storeAs('imports', 'import_'.time().'.'.$file->getClientOriginalExtension(), 'local');
+        $fullPath = storage_path('app/private/'.$path);
+
+        // Pre-load lookup maps for name-to-id resolution
+        $clientMap = Client::pluck('id', 'name')->mapWithKeys(fn ($id, $name) => [strtolower(trim($name)) => $id]);
+        $productMap = Team::where('type', 'PRODUCT')->pluck('id', 'name')->mapWithKeys(fn ($id, $name) => [strtolower(trim($name)) => $id]);
+        $engineerMap = Team::where('type', 'ENGINEER')->pluck('id', 'name')->mapWithKeys(fn ($id, $name) => [strtolower(trim($name)) => $id]);
+
+        $validCategories = ['Fitur Berbayar', 'Regulasi', 'Saran Fitur', 'Prioritas'];
+        $validPriorities = ['urgent', 'high', 'medium', 'low'];
+        $validStatuses = ['open', 'in_progress', 'revision', 'completed'];
+
+        $imported = 0;
+        $skipped = 0;
+        $errors = [];
+
+        $rows = SimpleExcelReader::create($fullPath)->getRows();
+
+        foreach ($rows as $index => $row) {
+            $rowNumber = $index + 2; // +2 because index is 0-based and header is row 1
+
+            $title = trim($row['Judul Task'] ?? $row['title'] ?? '');
+            if (empty($title)) {
+                $skipped++;
+                $errors[] = "Baris {$rowNumber}: Judul task kosong, dilewati.";
+
+                continue;
+            }
+
+            // Resolve client by name
+            $rawClientName = $row['Client / Faskes'] ?? $row['client'] ?? '';
+            $clientName = strtolower(trim($rawClientName));
+            $clientId = $clientMap[$clientName] ?? null;
+            if (! $clientId) {
+                $skipped++;
+                $errors[] = "Baris {$rowNumber}: Client '{$rawClientName}' tidak ditemukan.";
+
+                continue;
+            }
+
+            // Resolve product by name
+            $rawProductName = $row['Product'] ?? $row['product'] ?? '';
+            $productName = strtolower(trim($rawProductName));
+            $productId = $productMap[$productName] ?? null;
+            if (! $productId) {
+                $skipped++;
+                $errors[] = "Baris {$rowNumber}: Product '{$rawProductName}' tidak ditemukan.";
+
+                continue;
+            }
+
+            // Resolve engineer (optional)
+            $engineerName = strtolower(trim($row['Engineer'] ?? $row['engineer'] ?? ''));
+            $engineerId = ($engineerName && $engineerName !== '-') ? ($engineerMap[$engineerName] ?? null) : null;
+
+            // Category validation
+            $category = trim($row['Jenis'] ?? $row['category'] ?? 'Saran Fitur');
+            if (! in_array($category, $validCategories)) {
+                $category = 'Saran Fitur';
+            }
+
+            // Priority validation
+            $priority = strtolower(trim($row['Prioritas'] ?? $row['priority'] ?? 'medium'));
+            if (! in_array($priority, $validPriorities)) {
+                $priority = 'medium';
+            }
+
+            // Status validation
+            $status = strtolower(trim($row['Status'] ?? $row['status'] ?? 'open'));
+            if (! in_array($status, $validStatuses)) {
+                $status = 'open';
+            }
+
+            // Parse release date
+            $releaseDate = null;
+            $rawDate = trim($row['Tanggal Release'] ?? $row['release_date'] ?? '');
+            if ($rawDate && $rawDate !== '-') {
+                try {
+                    $releaseDate = Carbon::parse($rawDate)->format('Y-m-d');
+                } catch (\Exception) {
+                    // Invalid date, skip
+                }
+            }
+
+            Task::create([
+                'title' => $title,
+                'description' => trim($row['Deskripsi'] ?? $row['description'] ?? '') ?: null,
+                'modul' => trim($row['Modul / Fitur'] ?? $row['modul'] ?? '') ?: null,
+                'task_url' => trim($row['URL'] ?? $row['task_url'] ?? '') ?: '-',
+                'category' => $category,
+                'priority' => $priority,
+                'status' => $status,
+                'client_id' => $clientId,
+                'product_id' => $productId,
+                'engineer_id' => $engineerId,
+                'release_date' => $releaseDate,
+                'completed_at' => $status === 'completed' ? now() : null,
+                'created_by' => $user->id,
+            ]);
+
+            $imported++;
+        }
+
+        // Cleanup
+        @unlink($fullPath);
+
+        ActivityLogger::log('imported', 'task', null, 'Import Task', "Import {$imported} task dari file: {$file->getClientOriginalName()}");
+
+        $message = "Berhasil mengimport {$imported} task.";
+        if ($skipped > 0) {
+            $message .= " {$skipped} baris dilewati.";
+        }
+
+        return back()->with('success', $message)
+            ->with('import_errors', $errors);
     }
 }

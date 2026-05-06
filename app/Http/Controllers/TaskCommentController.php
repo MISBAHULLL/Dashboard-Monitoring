@@ -4,12 +4,18 @@ namespace App\Http\Controllers;
 
 use App\Models\Task;
 use App\Models\TaskComment;
+use App\Models\User;
 use App\Services\ActivityLogger;
+use App\Services\NotificationService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 
 class TaskCommentController extends Controller
 {
+    public function __construct(
+        protected NotificationService $notificationService,
+    ) {}
+
     public function store(Request $request, Task $task): RedirectResponse
     {
         $this->authorize('view', $task);
@@ -19,12 +25,17 @@ class TaskCommentController extends Controller
             'body' => ['required', 'string', 'max:5000'],
         ]);
 
+        /** @var User $user */
+        $user = $request->user();
+
         /** @var TaskComment $comment */
         $comment = $task->comments()->create([
-            'user_id' => $request->user()->id,
+            'user_id' => $user->id,
             'body' => $validated['body'],
             'is_pinned' => false,
         ]);
+
+        $this->notificationService->notifyNewComment($task, $user);
 
         ActivityLogger::created(
             'task',

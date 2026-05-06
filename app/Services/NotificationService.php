@@ -4,13 +4,16 @@ namespace App\Services;
 
 use App\Models\Notification;
 use App\Models\Task;
+use App\Models\User;
 use Carbon\CarbonImmutable;
-use Illuminate\Support\Collection;
 
 class NotificationService
 {
     public const DUE_SOON_DAYS = 3;
 
+    /**
+     * Notify the assigned user when a task is assigned or reassigned.
+     */
     public function notifyTaskAssignment(Task $task, ?int $previousAssigneeId = null): void
     {
         if (! $task->assigned_to || $task->assigned_to === $previousAssigneeId) {
@@ -31,6 +34,97 @@ class NotificationService
         ]);
     }
 
+    /**
+     * Notify relevant users when a task's status changes.
+     * - If admin changes status → notify the assignee
+     * - If member changes status → notify all admins
+     */
+    public function notifyStatusChanged(Task $task, string $oldStatus, string $newStatus, User $changedBy): void
+    {
+        if ($oldStatus === $newStatus) {
+            return;
+        }
+
+        $statusLabels = [
+            'open' => 'Belum Di Cek',
+            'in_progress' => 'Dalam Proses',
+            'revision' => 'Revisi',
+            'completed' => 'Selesai',
+        ];
+
+        $newLabel = $statusLabels[$newStatus] ?? $newStatus;
+        $oldLabel = $statusLabels[$oldStatus] ?? $oldStatus;
+
+        // If the changer is admin → notify the assignee
+        if ($changedBy->isAdmin() && $task->assigned_to && $task->assigned_to !== $changedBy->id) {
+            Notification::create([
+                'user_id' => $task->assigned_to,
+                'type' => 'status_changed',
+                'title' => "Status task diubah ke {$newLabel}",
+                'body' => sprintf(
+                    'Task "%s" diubah dari %s → %s oleh %s.',
+                    $task->title,
+                    $oldLabel,
+                    $newLabel,
+                    $changedBy->name
+                ),
+                'link' => route('tasks.show', $task),
+                'is_read' => false,
+            ]);
+        }
+
+        // If the changer is member → notify all admins
+        if ($changedBy->isMember()) {
+            $admins = User::where('role', 'admin')
+                ->where('is_active', true)
+                ->where('id', '!=', $changedBy->id)
+                ->pluck('id');
+
+            foreach ($admins as $adminId) {
+                Notification::create([
+                    'user_id' => $adminId,
+                    'type' => 'status_changed',
+                    'title' => "Status task diubah ke {$newLabel}",
+                    'body' => sprintf(
+                        'Task "%s" diubah dari %s → %s oleh %s.',
+                        $task->title,
+                        $oldLabel,
+                        $newLabel,
+                        $changedBy->name
+                    ),
+                    'link' => route('tasks.show', $task),
+                    'is_read' => false,
+                ]);
+            }
+        }
+    }
+
+    /**
+     * Notify the task assignee when a new comment is added (unless they are the commenter).
+     */
+    public function notifyNewComment(Task $task, User $commenter): void
+    {
+        if (! $task->assigned_to || $task->assigned_to === $commenter->id) {
+            return;
+        }
+
+        Notification::create([
+            'user_id' => $task->assigned_to,
+            'type' => 'new_comment',
+            'title' => 'Komentar baru pada task Anda',
+            'body' => sprintf(
+                '%s menambahkan komentar pada task "%s".',
+                $commenter->name,
+                $task->title
+            ),
+            'link' => route('tasks.show', $task),
+            'is_read' => false,
+        ]);
+    }
+
+    /**
+     * Send notifications for tasks with approaching deadlines.
+     */
     public function sendDueSoonNotifications(int $daysAhead = self::DUE_SOON_DAYS): int
     {
         $today = CarbonImmutable::today();

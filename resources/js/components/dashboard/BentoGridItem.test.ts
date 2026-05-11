@@ -3,8 +3,6 @@
  *
  * Tests the BentoGridItem wrapper component for proper CSS Grid column span
  * class application and responsive breakpoint variants.
- *
- * @see Requirements: 1.1
  */
 
 import { describe, it, expect } from 'vitest'

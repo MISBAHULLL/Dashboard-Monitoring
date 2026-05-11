@@ -502,3 +502,25 @@
         display: none !important;
     }
 }
+
+/* ─────────────────────────────────────────────────────────────
+   Dashboard Bento Grid — custom column template
+   Harus di luar @layer dan pakai !important agar menang
+   terhadap Tailwind utility classes (grid-cols-1, md:grid-cols-2).
+   Ubah nilai 1.6fr untuk mengatur lebar kolom hero.
+───────────────────────────────────────────────────────────── */
+.dashboard-grid {
+    grid-template-columns: 1fr !important;
+}
+
+@media (min-width: 768px) {
+    .dashboard-grid {
+        grid-template-columns: 1fr 1fr !important;
+    }
+}
+
+@media (min-width: 1024px) {
+    .dashboard-grid {
+        grid-template-columns: 2fr 1fr 1fr 1fr !important;
+    }
+}

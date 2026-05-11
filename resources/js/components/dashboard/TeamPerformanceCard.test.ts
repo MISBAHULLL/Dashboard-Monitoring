@@ -5,7 +5,7 @@
  * team data display, completion rate badges, empty states, loading states,
  * and semantic HTML structure.
  *
- * @see Requirements: 6.1-6.5, 16.1-16.5
+ * @see
  */
 
 import { describe, it, expect } from 'vitest'

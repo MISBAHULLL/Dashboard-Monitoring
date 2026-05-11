@@ -8,8 +8,6 @@ import type { GridSpan } from '@/types/dashboard';
  * An individual grid item with configurable span for asymmetric layout.
  * This component wraps content and applies CSS Grid column span classes
  * to create the bento box-style asymmetric grid pattern.
- *
- * @see Requirements: 1.1, 1.4
  */
 
 interface Props {

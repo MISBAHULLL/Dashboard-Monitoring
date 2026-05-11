@@ -4,7 +4,6 @@
  * Tests the ChartCard component for proper rendering with props,
  * chart type variants, loading states, and accessibility.
  *
- * @see Requirements: 5.1, 5.2, 5.5, 12.4
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest'

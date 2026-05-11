@@ -1,13 +1,12 @@
 <script setup lang="ts">
 import { Head } from '@inertiajs/vue3';
+import { computed } from 'vue';
+import { usePage } from '@inertiajs/vue3';
 import { dashboard } from '@/routes';
 import { index as tasksIndex } from '@/routes/tasks';
-import { Users, Building2, ListTodo, AlertCircle, Clock } from 'lucide-vue-next';
+import { Users, Building2, ListTodo, Clock } from 'lucide-vue-next';
 import type { ApexOptions } from 'apexcharts';
 
-// Import Bento Grid components
-import BentoGrid from '@/components/dashboard/BentoGrid.vue';
-import BentoGridItem from '@/components/dashboard/BentoGridItem.vue';
 import HeroCard from '@/components/dashboard/HeroCard.vue';
 import StatCard from '@/components/dashboard/StatCard.vue';
 import ActionsCard from '@/components/dashboard/ActionsCard.vue';
@@ -16,7 +15,6 @@ import ChartCard from '@/components/dashboard/ChartCard.vue';
 import TeamPerformanceCard from '@/components/dashboard/TeamPerformanceCard.vue';
 import TaskListCard from '@/components/dashboard/TaskListCard.vue';
 
-// 1. Menerima data dari Controller
 const props = defineProps<{
     stats: {
         total_tasks: number;
@@ -66,18 +64,16 @@ const props = defineProps<{
     }>;
 }>();
 
-// Konfigurasi Donut Chart
 const donutOptions: ApexOptions = {
     chart: { type: 'donut', fontFamily: 'inherit' },
     labels: ['Open', 'In Progress', 'Revisi', 'Completed'],
     colors: ['#f59e0b', '#3b82f6', '#ef4444', '#10b981'],
     plotOptions: { pie: { donut: { size: '70%' } } },
     dataLabels: { enabled: false },
-    legend: { position: 'bottom' }
+    legend: { position: 'bottom', fontSize: '11px' }
 };
 const donutSeries = props.chart_donut;
 
-// Konfigurasi Area Chart
 const areaOptions: ApexOptions = {
     chart: { type: 'area', fontFamily: 'inherit', toolbar: { show: false } },
     colors: ['#0ea5e9'],
@@ -89,29 +85,19 @@ const areaOptions: ApexOptions = {
         gradient: { shadeIntensity: 1, opacityFrom: 0.7, opacityTo: 0.1, stops: [0, 90, 100] }
     }
 };
-const areaSeries = [{
-    name: 'Task Dibuat',
-    data: props.chart_area.data
-}];
+const areaSeries = [{ name: 'Task Dibuat', data: props.chart_area.data }];
 
-// Chart data for hero mini bar chart (last 7 days)
-const heroChartData = computed(() => {
-    return props.chart_area.data.slice(-7);
-});
+const heroChartData = computed(() => props.chart_area.data.slice(-6));
 
-// 2. Mengatur Breadcrumbs (Navigasi Header)
+// Ambil nama user yang sedang login dari Inertia shared props
+const page = usePage();
+const authUserName = computed(() => (page.props.auth as any)?.user?.name ?? 'User');
+
 defineOptions({
     layout: {
-        breadcrumbs: [
-            {
-                title: 'Dashboard',
-                href: dashboard(),
-            },
-        ],
+        breadcrumbs: [{ title: 'Dashboard', href: dashboard() }],
     },
 });
-
-import { computed } from 'vue';
 </script>
 
 <template>
@@ -119,17 +105,17 @@ import { computed } from 'vue';
 
     <div
         id="main-content"
-        class="flex h-full flex-1 flex-col gap-5 overflow-x-auto rounded-xl p-4 md:p-6"
+        class="flex h-full flex-1 flex-col gap-3 overflow-x-auto rounded-xl p-3 md:p-4"
         role="main"
         aria-label="Dashboard Admin"
     >
-        <!-- Bento Grid Layout - 4 columns on large screens -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 auto-rows-min">
+        <!-- Bento Grid — kolom diatur via .dashboard-grid di app.css -->
+        <div class="dashboard-grid grid gap-3 auto-rows-[120px]">
 
-            <!-- ROW 1 LEFT: Hero Card (spans 2 columns) -->
-            <div class="col-span-1 md:col-span-2 lg:col-span-2 row-span-2">
+            <!-- HERO (narrow + tall): col-span-1, row-span-5 = 600px tall, 25% width -->
+            <div class="col-span-1 md:col-span-1 lg:col-span-1 row-span-5">
                 <HeroCard
-                    user-name="Admin PO"
+                    :user-name="authUserName"
                     :pending-count="stats.open_tasks"
                     :overdue-count="overdue_count"
                     :total-tasks="stats.total_tasks"
@@ -137,8 +123,8 @@ import { computed } from 'vue';
                 />
             </div>
 
-            <!-- ROW 1 RIGHT: Task Due Soon (top right) -->
-            <div class="col-span-1">
+            <!-- Task Due Soon (row 1-2, col 2) -->
+            <div class="col-span-1 row-span-2">
                 <DeadlineAlertCard
                     type="due_soon"
                     :count="due_soon_count"
@@ -147,28 +133,28 @@ import { computed } from 'vue';
                 />
             </div>
 
-            <!-- ROW 1 RIGHT: Rasio Status Task - Donut Chart (top right) -->
-            <div class="col-span-1">
+            <!-- Donut (row 1-2, col 3) -->
+            <div class="col-span-1 row-span-2">
                 <ChartCard
                     title="Rasio Status Task"
                     chartType="donut"
                     :options="donutOptions"
                     :series="donutSeries"
-                    :height="200"
+                    :height="160"
                 />
             </div>
 
-            <!-- ROW 2 RIGHT: Actions Card (middle right) -->
-            <div class="col-span-1">
+            <!-- Actions (row 1-2, col 4) -->
+            <div class="col-span-1 row-span-2">
                 <ActionsCard />
             </div>
 
-            <!-- ROW 2 RIGHT: Stats Grid in Green Container (bottom right - spans full width of right side) -->
-            <div class="col-span-1 md:col-span-2 lg:col-span-2">
+            <!-- Stats 2x2 green container (row 3-4, col 2-4 span-3) -->
+            <div class="col-span-1 md:col-span-2 lg:col-span-3 row-span-2">
                 <div
-                    class="relative overflow-hidden rounded-xl border-2 border-tm-green bg-tm-green-pale/60 p-3 shadow-[3px_3px_0_0_rgba(43,174,110,0.15)] dark:bg-tm-green/10 dark:border-tm-green/50"
+                    class="relative h-full overflow-hidden rounded-xl border-2 border-tm-green bg-tm-green-pale/60 p-2 shadow-[2px_2px_0_0_rgba(43,174,110,0.15)] dark:bg-tm-green/10 dark:border-tm-green/50"
                 >
-                    <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-2 h-full">
                         <StatCard
                             label="Total Tasks"
                             :value="stats.total_tasks"
@@ -186,7 +172,7 @@ import { computed } from 'vue';
                             compact
                         />
                         <StatCard
-                            label="Menunggu Dikerjakan"
+                            label="Menunggu"
                             :value="stats.open_tasks"
                             :icon="Clock"
                             colorTheme="amber"
@@ -207,8 +193,8 @@ import { computed } from 'vue';
                 </div>
             </div>
 
-            <!-- ROW 3 LEFT: Task Overdue -->
-            <div class="col-span-1">
+            <!-- Task Overdue (row 5-6, col 1-2) -->
+            <div class="col-span-1 md:col-span-2 lg:col-span-2 row-span-2">
                 <DeadlineAlertCard
                     type="overdue"
                     :count="overdue_count"
@@ -217,29 +203,28 @@ import { computed } from 'vue';
                 />
             </div>
 
-            <!-- ROW 3 RIGHT: Tren Task 7 Days (spans 3 columns) -->
-            <div class="col-span-1 md:col-span-1 lg:col-span-3">
+            <!-- Tren Task 7 Days (row 5-6, col 3-4) -->
+            <div class="col-span-1 md:col-span-2 lg:col-span-2 row-span-2">
                 <ChartCard
                     title="Tren Task 7 Days"
-                    subtitle="Perkembangan pembuatan task per minggu"
+                    subtitle="Perkembangan pembuatan task"
                     chartType="area"
                     :options="areaOptions"
                     :series="areaSeries"
-                    :height="260"
+                    :height="200"
                 />
             </div>
 
-            <!-- ROW 4 LEFT: Ringkasan Performa Team -->
-            <div class="col-span-1 md:col-span-1 lg:col-span-2">
+            <!-- Ringkasan Performa Team (row 7-9, col 1-2) -->
+            <div class="col-span-1 md:col-span-1 lg:col-span-2 row-span-3">
                 <TeamPerformanceCard :teams="team_performance" />
             </div>
 
-            <!-- ROW 4 RIGHT: 5 Task Terbaru -->
-            <div class="col-span-1 md:col-span-1 lg:col-span-2">
+            <!-- 5 Task Terbaru (row 7-9, col 3-4) -->
+            <div class="col-span-1 md:col-span-1 lg:col-span-2 row-span-3">
                 <TaskListCard variant="recent" :tasks="recent_tasks" />
             </div>
 
         </div>
-
     </div>
 </template>

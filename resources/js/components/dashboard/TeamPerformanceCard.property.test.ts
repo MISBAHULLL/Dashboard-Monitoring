@@ -10,7 +10,7 @@
  * - Verify rendered teams are sorted by total_tasks descending
  * - Verify maximum 10 teams displayed
  *
- * @see Requirements 6.5
+ * @see
  */
 
 import { describe, it, expect } from 'vitest'

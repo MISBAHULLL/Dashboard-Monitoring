@@ -75,7 +75,7 @@ class ClientController extends Controller
 
         ActivityLogger::deleted('client', $client->id, $client->name, "Menghapus faskes '{$client->name}'");
 
-        $client->forceDelete();
+        $client->Delete();
 
         return back()->with('success', 'Faskes / Client berhasil dihapus.');
     }

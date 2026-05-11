@@ -9,7 +9,6 @@
  * - Generate random colorTheme values
  * - Verify component has correct background, border, and text color classes
  *
- * @see Requirements: 2.3, 3.3, 3.4, 3.5, 8.2, 8.3, 8.4
  */
 
 import { describe, it, expect } from 'vitest'

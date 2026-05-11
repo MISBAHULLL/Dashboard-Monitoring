@@ -4,7 +4,6 @@
  * Tests the DeadlineAlertCard component for proper rendering with props,
  * urgency-to-color mapping, loading states, empty states, and accessibility.
  *
- * @see Requirements: 4.1, 4.2, 4.3, 4.4, 4.5, 4.7, 4.8, 14.1, 14.3
  */
 
 import { describe, it, expect } from 'vitest'

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { ref, computed } from 'vue';
 import { Head, Link, useForm } from '@inertiajs/vue3';
 import { ArrowLeft, Save } from 'lucide-vue-next';
 
@@ -18,6 +19,9 @@ const props = defineProps<{
 }>();
 
 // Inertia Form State (Otomatis terisi data lama)
+// Simpan tanggal awal untuk deteksi perubahan
+const originalReleaseDate = props.task.release_date ? props.task.release_date.split('T')[0] : '';
+
 const form = useForm({
     title: props.task.title || '',
     client_id: props.task.client_id || '',
@@ -30,8 +34,13 @@ const form = useForm({
     category: props.task.category || 'Saran Fitur',
     priority: props.task.priority || 'medium',
     status: props.task.status || 'open',
-    // Mengamankan format tanggal agar support kotak input date HTML
-    release_date: props.task.release_date ? props.task.release_date.split('T')[0] : '',
+    release_date: originalReleaseDate,
+    release_reason: '',
+});
+
+// Tampilkan textarea alasan hanya jika tanggal berubah
+const releaseDateChanged = computed(() => {
+    return originalReleaseDate !== '' && form.release_date !== originalReleaseDate;
 });
 
 const submitForm = () => {
@@ -174,6 +183,24 @@ const submitForm = () => {
                             </select>
                             <p v-if="form.errors.assigned_to" class="text-sm text-red-500">{{ form.errors.assigned_to }}</p>
                         </div>
+                    </div>
+
+                     <!-- Alasan perubahan tanggal (muncul hanya jika tanggal berubah) -->
+                    <div v-if="releaseDateChanged" class="space-y-2 rounded-lg border border-amber-300 bg-amber-50 dark:bg-amber-950/20 dark:border-amber-700 p-4">
+                        <Label for="release_reason" class="text-amber-800 dark:text-amber-300 font-medium">
+                            Alasan Perubahan Tanggal Release
+                        </Label>
+                        <p class="text-xs text-amber-600 dark:text-amber-400">
+                            Tanggal release berubah dari {{ originalReleaseDate }} ke {{ form.release_date }}. Mohon berikan alasan.
+                        </p>
+                        <Textarea
+                            id="release_reason"
+                            v-model="form.release_reason"
+                            rows="3"
+                            placeholder="Contoh: Permintaan faskes untuk menunda deployment..."
+                            class="border-amber-300"
+                        />
+                        <p v-if="form.errors.release_reason" class="text-sm text-red-500">{{ form.errors.release_reason }}</p>
                     </div>
 
                 </div>

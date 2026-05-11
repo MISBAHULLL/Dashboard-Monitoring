@@ -4,7 +4,6 @@
  * Tests the BentoGrid container component for proper CSS Grid layout,
  * responsive column classes, and gap configuration.
  *
- * @see Requirements: 1.2, 1.3
  */
 
 import { describe, it, expect } from 'vitest'
@@ -45,7 +44,6 @@ describe('BentoGrid', () => {
       const wrapper = mount(BentoGrid)
       const classes = wrapper.find('div').classes()
       expect(classes).toContain('gap-4')
-      expect(classes).toContain('md:gap-6')
     })
 
     it('renders slot content', () => {

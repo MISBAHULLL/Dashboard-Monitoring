@@ -278,22 +278,22 @@
 
 /* ─────────────────────────────────────────────────────────────
    Bento Grid Neo-Brutalism Utilities
-   Modern card styling with bold borders and subtle shadows
+   Modern card styling with bold borders and distinct shadows
 ───────────────────────────────────────────────────────────── */
 @layer utilities {
-    /* Base bento card styling */
+    /* Base bento card styling - bolder for design match */
     .bento-card {
-        @apply relative overflow-hidden rounded-xl border-[1.5px] p-6;
-        @apply shadow-[2px_2px_0_0_rgba(0,0,0,0.08)];
+        @apply relative overflow-hidden rounded-2xl border-2 p-6;
+        @apply shadow-[3px_3px_0_0_rgba(27,58,107,0.12)];
         @apply transition-all duration-200 ease-out;
-        @apply hover:shadow-[4px_4px_0_0_rgba(0,0,0,0.1)];
+        @apply hover:shadow-[5px_5px_0_0_rgba(27,58,107,0.15)];
         @apply hover:-translate-y-0.5;
     }
 
     /* Dark mode shadow adjustment */
     .dark .bento-card {
-        @apply shadow-[2px_2px_0_0_rgba(255,255,255,0.05)];
-        @apply hover:shadow-[4px_4px_0_0_rgba(255,255,255,0.08)];
+        @apply shadow-[3px_3px_0_0_rgba(27,58,107,0.25)];
+        @apply hover:shadow-[5px_5px_0_0_rgba(27,58,107,0.35)];
     }
 
     /* Color theme variants */
@@ -338,13 +338,134 @@
         @apply col-span-full;
     }
 
-    /* Icon container with neo-brutalism styling */
+    /* Icon container with nested neo-brutalism styling */
     .bento-icon-container {
-        @apply rounded-xl p-3 border-[1.5px];
+        @apply rounded-xl p-3 border-2;
+        @apply shadow-[2px_2px_0_0_rgba(27,58,107,0.08)];
+    }
+
+    /* Nested shadow for elements inside cards */
+    .bento-nested-shadow {
+        @apply shadow-[2px_2px_0_0_rgba(27,58,107,0.08)];
+        @apply dark:shadow-[2px_2px_0_0_rgba(255,255,255,0.05)];
     }
 
     /* Loading skeleton for bento cards */
     .bento-skeleton {
         @apply animate-pulse rounded bg-muted/50;
+    }
+
+    /* Trend badge styling */
+    .trend-badge-up {
+        @apply inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-xs font-semibold;
+        @apply bg-tm-green-pale text-tm-green-dark border border-tm-green;
+    }
+
+    .trend-badge-down {
+        @apply inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-xs font-semibold;
+        @apply bg-tm-danger-pale text-tm-danger border border-tm-danger;
+    }
+
+    /* Dark mode trend badges */
+    .dark .trend-badge-up {
+        @apply bg-tm-green/20 text-tm-green border-tm-green/50;
+    }
+
+    .dark .trend-badge-down {
+        @apply bg-tm-danger/20 text-tm-danger border-tm-danger/50;
+    }
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Sidebar Lucide (expanded) — navy rounded variant
+   Diterapkan via class `sidebar-lucide-navy` di root <Sidebar>.
+   Linear & profesional: ikon Lucide, label medium, proporsi compact.
+───────────────────────────────────────────────────────────── */
+@layer utilities {
+    /* Override --sidebar-width di ancestor wrapper supaya spacer +
+       fixed sidebar dapat nilai yang sama (cegah misalignment). */
+    [data-slot="sidebar-wrapper"]:has(.sidebar-lucide-navy) {
+        --sidebar-width: 17rem;            /* 272px */
+    }
+
+    .sidebar-lucide-navy {
+        --sidebar-lucide-bg: #093b70;      /* navy brand */
+        --sidebar-lucide-bg-hover: rgb(255 255 255 / 0.08);
+        --sidebar-lucide-bg-active: rgb(255 255 255 / 0.14);
+    }
+
+    .sidebar-lucide-navy [data-slot="sidebar-inner"],
+    .sidebar-lucide-navy [data-sidebar="sidebar"] {
+        background-color: var(--sidebar-lucide-bg);
+        border-radius: 1.75rem;            /* 28px — rounded modern */
+        padding-top: 0.5rem;
+        padding-bottom: 0.75rem;
+        overflow: hidden;
+    }
+
+    /* Satu baris navigasi — diterapkan pada SidebarMenuButton agar
+       spesifisitas CSS menang terhadap shadcn default. */
+    .sidebar-lucide-item {
+        @apply relative flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-white transition-colors;
+        @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60;
+        height: auto;                      /* override h-8 default */
+    }
+
+    .sidebar-lucide-item:hover {
+        background-color: var(--sidebar-lucide-bg-hover);
+    }
+
+    .sidebar-lucide-item[data-active="true"] {
+        background-color: var(--sidebar-lucide-bg-active);
+    }
+
+    /* Indikator aktif: strip vertikal kecil di kiri (modern linear look). */
+    .sidebar-lucide-item[data-active="true"]::before {
+        content: '';
+        position: absolute;
+        left: 0.25rem;
+        top: 25%;
+        bottom: 25%;
+        width: 3px;
+        border-radius: 9999px;
+        background-color: #2bae6e;        /* green brand */
+    }
+
+    .sidebar-lucide-icon {
+        width: 1.25rem;                    /* 20px */
+        height: 1.25rem;
+        color: #ffffff;
+    }
+
+    /* Override default shadcn `[&>svg]:size-4` (16px) agar ikon Lucide
+       kita tetap 20×20. `.sidebar-lucide-item > svg` punya specificity
+       (0,1,1) + urutan belakang → menang terhadap default shadcn. */
+    .sidebar-lucide-item > svg,
+    .sidebar-lucide-item > .sidebar-lucide-icon {
+        width: 1.25rem;
+        height: 1.25rem;
+    }
+
+    .sidebar-lucide-label {
+        font-family: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
+        font-weight: 600;
+        font-size: 0.9375rem;              /* 15px */
+        line-height: 1.3;
+        color: #ffffff;
+    }
+
+    /* Collapsed (icon-only) — sembunyikan label, strip indikator,
+       dan reset padding supaya ikon center. */
+    .sidebar-lucide-navy[data-state="collapsed"] .sidebar-lucide-label,
+    [data-collapsible="icon"] .sidebar-lucide-label {
+        display: none;
+    }
+
+    [data-collapsible="icon"] .sidebar-lucide-item[data-active="true"]::before {
+        display: none;
+    }
+
+    [data-collapsible="icon"] .sidebar-lucide-item {
+        @apply justify-center px-2;
     }
 }

@@ -12,3 +12,17 @@ export type NavItem = {
     icon?: LucideIcon;
     isActive?: boolean;
 };
+
+/**
+ * Navigation item untuk sidebar variant Lucide (linear, profesional).
+ *
+ * Berbeda dari {@link NavItem} — `icon` di sini wajib diisi komponen
+ * Lucide supaya rendering konsisten & bisa menerima stroke-width kustom.
+ */
+export interface NavItemLucide {
+    title: string;
+    href: NonNullable<InertiaLinkProps['href']>;
+    icon: LucideIcon;
+    /** Only shown for admin role (enforced at composer level, not here). */
+    adminOnly?: boolean;
+}

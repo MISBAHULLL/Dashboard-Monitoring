@@ -4,7 +4,6 @@
  * Tests the StatCard component for proper rendering with props,
  * color theme variants, loading states, hover animations, and accessibility.
  *
- * @see Requirements: 2.1, 2.3, 12.2
  */
 
 import { describe, it, expect } from 'vitest'
@@ -104,9 +103,13 @@ describe('StatCard', () => {
         },
       })
       const article = wrapper.find('article')
-      expect(article.classes()).toContain('rounded-xl')
-      expect(article.classes()).toContain('border-[1.5px]')
-      expect(article.classes()).toContain('p-6')
+      const classString = article.classes().join(' ')
+      // Check for base styling classes
+      expect(classString).toContain('relative')
+      expect(classString).toContain('overflow-hidden')
+      expect(classString).toContain('border-2')
+      // Normal mode should have p-6
+      expect(classString).toMatch(/\bp-6\b/)
     })
 
     it('applies shadow styles', () => {
@@ -208,10 +211,17 @@ describe('StatCard', () => {
           },
         })
 
-        const valueElement = wrapper.find('p.text-3xl')
-        expect(valueElement.exists()).toBe(true)
+        // Find all p elements and check for the value element
+        const pElements = wrapper.findAll('p')
+        // Value element should have font-bold and either text-3xl (normal) or text-xl (compact)
+        const valueElement = pElements.find(p => {
+          const text = p.text()
+          return text === '1' // The value we're looking for
+        })
+        expect(valueElement).toBeDefined()
         // Value element should have a text color class
-        const hasTextColor = valueElement.classes().some(c => c.startsWith('text-'))
+        const classString = valueElement!.classes().join(' ')
+        const hasTextColor = classString.split(' ').some(c => c.startsWith('text-'))
         expect(hasTextColor).toBe(true)
       })
     })
@@ -230,7 +240,7 @@ describe('StatCard', () => {
         })
 
         // Icon container should have theme classes
-        const iconContainer = wrapper.find('div.rounded-xl.p-3')
+        const iconContainer = wrapper.find('div.rounded-xl.border-2')
         expect(iconContainer.exists()).toBe(true)
         const hasIconBg = iconContainer.classes().some(c => c.includes('bg-tm-') || c.includes('bg-muted'))
         expect(hasIconBg).toBe(true)
@@ -636,9 +646,14 @@ describe('StatCard', () => {
           icon: MockIcon,
         },
       })
-      const valueElement = wrapper.find('p.text-3xl')
-      expect(valueElement.exists()).toBe(true)
-      expect(valueElement.classes()).toContain('font-bold')
+      // Find all p elements and check for the value element
+      const pElements = wrapper.findAll('p')
+      const valueElement = pElements.find(p => p.text() === '100')
+      expect(valueElement).toBeDefined()
+      const classString = valueElement!.classes().join(' ')
+      expect(classString).toContain('font-bold')
+      // Should have text-3xl for normal mode (not compact)
+      expect(classString).toContain('text-3xl')
     })
   })
 
@@ -663,8 +678,17 @@ describe('StatCard', () => {
           icon: MockIcon,
         },
       })
-      const iconContainer = wrapper.find('div.rounded-xl.p-3')
-      expect(iconContainer.exists()).toBe(true)
+      // Find all divs and check for icon container (the one with the icon)
+      const divs = wrapper.findAll('div')
+      const iconContainer = divs.find(d => {
+        // Icon container should have rounded-xl and border-2
+        const classString = d.classes().join(' ')
+        return classString.includes('rounded-xl') && classString.includes('border-2') && d.find('svg').exists()
+      })
+      expect(iconContainer).toBeDefined()
+      // Should have p-3 for normal mode (not compact)
+      const classString = iconContainer!.classes().join(' ')
+      expect(classString).toMatch(/\bp-3\b/)
     })
 
     it('has border on icon container', () => {
@@ -676,7 +700,7 @@ describe('StatCard', () => {
         },
       })
       const iconContainer = wrapper.find('div.rounded-xl')
-      expect(iconContainer.classes()).toContain('border-[1.5px]')
+      expect(iconContainer.classes()).toContain('border-2')
     })
 
     it('icon has correct size classes', () => {
@@ -688,8 +712,8 @@ describe('StatCard', () => {
         },
       })
       const icon = wrapper.find('svg')
-      expect(icon.classes()).toContain('h-6')
-      expect(icon.classes()).toContain('w-6')
+      expect(icon.classes()).toContain('h-5')
+      expect(icon.classes()).toContain('w-5')
     })
   })
 

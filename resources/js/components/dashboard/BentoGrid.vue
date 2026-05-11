@@ -9,7 +9,6 @@ import type { GridColumns } from '@/types/dashboard';
  * This component creates an asymmetric grid pattern inspired by Japanese bento boxes,
  * providing visual hierarchy and interest through varied card sizes.
  *
- * @see Requirements: 1.2, 1.3, 10.1, 10.2, 10.3
  */
 
 interface Props {
@@ -28,7 +27,7 @@ interface Props {
 
 const props = withDefaults(defineProps<Props>(), {
   columns: () => ({ default: 1, md: 2, lg: 4 }),
-  gap: 'gap-4 md:gap-6',
+  gap: 'gap-4',
 });
 
 /**

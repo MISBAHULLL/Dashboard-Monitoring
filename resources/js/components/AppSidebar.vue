@@ -1,58 +1,66 @@
 <script setup lang="ts">
-import { Link, usePage } from '@inertiajs/vue3';
-import { LayoutGrid, ListTodo, Users, Building2, UsersRound, Settings, Columns3, Activity, FileText, Database } from 'lucide-vue-next';
-import AppLogo from '@/components/AppLogo.vue';
-import NavFooter from '@/components/NavFooter.vue';
-import NavMain from '@/components/NavMain.vue';
+import { usePage } from '@inertiajs/vue3';
+import {
+    Building2,
+    FileText,
+    History,
+    KanbanSquare,
+    LayoutDashboard,
+    ListChecks,
+    Settings,
+    Users,
+    UserSquare2,
+} from 'lucide-vue-next';
+import { computed } from 'vue';
+
+import { index as activityLogsIndex } from '@/actions/App/Http/Controllers/ActivityLogController';
+import { index as clientsIndex } from '@/actions/App/Http/Controllers/ClientController';
+import { index as documentsIndex } from '@/actions/App/Http/Controllers/DocumentController';
+import { index as tasksIndex } from '@/actions/App/Http/Controllers/TaskController';
+import { index as teamsIndex } from '@/actions/App/Http/Controllers/TeamController';
+import { index as usersIndex } from '@/actions/App/Http/Controllers/UserController';
+
 import NavUser from '@/components/NavUser.vue';
+import SidebarBrandLogo from '@/components/sidebar-lucide/SidebarBrandLogo.vue';
+import SidebarNavLucide from '@/components/sidebar-lucide/SidebarNavLucide.vue';
 import {
     Sidebar,
     SidebarContent,
     SidebarFooter,
     SidebarHeader,
-    SidebarMenu,
-    SidebarMenuButton,
-    SidebarMenuItem,
 } from '@/components/ui/sidebar';
 
-// Import route generator otomatis dari Laravel Wayfinder
+// Route generator otomatis dari Laravel Wayfinder
 import { dashboard } from '@/routes';
-import { index as activityLogsIndex } from '@/actions/App/Http/Controllers/ActivityLogController';
-import { index as documentsIndex } from '@/actions/App/Http/Controllers/DocumentController';
-import { index as tasksIndex } from '@/actions/App/Http/Controllers/TaskController';
-import { index as usersIndex } from '@/actions/App/Http/Controllers/UserController';
-import { index as teamsIndex } from '@/actions/App/Http/Controllers/TeamController';
-import { index as clientsIndex } from '@/actions/App/Http/Controllers/ClientController';
 
-import type { NavItem } from '@/types';
-import { computed } from 'vue';
+import type { NavItemLucide } from '@/types/navigation';
 
-// Mengambil data user yang login dari middleware HandleInertiaRequests yang kita buat
+// Data user yang login (dari middleware HandleInertiaRequests)
 const page = usePage();
 const user = computed(() => page.props.auth.user);
 
-// Menu utama (Bisa diakses semua user)
-const mainNavItems = computed<NavItem[]>(() => {
-    const items = [
+// Menu utama (5 item dasar + 3 admin-only)
+const mainNavItems = computed<NavItemLucide[]>(() => {
+    const items: NavItemLucide[] = [
         {
             title: 'Dashboard',
             href: dashboard(),
-            icon: LayoutGrid,
+            icon: LayoutDashboard,
         },
         {
             title: 'Tabel Task',
             href: tasksIndex.url(),
-            icon: ListTodo,
+            icon: ListChecks,
         },
         {
             title: 'Kanban Board',
             href: '/tasks-kanban',
-            icon: Columns3,
+            icon: KanbanSquare,
         },
         {
             title: 'Audit Trail',
             href: '/activity-logs',
-            icon: Activity,
+            icon: History,
         },
         {
             title: 'Dokumen',
@@ -61,10 +69,7 @@ const mainNavItems = computed<NavItem[]>(() => {
         },
     ];
 
-    // Menu master data HANYA ditambahkan jika user adalah admin
     if (user.value?.role === 'admin') {
-        // Backup & Restore intentionally omitted from main sidebar;
-        // accessible via Settings layout only.
         items.push({
             title: 'Faskes / Client',
             href: clientsIndex.url(),
@@ -73,51 +78,49 @@ const mainNavItems = computed<NavItem[]>(() => {
         items.push({
             title: 'Master Team',
             href: teamsIndex.url(),
-            icon: UsersRound,
+            icon: Users,
         });
         items.push({
             title: 'Master User',
             href: usersIndex.url(),
-            icon: Users,
+            icon: UserSquare2,
         });
     }
 
     return items;
 });
 
-const footerNavItems: NavItem[] = [
+const footerNavItems: NavItemLucide[] = [
     {
         title: 'Pengaturan Sistem',
-        href: '#', // Nanti kita arahkan ke halaman pengaturan SLA dsb
+        href: '#',
         icon: Settings,
     },
 ];
+
+// `activityLogsIndex` diimpor untuk preservasi Wayfinder signature
+// meski href literal dipakai agar konsisten dengan versi sebelumnya.
+void activityLogsIndex;
 </script>
 
 <template>
-    <Sidebar collapsible="icon" variant="inset">
-        <SidebarHeader>
-            <SidebarMenu>
-                <SidebarMenuItem>
-                    <SidebarMenuButton size="lg" as-child>
-                        <Link :href="dashboard()">
-                            <AppLogo />
-                        </Link>
-                    </SidebarMenuButton>
-                </SidebarMenuItem>
-            </SidebarMenu>
+    <Sidebar collapsible="icon" variant="inset" class="sidebar-lucide-navy">
+        <SidebarHeader class="p-0">
+            <SidebarBrandLogo />
         </SidebarHeader>
 
         <SidebarContent>
-            <!-- Daftar Menu -->
-            <NavMain :items="mainNavItems" />
+            <SidebarNavLucide
+                :items="mainNavItems"
+                label="Main navigation"
+            />
         </SidebarContent>
 
-        <SidebarFooter>
-            <NavFooter :items="footerNavItems" />
-            
-            <!-- Profil User & Tombol Logout -->
-            <NavUser />
+        <SidebarFooter class="gap-1 p-0">
+            <SidebarNavLucide :items="footerNavItems" />
+            <div class="px-3 pb-2">
+                <NavUser variant="lucide" />
+            </div>
         </SidebarFooter>
     </Sidebar>
     <slot />

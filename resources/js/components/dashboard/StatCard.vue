@@ -2,6 +2,7 @@
 import { computed } from 'vue';
 import type { Component } from 'vue';
 import type { ColorTheme } from '@/types/dashboard';
+import TrendBadge from './TrendBadge.vue';
 
 /**
  * StatCard Component
@@ -45,12 +46,30 @@ interface Props {
    * @default true
    */
   animate?: boolean;
+
+  /**
+   * Trend direction for badge (optional)
+   * 'up' for positive, 'down' for negative
+   */
+  trendDirection?: 'up' | 'down';
+
+  /**
+   * Trend value for badge (optional)
+   */
+  trendValue?: number;
+
+  /**
+   * Compact mode for grid layouts (smaller padding)
+   * @default false
+   */
+  compact?: boolean;
 }
 
 const props = withDefaults(defineProps<Props>(), {
   colorTheme: 'neutral',
   loading: false,
   animate: true,
+  compact: false,
 });
 
 /**
@@ -105,16 +124,20 @@ const theme = computed(() => themeClasses[props.colorTheme]);
  */
 const containerClasses = computed(() => {
   const base = [
-    'relative overflow-hidden rounded-xl border-[1.5px] p-6',
-    'shadow-[2px_2px_0_0_rgba(0,0,0,0.08)] dark:shadow-[2px_2px_0_0_rgba(255,255,255,0.05)]',
+    'relative overflow-hidden rounded-2xl border-2 p-5',
+    'shadow-[3px_3px_0_0_rgba(27,58,107,0.12)] dark:shadow-[3px_3px_0_0_rgba(27,58,107,0.25)]',
     theme.value.bg,
     theme.value.border,
   ];
 
+  if (props.compact) {
+    base[1] = 'p-4';
+  }
+
   if (props.animate) {
     base.push(
       'transition-all duration-200 ease-out',
-      'hover:shadow-[4px_4px_0_0_rgba(0,0,0,0.1)] dark:hover:shadow-[4px_4px_0_0_rgba(255,255,255,0.08)]',
+      'hover:shadow-[5px_5px_0_0_rgba(27,58,107,0.15)] dark:hover:shadow-[5px_5px_0_0_rgba(27,58,107,0.35)]',
       'hover:-translate-y-0.5'
     );
   }
@@ -141,26 +164,35 @@ const ariaLabel = computed(() => `${props.label}: ${props.value}`);
     </div>
 
     <!-- Content -->
-    <div v-else class="flex items-center justify-between">
-      <div>
-        <p class="text-sm font-medium text-muted-foreground">{{ label }}</p>
-        <p
-          class="mt-2 text-3xl font-bold"
-          :class="theme.valueColor"
-        >
-          {{ value }}
-        </p>
+    <div v-else class="flex items-start justify-between gap-3">
+      <div class="min-w-0 flex-1">
+        <p class="text-sm font-medium text-muted-foreground truncate">{{ label }}</p>
+        <div class="mt-1 flex items-center gap-2">
+          <p
+            class="text-2xl font-extrabold tracking-tight"
+            :class="theme.valueColor"
+          >
+            {{ value }}
+          </p>
+          <!-- Trend badge -->
+          <TrendBadge
+            v-if="trendDirection && trendValue !== undefined"
+            :direction="trendDirection"
+            :value="trendValue"
+          />
+        </div>
       </div>
+      <!-- Icon container with nested shadow -->
       <div
         :class="[
-          'rounded-xl p-3 border-[1.5px]',
+          'shrink-0 rounded-xl p-2.5 border-2 shadow-[2px_2px_0_0_rgba(27,58,107,0.08)]',
           theme.iconBg,
           theme.border,
         ]"
       >
         <component
           :is="icon"
-          class="h-6 w-6"
+          class="h-5 w-5"
           :class="theme.iconColor"
         />
       </div>

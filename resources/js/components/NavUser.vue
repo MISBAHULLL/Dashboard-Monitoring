@@ -53,7 +53,7 @@ const { isMobile, state } = useSidebar();
                                 class="sidebar-lucide-label flex-1 truncate text-left"
                             >{{ user.name }}</span>
                             <ChevronsUpDown
-                                class="ml-auto size-4 shrink-0 text-white/80"
+                                class="sidebar-lucide-chevron ml-auto size-4 shrink-0 text-white/80"
                                 :stroke-width="2"
                             />
                         </template>

@@ -118,7 +118,7 @@ void activityLogsIndex;
 
         <SidebarFooter class="gap-1 p-0">
             <SidebarNavLucide :items="footerNavItems" />
-            <div class="px-3 pb-2">
+            <div class="px-3 pb-2 group-data-[collapsible=icon]:px-0">
                 <NavUser variant="lucide" />
             </div>
         </SidebarFooter>

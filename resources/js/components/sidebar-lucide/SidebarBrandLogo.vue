@@ -42,7 +42,9 @@ const hasMarkError = ref(false);
             class="block rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
         >
             <!-- ── Expanded: logo teks (PNG sudah di-trim) ─── -->
-            <div class="block px-3 py-3 group-data-[collapsible=icon]:hidden">
+            <!-- px-6 + pt-6 menjaga logo tidak ter-clip oleh rounded
+                 corner 28px container sidebar. -->
+            <div class="block px-6 pt-6 pb-4 group-data-[collapsible=icon]:hidden">
                 <img
                     v-if="!hasTextError"
                     :src="props.textSrc"
@@ -61,7 +63,7 @@ const hasMarkError = ref(false);
 
             <!-- ── Collapsed: logo mark ──────────────────────── -->
             <div
-                class="hidden items-center justify-center py-3 group-data-[collapsible=icon]:flex"
+                class="hidden items-center justify-center py-4 group-data-[collapsible=icon]:flex"
             >
                 <img
                     v-if="!hasMarkError"

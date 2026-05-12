@@ -138,13 +138,13 @@ defineOptions({
                 <RasioStatusTaskCard :series="chart_donut" />
             </div>
 
-            <!-- Actions (row 3-4, col 2 — pindah ke baris kedua) -->
-            <div class="col-span-1 row-span-2">
+            <!-- Actions (row 3-5, col 2 — sejajar bottom dengan Hero) -->
+            <div class="col-span-1 row-span-3">
                 <ActionsCard />
             </div>
 
-            <!-- Stats 2x2 green container (row 3-4, col 3-4 span-2) -->
-            <div class="col-span-1 md:col-span-2 lg:col-span-2 row-span-2">
+            <!-- Stats 2x2 green container (row 3-5, col 3-4 span-2 — sejajar bottom dengan Hero) -->
+            <div class="col-span-1 md:col-span-2 lg:col-span-2 row-span-3">
                 <div
                     class="relative h-full overflow-hidden rounded-xl border-2 border-tm-green bg-tm-green-pale/60 p-2 shadow-[2px_2px_0_0_rgba(43,174,110,0.15)] dark:bg-tm-green/10 dark:border-tm-green/50"
                 >

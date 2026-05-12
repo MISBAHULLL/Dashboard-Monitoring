@@ -4,12 +4,11 @@ import { computed } from 'vue';
 import { usePage } from '@inertiajs/vue3';
 import { dashboard } from '@/routes';
 import { index as tasksIndex } from '@/routes/tasks';
-import { Users, Building2, ListTodo, Clock } from 'lucide-vue-next';
 import type { ApexOptions } from 'apexcharts';
 
 import HeroCard from '@/components/dashboard/HeroCard.vue';
-import StatCard from '@/components/dashboard/StatCard.vue';
 import ActionsCard from '@/components/dashboard/ActionsCard.vue';
+import GridTaskCard from '@/components/dashboard/GridTaskCard.vue';
 import DeadlineAlertCard from '@/components/dashboard/DeadlineAlertCard.vue';
 import TaskDueSoonCard from '@/components/dashboard/TaskDueSoonCard.vue';
 import ChartCard from '@/components/dashboard/ChartCard.vue';
@@ -35,6 +34,12 @@ const props = defineProps<{
         completed_tasks: number;
         total_clients: number;
         total_teams: number;
+    };
+    trends: {
+        tasks: number;
+        teams: number;
+        pending: number;
+        clients: number;
     };
     chart_donut: number[];
     chart_area: {
@@ -143,48 +148,15 @@ defineOptions({
                 <ActionsCard />
             </div>
 
-            <!-- Stats 2x2 green container (row 3-5, col 3-4 span-2 — sejajar bottom dengan Hero) -->
+            <!-- Grid Task Stats 2x2 (row 3-5, col 3-4 span-2 — sejajar bottom dengan Hero) -->
             <div class="col-span-1 md:col-span-2 lg:col-span-2 row-span-3">
-                <div
-                    class="relative h-full overflow-hidden rounded-xl border-2 border-tm-green bg-tm-green-pale/60 p-2 shadow-[2px_2px_0_0_rgba(43,174,110,0.15)] dark:bg-tm-green/10 dark:border-tm-green/50"
-                >
-                    <div class="grid grid-cols-2 gap-2 h-full">
-                        <StatCard
-                            label="Total Tasks"
-                            :value="stats.total_tasks"
-                            :icon="ListTodo"
-                            colorTheme="neutral"
-                            trend-direction="up"
-                            :trend-value="2"
-                            compact
-                        />
-                        <StatCard
-                            label="Total Tim"
-                            :value="stats.total_teams"
-                            :icon="Users"
-                            colorTheme="navy"
-                            compact
-                        />
-                        <StatCard
-                            label="Menunggu"
-                            :value="stats.open_tasks"
-                            :icon="Clock"
-                            colorTheme="amber"
-                            trend-direction="down"
-                            :trend-value="2"
-                            compact
-                        />
-                        <StatCard
-                            label="Total Faskes"
-                            :value="stats.total_clients"
-                            :icon="Building2"
-                            colorTheme="green"
-                            trend-direction="up"
-                            :trend-value="2"
-                            compact
-                        />
-                    </div>
-                </div>
+                <GridTaskCard
+                    :total-tasks="stats.total_tasks"
+                    :total-teams="stats.total_teams"
+                    :pending-tasks="stats.open_tasks"
+                    :total-clients="stats.total_clients"
+                    :trends="trends"
+                />
             </div>
 
             <!-- Task Overdue (row 5-6, col 1-2) -->

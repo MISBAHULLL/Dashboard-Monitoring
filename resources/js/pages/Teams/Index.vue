@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { ref } from 'vue';
-import { Head, useForm } from '@inertiajs/vue3';
+import { ref, onMounted } from 'vue';
+import { Head, useForm, usePage } from '@inertiajs/vue3';
 import { UsersRound, Plus, Edit, Trash2 } from 'lucide-vue-next';
 import { dashboard } from '@/routes';
 
@@ -61,6 +61,14 @@ const openAddModal = () => {
     form.clearErrors();
     isModalOpen.value = true;
 };
+
+// Auto-open modal jika ada query param ?action=create (dari dashboard Actions card)
+onMounted(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('action') === 'create') {
+        openAddModal();
+    }
+});
 
 // Buka Modal Edit
 const openEditModal = (team: any) => {

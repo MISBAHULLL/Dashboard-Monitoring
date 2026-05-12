@@ -285,11 +285,22 @@ function onSegmentLeave() {
 
 <style scoped>
 .raslo-card {
-    box-shadow: 1px 3px 5px 1px #181818ff;
+    box-shadow: 1px 3px 5px 0 rgba(0, 0, 0, 0.50);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.raslo-card:hover {
+    transform: translateY(-3px) scale(1.01);
+    box-shadow: 2px 6px 12px 2px rgba(24, 24, 24, 0.35);
 }
 
 :global(.dark) .raslo-card {
     box-shadow: 4px 6px 4px 1px #181818ff;
+}
+
+:global(.dark) .raslo-card:hover {
+    transform: translateY(-3px) scale(1.01);
+    box-shadow: 4px 8px 14px 2px rgba(255, 255, 255, 0.12);
 }
 
 .tooltip-fade-enter-active,

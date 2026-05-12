@@ -2,6 +2,7 @@
 import { computed } from 'vue';
 import { Clock, ArrowRight } from 'lucide-vue-next';
 import { Link } from '@inertiajs/vue3';
+import { show as showTask } from '@/routes/tasks';
 import type { DeadlineTask } from '@/types/dashboard';
 
 /**
@@ -74,8 +75,8 @@ const formatDate = (date?: string): string => {
     <!-- EMPTY STATE -->
     <article
         v-if="isEmpty && !loading"
-        class="relative flex h-full flex-col overflow-hidden rounded-[18px] border-[2.5px] border-black bg-white dark:bg-card"
-        style="box-shadow: 1px 5px 5px 1px #faa700"
+        class="relative flex h-full flex-col overflow-hidden rounded-[18px] border-[2.5px] border-black bg-white dark:bg-card transition-all duration-300 ease-out hover:-translate-y-1 hover:shadow-[2px_6px_12px_2px_#faa700] cursor-default"
+        style="box-shadow: 1px 3px 7px 1px #faa700"
         :aria-label="`Task Due Soon H-7: 0 tasks`"
     >
         <!-- Header -->
@@ -96,7 +97,7 @@ const formatDate = (date?: string): string => {
             <Link
                 v-if="viewAllLink"
                 :href="viewAllLink"
-                class="flex items-center gap-1 rounded-full border-2 border-black bg-white px-4 py-1 text-[#111] transition-colors hover:bg-gray-50 dark:bg-card dark:text-tm-navy-pale dark:border-tm-navy-pale dark:hover:bg-tm-navy/40 font-['Solway',serif] text-[14px] font-medium"
+                class="flex items-center gap-1 rounded-full border-2 border-black bg-white px-4 py-1 text-[#111] transition-all duration-200 hover:bg-[#111] hover:text-white hover:scale-105 dark:bg-card dark:text-tm-navy-pale dark:border-tm-navy-pale dark:hover:bg-tm-navy-pale dark:hover:text-[#111] font-['Solway',serif] text-[14px] font-medium"
             >
                 View All
                 <ArrowRight :size="14" :stroke-width="2.5" />
@@ -142,8 +143,8 @@ const formatDate = (date?: string): string => {
     <!-- FILLED STATE -->
     <article
         v-else
-        class="relative flex h-full flex-col overflow-hidden rounded-2xl border-[2.5px] border-black bg-white px-[18px] pt-4 pb-3.5 dark:bg-card"
-        style="box-shadow: 1px 5px 5px 1px #faa700"
+        class="relative flex h-full flex-col overflow-hidden rounded-2xl border-[2.5px] border-black bg-white px-[18px] pt-4 pb-3.5 dark:bg-card transition-all duration-300 ease-out hover:-translate-y-1 hover:shadow-[2px_6px_12px_2px_#faa700] cursor-default"
+        style="box-shadow: 1px 3px 7px 1px #faa700"
         :aria-label="`Task Due Soon H-7: ${count} tasks`"
     >
         <!-- Header -->
@@ -166,7 +167,7 @@ const formatDate = (date?: string): string => {
             <Link
                 v-if="viewAllLink"
                 :href="viewAllLink"
-                class="flex flex-shrink-0 items-center gap-1 rounded-lg border-[1.5px] border-black bg-white px-2.5 py-1 text-[13px] font-semibold text-[#111] leading-tight transition-colors hover:bg-gray-50 dark:bg-card dark:text-tm-navy-pale dark:border-tm-navy-pale dark:hover:bg-tm-navy/40"
+                class="flex flex-shrink-0 items-center gap-1 rounded-lg border-[1.5px] border-black bg-white px-2.5 py-1 text-[13px] font-semibold text-[#111] leading-tight transition-all duration-200 hover:bg-[#111] hover:text-white hover:scale-105 dark:bg-card dark:text-tm-navy-pale dark:border-tm-navy-pale dark:hover:bg-tm-navy-pale dark:hover:text-[#111]"
             >
                 View All&nbsp;<ArrowRight :size="13" :stroke-width="2.5" />
             </Link>
@@ -183,8 +184,8 @@ const formatDate = (date?: string): string => {
                 v-for="task in displayTasks"
                 :key="task.id"
                 role="listitem"
-                class="relative rounded-xl border-2 border-[#f5ab00] bg-white px-[10px] pt-2 pb-2 pl-3 dark:bg-card dark:border-amber-500/70"
-                style="box-shadow: 1px 3px 3px 0 #f5ab00"
+                class="relative rounded-xl border-2 border-[#f5ab00] bg-white px-[10px] pt-2 pb-2 pl-3 dark:bg-card dark:border-amber-500/70 transition-all duration-200 ease-out hover:bg-amber-50/60 hover:shadow-[0_4px_10px_2px_rgba(245,171,0,0.35)] dark:hover:bg-amber-900/15"
+                style="box-shadow: 0px 2px 5px 0 #f5ab00"
             >
                 <!-- Date top-right -->
                 <span
@@ -194,11 +195,12 @@ const formatDate = (date?: string): string => {
                 </span>
 
                 <!-- Title -->
-                <p
-                    class="m-0 truncate pr-20 text-[14.5px] font-medium leading-[1.4] text-[#111] dark:text-slate-100"
+                <Link
+                    :href="showTask(task.id).url"
+                    class="m-0 block truncate pr-20 text-[14.5px] font-medium leading-[1.4] text-[#111] hover:text-sky-600 transition-colors dark:text-slate-100 dark:hover:text-sky-400"
                 >
                     {{ task.title }}
-                </p>
+                </Link>
 
                 <!-- Due sub-label -->
                 <p
@@ -213,7 +215,7 @@ const formatDate = (date?: string): string => {
         <Link
             v-if="tasks.length > 3 && viewAllLink"
             :href="viewAllLink"
-            class="mt-1.5 pl-1 text-[11.5px] font-semibold text-[#f5ab00] hover:underline"
+            class="mt-1.5 inline-block rounded px-1.5 py-0.5 text-[11.5px] font-semibold text-[#f5ab00] transition-all duration-200 hover:text-emerald-400 dark:hover:text-amber-300"
         >
             +{{ tasks.length - 3 }} task lainnya → lihat semua
         </Link>

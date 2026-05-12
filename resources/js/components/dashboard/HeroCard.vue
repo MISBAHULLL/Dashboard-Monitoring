@@ -59,7 +59,7 @@ const greeting = computed(() => {
 
 <template>
   <article
-    class="relative flex h-full flex-col overflow-hidden rounded-[18px] border-2 border-black bg-[#0f172a] p-4 shadow-[4px_6px_5px_1px_rgba(0,0,0,0.6)]"
+    class="relative flex h-full flex-col overflow-hidden rounded-[18px] border-2 border-black bg-[#0f172a] p-4 shadow-[4px_6px_5px_1px_rgba(0,0,0,0.6)] transition-all duration-300 ease-out hover:-translate-y-1 hover:shadow-[6px_10px_8px_2px_rgba(0,0,0,0.7)] hover:border-emerald-500/40"
   >
     <!-- Loading skeleton -->
     <div v-if="loading" class="flex h-full flex-col justify-between animate-pulse">

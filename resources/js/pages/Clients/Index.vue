@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { Head, useForm, router } from '@inertiajs/vue3';
 import { Building2, Plus, Edit, Trash2, CheckCircle, XCircle, Search, ChevronLeft, ChevronRight, Eye, FilePlus, FileText } from 'lucide-vue-next';
 import { dashboard } from '@/routes';
@@ -122,6 +122,14 @@ const openAddModal = () => {
     form.clearErrors();
     isModalOpen.value = true;
 };
+
+// Auto-open modal jika ada query param ?action=create (dari dashboard Actions card)
+onMounted(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('action') === 'create') {
+        openAddModal();
+    }
+});
 
 // Fungsi membuka modal untuk Edit Data
 const openEditModal = (client: any) => {

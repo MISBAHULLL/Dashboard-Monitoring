@@ -27,6 +27,27 @@ class DashboardController extends Controller
                 'total_teams' => Team::count(),
             ];
 
+            // Hitung trend: jumlah data baru yang ditambahkan dalam 7 hari terakhir
+            $sevenDaysAgo = Carbon::now()->subDays(7);
+
+            $tasksTrend = Task::where('created_at', '>=', $sevenDaysAgo)->count();
+            $teamsTrend = Team::where('created_at', '>=', $sevenDaysAgo)->count();
+            $clientsTrend = Client::where('created_at', '>=', $sevenDaysAgo)->count();
+
+            // Untuk pending: hitung selisih task open yang baru masuk vs yang selesai dalam 7 hari
+            $newOpenTasks = Task::where('status', 'open')
+                ->where('created_at', '>=', $sevenDaysAgo)->count();
+            $recentlyCompleted = Task::where('status', 'completed')
+                ->where('updated_at', '>=', $sevenDaysAgo)->count();
+            $pendingTrend = $newOpenTasks - $recentlyCompleted;
+
+            $trends = [
+                'tasks' => $tasksTrend,
+                'teams' => $teamsTrend,
+                'pending' => $pendingTrend,
+                'clients' => $clientsTrend,
+            ];
+
             $today = Carbon::today();
             $dueSoonEndDate = Carbon::today()->addDays(7);
             
@@ -122,6 +143,7 @@ class DashboardController extends Controller
 
             return Inertia::render('Dashboard/AdminDashboard', [
                 'stats' => $stats,
+                'trends' => $trends,
                 'chart_donut' => $chartDonut,
                 'chart_area' => $chartArea,
                 'overdue_count' => (clone $overdueBaseQuery)->count(),

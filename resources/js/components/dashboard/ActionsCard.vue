@@ -48,13 +48,13 @@ const defaultActions: ActionItem[] = [
         label: 'Add Team',
         description: 'Create New Team',
         icon: Users,
-        href: teamsIndex.url(),
+        href: teamsIndex.url({ query: { action: 'create' } }),
     },
     {
         label: 'New Faskes',
         description: 'Create New Faskes',
         icon: Building2,
-        href: clientsIndex.url(),
+        href: clientsIndex.url({ query: { action: 'create' } }),
     },
     {
         label: 'Export data',
@@ -70,8 +70,7 @@ const actionItems = computed(() => props.actions || defaultActions);
 
 <template>
     <article
-        class="relative flex h-full flex-col overflow-hidden rounded-[21px] border-3 border-black bg-white p-5 dark:bg-card dark:border-border"
-        style="box-shadow: 2px 4px 4px 4px rgba(0, 0, 0, 0.25)"
+        class="actions-card relative flex h-full flex-col rounded-[21px] border-3 border-black bg-white p-5 dark:bg-card dark:border-border"
     >
         <!-- Loading skeleton -->
         <div v-if="loading" class="animate-pulse space-y-3 flex-1">
@@ -88,36 +87,149 @@ const actionItems = computed(() => props.actions || defaultActions);
                 </h2>
             </header>
 
-            <!-- Action items list — justify-between agar tersebar merata -->
+            <!-- Action items list -->
             <div class="flex flex-1 flex-col justify-between gap-3">
-                <component
-                    v-for="(action, index) in actionItems"
-                    :key="index"
-                    :is="action.external ? 'a' : Link"
+                <!-- External link (file download) -->
+                <a
+                    v-for="(action, index) in actionItems.filter(a => a.external)"
+                    :key="'ext-' + index"
                     :href="action.href"
-                    class="group flex items-center gap-3 rounded-[7px] border border-emerald-500 bg-white px-4 py-3 transition-all duration-200 hover:-translate-y-0.5 hover:bg-emerald-50/50 dark:bg-card dark:border-emerald-500/60 dark:hover:bg-emerald-900/10"
-                    style="box-shadow: 0px 4px 4px 0px rgba(16, 185, 129, 0.25)"
+                    class="action-item"
                 >
-                    <!-- Icon -->
-                    <div class="flex h-9 w-9 shrink-0 items-center justify-center">
-                        <component
-                            :is="action.icon"
-                            class="h-5 w-5 text-black dark:text-foreground"
-                            :stroke-width="1.5"
-                        />
+                    <div class="action-icon">
+                        <component :is="action.icon" class="h-5 w-5" :stroke-width="1.5" />
                     </div>
-
-                    <!-- Text content -->
                     <div class="min-w-0">
-                        <p class="text-[15px] font-normal leading-tight text-black dark:text-foreground truncate">
-                            {{ action.label }}
-                        </p>
-                        <p class="text-[11px] text-black/60 dark:text-muted-foreground leading-tight mt-0.5">
-                            {{ action.description }}
-                        </p>
+                        <p class="action-label">{{ action.label }}</p>
+                        <p class="action-desc">{{ action.description }}</p>
                     </div>
-                </component>
+                </a>
+
+                <!-- Inertia Link (SPA navigation) -->
+                <Link
+                    v-for="(action, index) in actionItems.filter(a => !a.external)"
+                    :key="'link-' + index"
+                    :href="action.href"
+                    class="action-item"
+                >
+                    <div class="action-icon">
+                        <component :is="action.icon" class="h-5 w-5" :stroke-width="1.5" />
+                    </div>
+                    <div class="min-w-0">
+                        <p class="action-label">{{ action.label }}</p>
+                        <p class="action-desc">{{ action.description }}</p>
+                    </div>
+                </Link>
             </div>
         </template>
     </article>
 </template>
+
+<style scoped>
+.actions-card {
+    box-shadow: 2px 4px 4px 4px rgba(0, 0, 0, 0.25);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.actions-card:hover {
+    box-shadow: 4px 8px 16px 4px rgba(0, 0, 0, 0.35);
+    transform: translateY(-2px);
+}
+
+.action-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    border-radius: 7px;
+    border: 1px solid #10b981;
+    background: white;
+    box-shadow: 0px 4px 4px 0px rgba(16, 185, 129, 0.25);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    cursor: pointer;
+    text-decoration: none;
+    color: inherit;
+}
+
+.action-item:hover {
+    transform: translateY(-4px) scale(1.03);
+    box-shadow: 0px 12px 24px 0px rgba(16, 185, 129, 0.4);
+    border-color: #059669;
+    background: #ecfdf5;
+}
+
+.action-item:active {
+    transform: translateY(0) scale(0.98);
+    box-shadow: 0px 2px 4px 0px rgba(16, 185, 129, 0.2);
+}
+
+.action-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    flex-shrink: 0;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), color 0.3s;
+    color: #111;
+}
+
+.action-item:hover .action-icon {
+    transform: scale(1.2) rotate(5deg);
+    color: #059669;
+}
+
+.action-label {
+    font-size: 15px;
+    font-weight: 400;
+    line-height: 1.2;
+    color: #111;
+    transition: color 0.3s;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.action-item:hover .action-label {
+    color: #047857;
+}
+
+.action-desc {
+    font-size: 11px;
+    line-height: 1.2;
+    color: rgba(0, 0, 0, 0.5);
+    margin-top: 2px;
+}
+
+/* Dark mode */
+:deep(.dark) .action-item,
+.dark .action-item {
+    background: var(--card);
+    border-color: rgba(16, 185, 129, 0.5);
+}
+
+.dark .action-item:hover {
+    background: rgba(16, 185, 129, 0.1);
+    border-color: #34d399;
+}
+
+.dark .action-icon {
+    color: var(--foreground);
+}
+
+.dark .action-item:hover .action-icon {
+    color: #34d399;
+}
+
+.dark .action-label {
+    color: var(--foreground);
+}
+
+.dark .action-item:hover .action-label {
+    color: #6ee7b7;
+}
+
+.dark .action-desc {
+    color: var(--muted-foreground);
+}
+</style>

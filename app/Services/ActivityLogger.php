@@ -30,7 +30,7 @@ class ActivityLogger
         ]);
     }
 
-    public static function created(string $module, ?int $targetId, string $targetTitle, ?string $description = null, ?array $values = null): void
+     public static function created(string $module, ?int $targetId, string $targetTitle, ?string $description = null, ?array $values = null): void
     {
         self::log('created', $module, $targetId, $targetTitle, $description ?? "Membuat {$module} baru", null, $values);
     }

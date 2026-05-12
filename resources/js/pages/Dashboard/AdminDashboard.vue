@@ -11,9 +11,20 @@ import HeroCard from '@/components/dashboard/HeroCard.vue';
 import StatCard from '@/components/dashboard/StatCard.vue';
 import ActionsCard from '@/components/dashboard/ActionsCard.vue';
 import DeadlineAlertCard from '@/components/dashboard/DeadlineAlertCard.vue';
+import TaskDueSoonCard from '@/components/dashboard/TaskDueSoonCard.vue';
 import ChartCard from '@/components/dashboard/ChartCard.vue';
 import TeamPerformanceCard from '@/components/dashboard/TeamPerformanceCard.vue';
 import TaskListCard from '@/components/dashboard/TaskListCard.vue';
+
+/** Build /tasks?date_from=today&date_to=7days — filter yang dikenali TaskController */
+const dueSoonViewAllUrl = computed(() => {
+    const today = new Date();
+    const in7Days = new Date();
+    in7Days.setDate(today.getDate() + 7);
+    const fmt = (d: Date) =>
+        `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    return tasksIndex({ query: { date_from: fmt(today), date_to: fmt(in7Days) } }).url;
+});
 
 const props = defineProps<{
     stats: {
@@ -112,28 +123,26 @@ defineOptions({
         <!-- Bento Grid — kolom diatur via .dashboard-grid di app.css -->
         <div class="dashboard-grid grid gap-3 auto-rows-[120px]">
 
-            <!-- HERO (narrow + tall): col-span-1, row-span-5 = 600px tall, 25% width -->
+            <!-- HERO (narrow + tall): col-span-1, row-span-5 — sejajar dengan Due Soon + Actions stack -->
             <div class="col-span-1 md:col-span-1 lg:col-span-1 row-span-5">
                 <HeroCard
                     :user-name="authUserName"
                     :pending-count="stats.open_tasks"
                     :overdue-count="overdue_count"
                     :total-tasks="stats.total_tasks"
-                    :chart-data="heroChartData"
                 />
             </div>
 
-            <!-- Task Due Soon (row 1-2, col 2) -->
-            <div class="col-span-1 row-span-2">
-                <DeadlineAlertCard
-                    type="due_soon"
+            <!-- Task Due Soon (row 1-2, col 2-3 — lebar 2 kolom sesuai desain) -->
+            <div class="col-span-1 md:col-span-2 lg:col-span-2 row-span-2">
+                <TaskDueSoonCard
                     :count="due_soon_count"
                     :tasks="due_soon_tasks"
-                    :view-all-link="due_soon_tasks.length > 10 ? tasksIndex({ query: { status: 'due_soon' } }).url : undefined"
+                    :view-all-link="dueSoonViewAllUrl"
                 />
             </div>
 
-            <!-- Donut (row 1-2, col 3) -->
+            <!-- Donut (row 1-2, col 4 — ujung kanan) -->
             <div class="col-span-1 row-span-2">
                 <ChartCard
                     title="Rasio Status Task"
@@ -144,17 +153,17 @@ defineOptions({
                 />
             </div>
 
-            <!-- Actions (row 1-2, col 4) -->
+            <!-- Actions (row 3-4, col 2 — pindah ke baris kedua) -->
             <div class="col-span-1 row-span-2">
                 <ActionsCard />
             </div>
 
-            <!-- Stats 2x2 green container (row 3-4, col 2-4 span-3) -->
-            <div class="col-span-1 md:col-span-2 lg:col-span-3 row-span-2">
+            <!-- Stats 2x2 green container (row 3-4, col 3-4 span-2) -->
+            <div class="col-span-1 md:col-span-2 lg:col-span-2 row-span-2">
                 <div
                     class="relative h-full overflow-hidden rounded-xl border-2 border-tm-green bg-tm-green-pale/60 p-2 shadow-[2px_2px_0_0_rgba(43,174,110,0.15)] dark:bg-tm-green/10 dark:border-tm-green/50"
                 >
-                    <div class="grid grid-cols-2 md:grid-cols-4 gap-2 h-full">
+                    <div class="grid grid-cols-2 gap-2 h-full">
                         <StatCard
                             label="Total Tasks"
                             :value="stats.total_tasks"

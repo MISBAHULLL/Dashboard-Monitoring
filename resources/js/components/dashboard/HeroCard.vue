@@ -12,48 +12,41 @@ interface Props {
   pendingCount: number;
   overdueCount: number;
   totalTasks: number;
-  chartData?: number[];
   loading?: boolean;
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  chartData: () => [3, 5, 8, 6, 10, 12],
   loading: false,
 });
 
 /**
- * Resolve chart data with fallback pattern so bars are always visible.
+ * CHART_SCALE — pengali universal untuk semua bar.
+ * Ubah angka ini untuk membuat semua bar lebih tinggi/pendek secara proporsional.
+ * Contoh: 1.0 = normal, 1.5 = 50% lebih tinggi, 2.0 = 2x lebih tinggi
  */
-const resolvedChartData = computed(() => {
-  const data = props.chartData;
-  if (!data || data.length === 0) return [3, 5, 8, 6, 10, 12];
-  const hasNonZero = data.some((v) => v > 0);
-  if (!hasNonZero) return [3, 5, 8, 6, 10, 12];
-  return data.slice(0, 6);
-});
+const CHART_SCALE = 1.4;
 
 /**
- * Bar heights as percentage with minimum floor.
+ * Fixed decorative bar heights dalam pixel — pola Figma.
+ * Rasio antar bar tetap sama, hanya CHART_SCALE yang mengatur tinggi universal.
  */
-const maxValue = computed(() => Math.max(...resolvedChartData.value, 1));
-const barHeights = computed(() =>
-  resolvedChartData.value.map((value) => {
-    const pct = (value / maxValue.value) * 100;
-    return Math.max(pct, 20);
-  })
-);
+const BASE_HEIGHTS = [70, 45, 110, 80, 140, 175];
+const barHeights = BASE_HEIGHTS.map(h => Math.round(h * CHART_SCALE));
 
 /**
- * Bar colors — dark slate on left → bright emerald on right.
+ * Bar colors — dark navy → teal → bright emerald (kiri ke kanan).
+ * Mengikuti warna di Figma persis.
  */
 const getBarColor = (index: number): string => {
-  const total = resolvedChartData.value.length;
-  if (index === total - 1) return 'bg-emerald-400';
-  if (index === total - 2) return 'bg-emerald-600/75';
-  if (index === total - 3) return 'bg-teal-800/65';
-  if (index === total - 4) return 'bg-slate-600/60';
-  if (index === total - 5) return 'bg-slate-700/70';
-  return 'bg-slate-800/85';
+  const colors = [
+    'bg-[#1e2d45]',       // bar 1 — navy gelap
+    'bg-[#2a3a52]',       // bar 2 — navy medium
+    'bg-[#2a3a52]',       // bar 3 — navy medium (sama dengan bar 2)
+    'bg-[#1a5c4a]',       // bar 4 — teal gelap
+    'bg-[#1a7a5e]',       // bar 5 — teal medium
+    'bg-[#34d399]',       // bar 6 — emerald terang
+  ];
+  return colors[index] ?? 'bg-[#34d399]';
 };
 
 const greeting = computed(() => {
@@ -66,7 +59,7 @@ const greeting = computed(() => {
 
 <template>
   <article
-    class="relative flex h-full flex-col overflow-hidden rounded-[18px] border-2 border-black bg-[#0f172a] p-4 shadow-[4px_6px_0_3px_rgba(0,0,0,0.6)]"
+    class="relative flex h-full flex-col overflow-hidden rounded-[18px] border-2 border-black bg-[#0f172a] p-4 shadow-[4px_6px_5px_1px_rgba(0,0,0,0.6)]"
   >
     <!-- Loading skeleton -->
     <div v-if="loading" class="flex h-full flex-col justify-between animate-pulse">
@@ -135,14 +128,14 @@ const greeting = computed(() => {
           </p>
         </div>
 
-        <!-- Right: Bar chart — LARGE bars (wide + tall) -->
-        <div class="flex items-end gap-1.5 h-[220px] flex-1 justify-end">
+        <!-- Right: Bar chart — pola Figma, tinggi absolut bukan persentase -->
+        <div class="flex items-end gap-[7px] flex-1 justify-end">
           <div
             v-for="(height, index) in barHeights"
             :key="index"
-            class="w-[22px] rounded-[5px] transition-all duration-500 ease-out"
+            class="w-[26px] rounded-[8px] shrink-0"
             :class="getBarColor(index)"
-            :style="{ height: `${height}%` }"
+            :style="{ height: `${height}px` }"
           ></div>
         </div>
       </div>

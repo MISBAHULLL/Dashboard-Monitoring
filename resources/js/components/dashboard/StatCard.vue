@@ -2,15 +2,13 @@
 import { computed } from 'vue';
 import type { Component } from 'vue';
 import type { ColorTheme } from '@/types/dashboard';
-import TrendBadge from './TrendBadge.vue';
+import TrendBadge from '@/components/dashboard/TrendBadge.vue';
 
 /**
  * StatCard Component
  *
  * Displays numerical statistics with icon, label, and neo-brutalism styling.
  * Part of the Bento Grid dashboard system.
- *
- * @see Requirements: 2.1, 2.2, 2.4, 2.5, 2.6, 3.1-3.6, 8.1-8.5, 12.2, 16.1-16.5
  */
 
 interface Props {
@@ -48,21 +46,21 @@ interface Props {
   animate?: boolean;
 
   /**
-   * Trend direction for badge (optional)
+   * Use compact mode with smaller padding and text
+   * @default false
+   */
+  compact?: boolean;
+
+  /**
+   * Trend direction for badge display
    * 'up' for positive, 'down' for negative
    */
   trendDirection?: 'up' | 'down';
 
   /**
-   * Trend value for badge (optional)
+   * Trend value to display in badge (e.g., 2 shows as "+2")
    */
   trendValue?: number;
-
-  /**
-   * Compact mode for grid layouts (smaller padding)
-   * @default false
-   */
-  compact?: boolean;
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -120,24 +118,21 @@ const themeClasses = {
 const theme = computed(() => themeClasses[props.colorTheme]);
 
 /**
- * Compute container classes including hover animations
+ * Compute container classes including hover animations and compact mode
  */
 const containerClasses = computed(() => {
   const base = [
-    'relative overflow-hidden rounded-2xl border-2 p-5',
-    'shadow-[3px_3px_0_0_rgba(27,58,107,0.12)] dark:shadow-[3px_3px_0_0_rgba(27,58,107,0.25)]',
+    'relative overflow-hidden rounded-xl border-2',
+    props.compact ? 'p-3' : 'p-6',
+    'shadow-[2px_2px_0_0_rgba(0,0,0,0.08)] dark:shadow-[2px_2px_0_0_rgba(255,255,255,0.05)]',
     theme.value.bg,
     theme.value.border,
   ];
 
-  if (props.compact) {
-    base[1] = 'p-4';
-  }
-
   if (props.animate) {
     base.push(
       'transition-all duration-200 ease-out',
-      'hover:shadow-[5px_5px_0_0_rgba(27,58,107,0.15)] dark:hover:shadow-[5px_5px_0_0_rgba(27,58,107,0.35)]',
+      'hover:shadow-[4px_4px_0_0_rgba(0,0,0,0.1)] dark:hover:shadow-[4px_4px_0_0_rgba(255,255,255,0.08)]',
       'hover:-translate-y-0.5'
     );
   }
@@ -164,17 +159,21 @@ const ariaLabel = computed(() => `${props.label}: ${props.value}`);
     </div>
 
     <!-- Content -->
-    <div v-else class="flex items-start justify-between gap-3">
-      <div class="min-w-0 flex-1">
-        <p class="text-sm font-medium text-muted-foreground truncate">{{ label }}</p>
-        <div class="mt-1 flex items-center gap-2">
+    <div v-else class="flex items-center justify-between">
+      <div>
+        <p :class="['font-medium text-muted-foreground', props.compact ? 'text-xs' : 'text-sm']">
+          {{ label }}
+        </p>
+        <div class="flex items-center gap-2" :class="props.compact ? 'mt-1' : 'mt-2'">
           <p
-            class="text-2xl font-extrabold tracking-tight"
-            :class="theme.valueColor"
+            :class="[
+              'font-bold',
+              props.compact ? 'text-xl' : 'text-3xl',
+              theme.valueColor
+            ]"
           >
             {{ value }}
           </p>
-          <!-- Trend badge -->
           <TrendBadge
             v-if="trendDirection && trendValue !== undefined"
             :direction="trendDirection"
@@ -182,18 +181,17 @@ const ariaLabel = computed(() => `${props.label}: ${props.value}`);
           />
         </div>
       </div>
-      <!-- Icon container with nested shadow -->
       <div
         :class="[
-          'shrink-0 rounded-xl p-2.5 border-2 shadow-[2px_2px_0_0_rgba(27,58,107,0.08)]',
+          'rounded-xl border-2',
+          props.compact ? 'p-2' : 'p-3',
           theme.iconBg,
           theme.border,
         ]"
       >
         <component
           :is="icon"
-          class="h-5 w-5"
-          :class="theme.iconColor"
+          :class="['h-5 w-5', theme.iconColor]"
         />
       </div>
     </div>

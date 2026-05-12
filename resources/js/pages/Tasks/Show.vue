@@ -44,6 +44,8 @@ type TaskDetail = {
     task_url: string | null;
     modul: string | null;
     release_date: string | null;
+    created_at: string | null;
+    updated_at: string | null;
     client?: { name?: string | null } | null;
     product?: { name?: string | null } | null;
     engineer?: { name?: string | null } | null;
@@ -273,6 +275,20 @@ const orderedComments = computed(() =>
                         <p class="mt-2 flex items-center gap-2 text-sm font-semibold text-slate-900 dark:text-slate-100">
                             <UserRound class="h-4 w-4 text-slate-400" />
                             {{ task.creator?.name || '-' }}
+                        </p>
+                    </div>
+                    <div class="rounded-2xl border border-slate-200/80 bg-slate-50/80 p-4 dark:border-slate-800 dark:bg-slate-950/40">
+                        <p class="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">Dibuat Pada</p>
+                        <p class="mt-2 flex items-center gap-2 text-sm font-semibold text-slate-900 dark:text-slate-100">
+                            <CalendarDays class="h-4 w-4 text-slate-400" />
+                            {{ formatDate(task.created_at) }}
+                        </p>
+                    </div>
+                    <div class="rounded-2xl border border-slate-200/80 bg-slate-50/80 p-4 dark:border-slate-800 dark:bg-slate-950/40">
+                        <p class="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">Terakhir Diperbarui</p>
+                        <p class="mt-2 flex items-center gap-2 text-sm font-semibold text-slate-900 dark:text-slate-100">
+                            <CalendarDays class="h-4 w-4 text-slate-400" />
+                            {{ formatDate(task.updated_at) }}
                         </p>
                     </div>
                 </div>

@@ -21,7 +21,7 @@ const upcomingTasks = ['PO Task', 'Bug', 'Audit']
 
 <template>
   <main class="min-h-screen bg-slate-100 p-4 md:p-6">
-    <section class="mx-auto grid w-full max-w-[1360px] gap-4 xl:grid-cols-[280px_1.15fr_1.1fr]">
+    <section class="mx-auto grid w-full max-w-[1360px] gap-4 xl:grid-cols-[280px_1fr_1.25fr]">
       <aside class="rounded-3xl bg-[#003a84] p-5 text-white shadow-[4px_8px_16px_rgba(0,0,0,0.2)]">
         <div class="mb-8 rounded-2xl bg-white/95 p-4 text-center text-[#003a84]">
           <p class="text-3xl font-black leading-none">trustmedis</p>

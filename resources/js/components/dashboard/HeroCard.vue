@@ -133,7 +133,7 @@ const greeting = computed(() => {
           <div
             v-for="(height, index) in barHeights"
             :key="index"
-            class="w-[26px] rounded-[8px] shrink-0"
+            class="w-[30px] rounded-[8px] shrink-0"
             :class="getBarColor(index)"
             :style="{ height: `${height}px` }"
           ></div>

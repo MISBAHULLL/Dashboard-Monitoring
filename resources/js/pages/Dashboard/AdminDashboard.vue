@@ -13,6 +13,7 @@ import ActionsCard from '@/components/dashboard/ActionsCard.vue';
 import DeadlineAlertCard from '@/components/dashboard/DeadlineAlertCard.vue';
 import TaskDueSoonCard from '@/components/dashboard/TaskDueSoonCard.vue';
 import ChartCard from '@/components/dashboard/ChartCard.vue';
+import RasioStatusTaskCard from '@/components/dashboard/RasioStatusTaskCard.vue';
 import TeamPerformanceCard from '@/components/dashboard/TeamPerformanceCard.vue';
 import TaskListCard from '@/components/dashboard/TaskListCard.vue';
 
@@ -75,16 +76,6 @@ const props = defineProps<{
     }>;
 }>();
 
-const donutOptions: ApexOptions = {
-    chart: { type: 'donut', fontFamily: 'inherit' },
-    labels: ['Open', 'In Progress', 'Revisi', 'Completed'],
-    colors: ['#f59e0b', '#3b82f6', '#ef4444', '#10b981'],
-    plotOptions: { pie: { donut: { size: '70%' } } },
-    dataLabels: { enabled: false },
-    legend: { position: 'bottom', fontSize: '11px' }
-};
-const donutSeries = props.chart_donut;
-
 const areaOptions: ApexOptions = {
     chart: { type: 'area', fontFamily: 'inherit', toolbar: { show: false } },
     colors: ['#0ea5e9'],
@@ -142,15 +133,9 @@ defineOptions({
                 />
             </div>
 
-            <!-- Donut (row 1-2, col 4 — ujung kanan) -->
+            <!-- Rasio Status Task donut (row 1-2, col 4 — sejajar di samping Task Due Soon) -->
             <div class="col-span-1 row-span-2">
-                <ChartCard
-                    title="Rasio Status Task"
-                    chartType="donut"
-                    :options="donutOptions"
-                    :series="donutSeries"
-                    :height="160"
-                />
+                <RasioStatusTaskCard :series="chart_donut" />
             </div>
 
             <!-- Actions (row 3-4, col 2 — pindah ke baris kedua) -->

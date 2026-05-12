@@ -9,7 +9,7 @@ import type { ApexOptions } from 'apexcharts';
 import HeroCard from '@/components/dashboard/HeroCard.vue';
 import ActionsCard from '@/components/dashboard/ActionsCard.vue';
 import GridTaskCard from '@/components/dashboard/GridTaskCard.vue';
-import DeadlineAlertCard from '@/components/dashboard/DeadlineAlertCard.vue';
+import TaskOverdueCard from '@/components/dashboard/TaskOverdueCard.vue';
 import TaskDueSoonCard from '@/components/dashboard/TaskDueSoonCard.vue';
 import ChartCard from '@/components/dashboard/ChartCard.vue';
 import RasioStatusTaskCard from '@/components/dashboard/RasioStatusTaskCard.vue';
@@ -159,13 +159,12 @@ defineOptions({
                 />
             </div>
 
-            <!-- Task Overdue (row 5-6, col 1-2) -->
-            <div class="col-span-1 md:col-span-2 lg:col-span-2 row-span-2">
-                <DeadlineAlertCard
-                    type="overdue"
+            <!-- Task Overdue (row 6-7, col 1 — lebar mengikuti HeroCard / kolom pertama 2fr) -->
+            <div class="col-span-1 md:col-span-1 lg:col-span-1 row-span-2">
+                <TaskOverdueCard
                     :count="overdue_count"
                     :tasks="overdue_tasks"
-                    :view-all-link="overdue_tasks.length > 10 ? tasksIndex({ query: { status: 'overdue' } }).url : undefined"
+                    :view-all-link="overdue_tasks.length > 3 ? tasksIndex({ query: { status: 'overdue' } }).url : undefined"
                 />
             </div>
 

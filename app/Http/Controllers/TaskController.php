@@ -3,20 +3,16 @@
 namespace App\Http\Controllers;
 
 use App\Models\Client;
-use App\Models\ReleaseDateLog;
 use App\Models\Task;
 use App\Models\TaskComment;
-use App\Models\TaskTemplate;
 use App\Models\Team;
 use App\Models\User;
 use App\Services\ActivityLogger;
 use App\Services\NotificationService;
 use Carbon\Carbon;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
-use Spatie\SimpleExcel\SimpleExcelReader;
 use Spatie\SimpleExcel\SimpleExcelWriter;
 
 class TaskController extends Controller
@@ -29,15 +25,62 @@ class TaskController extends Controller
     {
         $this->authorize('viewAny', Task::class);
 
-        /** @var User $user */
         $user = $request->user();
-        $query = Task::with(['client', 'product', 'engineer', 'assignee', 'sla', 'documents:id,title,type'])->withCount('comments');
+        $query = Task::with(['client', 'product', 'engineer', 'assignee', 'documents:id,title,type'])->withCount('comments');
 
         if ($user->isMember()) {
             $query->where('assigned_to', $user->id);
         }
 
-        $this->applyTaskFilters($query, $request);
+        // Menerapkan Filter Berjenjang
+        if ($request->filled('product_id')) {
+            $query->where('product_id', $request->product_id);
+        }
+        if ($request->filled('client_id')) {
+            $query->where('client_id', $request->client_id);
+        }
+        if ($request->filled('engineer_id')) {
+            $query->where('engineer_id', $request->engineer_id);
+        }
+        if ($request->filled('category')) {
+            $query->where('category', $request->category);
+        }
+        if ($request->filled('status')) {
+            if ($request->status === 'overdue') {
+                // Overdue = release_date sudah lewat dan status belum completed
+                $query->whereNotNull('release_date')
+                    ->whereDate('release_date', '<', now()->toDateString())
+                    ->where('status', '!=', 'completed');
+            } else {
+                $query->where('status', $request->status);
+            }
+        }
+        if ($request->filled('has_link')) {
+            if ($request->has_link === 'yes') {
+                $query->whereNotNull('task_url')
+                    ->where('task_url', '!=', '')
+                    ->where('task_url', '!=', '-');
+            } else {
+                $query->where(function ($q) {
+                    $q->whereNull('task_url')
+                        ->orWhere('task_url', '')
+                        ->orWhere('task_url', '-');
+                });
+            }
+        }
+        if ($request->filled('date_from')) {
+            $query->whereDate('release_date', '>=', $request->date_from);
+        }
+        if ($request->filled('date_to')) {
+            $query->whereDate('release_date', '<=', $request->date_to);
+        }
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('title', 'like', "%{$search}%")
+                    ->orWhere('modul', 'like', "%{$search}%");
+            });
+        }
 
         $tasks = $query->latest()->paginate(10)->withQueryString();
         $tasks->through(function (Task $task) use ($user) {
@@ -69,9 +112,6 @@ class TaskController extends Controller
     {
         $this->authorize('create', Task::class);
 
-        /** @var User $currentUser */
-        $currentUser = request()->user();
-
         return Inertia::render('Tasks/Create', [
             // Kirim data master ke Vue untuk form pilihan Dropdown
             'clients' => Client::where('is_active', true)->get(['id', 'name']),
@@ -79,7 +119,7 @@ class TaskController extends Controller
             'engineer_teams' => Team::where('type', 'ENGINEER')->where('is_active', true)->get(['id', 'name']),
             'users' => User::where('is_active', true)->get(['id', 'name']),
             'existing_modules' => Task::select('modul')->whereNotNull('modul')->where('modul', '!=', '')->distinct()->pluck('modul'),
-            'task_templates' => TaskTemplate::where('created_by', $currentUser->id)->get(),
+            'task_templates' => \App\Models\TaskTemplate::where('created_by', request()->user()->id)->get(),
         ]);
     }
 
@@ -102,9 +142,7 @@ class TaskController extends Controller
             'release_date' => 'nullable|date',
         ]);
 
-        /** @var User $user */
-        $user = $request->user();
-        $validated['created_by'] = $user->id;
+        $validated['created_by'] = $request->user()->id;
 
         // Cegah error SQL "Column task_url cannot be null" karena database lama mewajibkan isi
         if (empty($validated['task_url'])) {
@@ -150,13 +188,11 @@ class TaskController extends Controller
             'engineer:id,name',
             'assignee:id,name',
             'creator:id,name',
-            'sla',
             'comments' => fn ($query) => $query
                 ->with('user:id,name')
                 ->latest(),
         ]);
 
-        /** @var User $user */
         $user = $request->user();
 
         return Inertia::render('Tasks/Show', [
@@ -202,6 +238,7 @@ class TaskController extends Controller
             'priority' => ['required', Rule::in(['urgent', 'high', 'medium', 'low'])],
             'status' => ['required', Rule::in(['open', 'in_progress', 'revision', 'completed'])],
             'release_date' => 'nullable|date',
+            'release_reason' => 'nullable|string|max:500'
         ]);
 
         // Cegah error SQL "Column task_url cannot be null"
@@ -217,32 +254,26 @@ class TaskController extends Controller
         }
 
         $oldValues = $task->getOriginal();
+        $oldReleaeDate = $task->getOriginal('release_date');
         $previousAssigneeId = $task->assigned_to;
-
-        // Log perubahan release_date jika berubah
-        $oldReleaseDate = $task->release_date?->toDateString();
-        $newReleaseDate = $validated['release_date'] ?? null;
-        if ($oldReleaseDate !== $newReleaseDate) {
-            /** @var User $user */
-            $user = $request->user();
-            ReleaseDateLog::create([
-                'task_id' => $task->id,
-                'changed_by' => $user->id,
-                'old_date' => $oldReleaseDate,
-                'new_date' => $newReleaseDate,
-                'reason' => $request->input('release_date_reason'),
-            ]);
-        }
-
         $task->update($validated);
         $task->loadMissing('client');
+
+        // Catat perubahan tanggal release jika berubah
+        $newReleaseDate = $validated['release_date'] ?? null;
+        if ($oldReleaseDate && $newReleaseDate && $oldReleaseDate != $newReleaseDate) {
+            \App\Models\ReleaseDateLog::create([
+                'task_id'    => $task->id,
+                'changed_by' => $request->user()->id,
+                'old_date'   => $oldReleaseDate,
+                'new_date'   => $newReleaseDate,
+                'reason'     => $request->input('release_reason', 'Tidak ada alasan'),
+            ]);
+        }
 
         $this->notificationService->notifyTaskAssignment($task, $previousAssigneeId);
 
         if ($validated['status'] !== ($oldValues['status'] ?? null)) {
-            /** @var User $currentUser */
-            $currentUser = $request->user();
-            $this->notificationService->notifyStatusChanged($task, $oldValues['status'] ?? 'open', $validated['status'], $currentUser);
             ActivityLogger::statusChanged('task', $task->id, $task->title, $oldValues['status'] ?? 'open', $validated['status']);
         }
 
@@ -266,17 +297,16 @@ class TaskController extends Controller
     {
         $this->authorize('viewAny', Task::class);
 
-        /** @var User $user */
         $user = request()->user();
         $completedWindowDays = 7;
 
         // Ambil semua task yang belum selesai
-        $activeTasksQuery = Task::with(['client', 'assignee', 'product', 'sla'])->withCount('comments')
+        $activeTasksQuery = Task::with(['client', 'assignee', 'product'])->withCount('comments')
             ->where('status', '!=', 'completed')
             ->orderBy('created_at', 'asc');
 
         // Ambil task yang sudah selesai dalam 7 hari terakhir
-        $completedTasksQuery = Task::with(['client', 'assignee', 'product', 'sla'])->withCount('comments')
+        $completedTasksQuery = Task::with(['client', 'assignee', 'product'])->withCount('comments')
             ->where('status', 'completed')
             ->where('completed_at', '>=', now()->subDays($completedWindowDays))
             ->orderBy('created_at', 'asc');
@@ -330,10 +360,6 @@ class TaskController extends Controller
         $oldStatus = $task->status;
         $task->update($validated);
 
-        /** @var User $user */
-        $user = $request->user();
-        $this->notificationService->notifyStatusChanged($task, $oldStatus, $validated['status'], $user);
-
         ActivityLogger::statusChanged('task', $task->id, $task->title, $oldStatus, $validated['status']);
 
         return back();
@@ -348,11 +374,8 @@ class TaskController extends Controller
 
         $tasks = Task::whereIn('id', $request->ids)->get();
 
-        /** @var User $user */
-        $user = $request->user();
-
         foreach ($tasks as $task) {
-            if ($user->can('delete', $task)) {
+            if ($request->user()->can('delete', $task)) {
                 ActivityLogger::deleted('task', $task->id, $task->title, "Menghapus task '{$task->title}' secara massal");
                 $task->delete();
             }
@@ -371,11 +394,8 @@ class TaskController extends Controller
 
         $tasks = Task::whereIn('id', $request->ids)->get();
 
-        /** @var User $user */
-        $user = $request->user();
-
         foreach ($tasks as $task) {
-            if ($user->can('updateStatus', $task) && $task->status !== $request->status) {
+            if ($request->user()->can('updateStatus', $task) && $task->status !== $request->status) {
                 $oldStatus = $task->status;
                 $updateData = ['status' => $request->status];
 
@@ -386,7 +406,6 @@ class TaskController extends Controller
                 }
 
                 $task->update($updateData);
-                $this->notificationService->notifyStatusChanged($task, $oldStatus, $request->status, $user);
                 ActivityLogger::statusChanged('task', $task->id, $task->title, $oldStatus, $request->status);
             }
         }
@@ -404,11 +423,8 @@ class TaskController extends Controller
 
         $tasks = Task::whereIn('id', $request->ids)->get();
 
-        /** @var User $user */
-        $user = $request->user();
-
         foreach ($tasks as $task) {
-            if ($user->can('update', $task)) {
+            if ($request->user()->can('update', $task)) {
                 $previousAssigneeId = $task->assigned_to;
                 $oldValues = $task->toArray();
 
@@ -426,15 +442,61 @@ class TaskController extends Controller
     {
         $this->authorize('viewAny', Task::class);
 
-        /** @var User $user */
         $user = $request->user();
-        $query = Task::with(['client', 'product', 'engineer', 'assignee', 'creator', 'sla']);
+        $query = Task::with(['client', 'product', 'engineer', 'assignee']);
 
         if ($user->isMember()) {
             $query->where('assigned_to', $user->id);
         }
 
-        $this->applyTaskFilters($query, $request);
+        // Menerapkan Filter Berjenjang
+        if ($request->filled('product_id')) {
+            $query->where('product_id', $request->product_id);
+        }
+        if ($request->filled('client_id')) {
+            $query->where('client_id', $request->client_id);
+        }
+        if ($request->filled('engineer_id')) {
+            $query->where('engineer_id', $request->engineer_id);
+        }
+        if ($request->filled('category')) {
+            $query->where('category', $request->category);
+        }
+        if ($request->filled('status')) {
+            if ($request->status === 'overdue') {
+                $query->whereNotNull('release_date')
+                    ->whereDate('release_date', '<', now()->toDateString())
+                    ->where('status', '!=', 'completed');
+            } else {
+                $query->where('status', $request->status);
+            }
+        }
+        if ($request->filled('has_link')) {
+            if ($request->has_link === 'yes') {
+                $query->whereNotNull('task_url')
+                    ->where('task_url', '!=', '')
+                    ->where('task_url', '!=', '-');
+            } else {
+                $query->where(function ($q) {
+                    $q->whereNull('task_url')
+                        ->orWhere('task_url', '')
+                        ->orWhere('task_url', '-');
+                });
+            }
+        }
+        if ($request->filled('date_from')) {
+            $query->whereDate('release_date', '>=', $request->date_from);
+        }
+        if ($request->filled('date_to')) {
+            $query->whereDate('release_date', '<=', $request->date_to);
+        }
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('title', 'like', "%{$search}%")
+                    ->orWhere('modul', 'like', "%{$search}%");
+            });
+        }
 
         $tasks = $query->latest()->get();
 
@@ -465,186 +527,81 @@ class TaskController extends Controller
 
         return $writer->toBrowser();
     }
-
-    /**
-     * Apply shared task filters to a query builder.
-     *
-     * @param  Builder<Task>  $query
-     */
-    private function applyTaskFilters($query, Request $request): void
-    {
-        if ($request->filled('product_id')) {
-            $query->where('product_id', $request->product_id);
-        }
-        if ($request->filled('client_id')) {
-            $query->where('client_id', $request->client_id);
-        }
-        if ($request->filled('engineer_id')) {
-            $query->where('engineer_id', $request->engineer_id);
-        }
-        if ($request->filled('category')) {
-            $query->where('category', $request->category);
-        }
-        if ($request->filled('status')) {
-            $query->where('status', $request->status);
-        }
-        if ($request->filled('has_link')) {
-            if ($request->has_link === 'yes') {
-                $query->whereNotNull('task_url')
-                    ->where('task_url', '!=', '')
-                    ->where('task_url', '!=', '-');
-            } else {
-                $query->where(function ($q) {
-                    $q->whereNull('task_url')
-                        ->orWhere('task_url', '')
-                        ->orWhere('task_url', '-');
-                });
-            }
-        }
-        if ($request->filled('date_from')) {
-            $query->whereDate('release_date', '>=', $request->date_from);
-        }
-        if ($request->filled('date_to')) {
-            $query->whereDate('release_date', '<=', $request->date_to);
-        }
-        if ($request->filled('search')) {
-            $search = $request->search;
-            $query->where(function ($q) use ($search) {
-                $q->where('title', 'like', "%{$search}%")
-                    ->orWhere('modul', 'like', "%{$search}%");
-            });
-        }
-    }
-
-    /**
-     * Import tasks from an Excel/CSV file.
-     */
     public function import(Request $request)
     {
         $this->authorize('create', Task::class);
-
         $request->validate([
-            'file' => ['required', 'file', 'mimes:xlsx,xls,csv', 'max:5120'],
+            'file' => 'required|file|mimes:csv,xlsx,xls|max:10240',
         ]);
-
-        /** @var User $user */
-        $user = $request->user();
-
-        $file = $request->file('file');
-        $path = $file->storeAs('imports', 'import_'.time().'.'.$file->getClientOriginalExtension(), 'local');
-        $fullPath = storage_path('app/private/'.$path);
-
-        // Pre-load lookup maps for name-to-id resolution
-        $clientMap = Client::pluck('id', 'name')->mapWithKeys(fn ($id, $name) => [strtolower(trim($name)) => $id]);
-        $productMap = Team::where('type', 'PRODUCT')->pluck('id', 'name')->mapWithKeys(fn ($id, $name) => [strtolower(trim($name)) => $id]);
-        $engineerMap = Team::where('type', 'ENGINEER')->pluck('id', 'name')->mapWithKeys(fn ($id, $name) => [strtolower(trim($name)) => $id]);
-
+        $path = $request->file('file')->store('temp');
+        $fullPath = storage_path('app/' . $path);
+        // Buat lookup maps: nama → id (case-insensitive)
+        $productMap = Team::where('type', 'PRODUCT')->pluck('id', 'name')->mapWithKeys(fn($id, $name) => [strtolower($name) => $id]);
+        $engineerMap = Team::where('type', 'ENGINEER')->pluck('id', 'name')->mapWithKeys(fn($id, $name) => [strtolower($name) => $id]);
+        $clientMap = Client::pluck('id', 'name')->mapWithKeys(fn($id, $name) => [strtolower($name) => $id]);
         $validCategories = ['Fitur Berbayar', 'Regulasi', 'Saran Fitur', 'Prioritas'];
         $validPriorities = ['urgent', 'high', 'medium', 'low'];
-        $validStatuses = ['open', 'in_progress', 'revision', 'completed'];
-
         $imported = 0;
         $skipped = 0;
         $errors = [];
-
-        $rows = SimpleExcelReader::create($fullPath)->getRows();
-
-        foreach ($rows as $index => $row) {
-            $rowNumber = $index + 2; // +2 because index is 0-based and header is row 1
-
-            $title = trim($row['Judul Task'] ?? $row['title'] ?? '');
-            if (empty($title)) {
+        $reader = \Spatie\SimpleExcel\SimpleExcelReader::create($fullPath);
+        foreach ($reader->getRows() as $index => $row) {
+            $rowNum = $index + 2; // baris 1 = header
+            // Cari FK dari nama
+            $productId = $productMap[strtolower(trim($row['Product'] ?? ''))] ?? null;
+            $clientId = $clientMap[strtolower(trim($row['Client'] ?? $row['Faskes'] ?? $row['Client / Faskes'] ?? ''))] ?? null;
+            $engineerId = $engineerMap[strtolower(trim($row['Engineer'] ?? ''))] ?? null;
+            // Validasi wajib
+            $title = trim($row['Judul Task'] ?? $row['Title'] ?? $row['Judul'] ?? '');
+            if (!$title || !$productId || !$clientId) {
                 $skipped++;
-                $errors[] = "Baris {$rowNumber}: Judul task kosong, dilewati.";
-
+                $errors[] = "Baris {$rowNum}: Data wajib tidak lengkap (Judul/Product/Client).";
                 continue;
             }
-
-            // Resolve client by name
-            $rawClientName = $row['Client / Faskes'] ?? $row['client'] ?? '';
-            $clientName = strtolower(trim($rawClientName));
-            $clientId = $clientMap[$clientName] ?? null;
-            if (! $clientId) {
-                $skipped++;
-                $errors[] = "Baris {$rowNumber}: Client '{$rawClientName}' tidak ditemukan.";
-
-                continue;
-            }
-
-            // Resolve product by name
-            $rawProductName = $row['Product'] ?? $row['product'] ?? '';
-            $productName = strtolower(trim($rawProductName));
-            $productId = $productMap[$productName] ?? null;
-            if (! $productId) {
-                $skipped++;
-                $errors[] = "Baris {$rowNumber}: Product '{$rawProductName}' tidak ditemukan.";
-
-                continue;
-            }
-
-            // Resolve engineer (optional)
-            $engineerName = strtolower(trim($row['Engineer'] ?? $row['engineer'] ?? ''));
-            $engineerId = ($engineerName && $engineerName !== '-') ? ($engineerMap[$engineerName] ?? null) : null;
-
-            // Category validation
-            $category = trim($row['Jenis'] ?? $row['category'] ?? 'Saran Fitur');
-            if (! in_array($category, $validCategories)) {
+            // Map category dan priority
+            $category = $row['Jenis'] ?? $row['Category'] ?? $row['Kategori'] ?? 'Saran Fitur';
+            if (!in_array($category, $validCategories)) {
                 $category = 'Saran Fitur';
             }
-
-            // Priority validation
-            $priority = strtolower(trim($row['Prioritas'] ?? $row['priority'] ?? 'medium'));
-            if (! in_array($priority, $validPriorities)) {
+            $priority = strtolower($row['Prioritas'] ?? $row['Priority'] ?? 'medium');
+            if (!in_array($priority, $validPriorities)) {
                 $priority = 'medium';
             }
-
-            // Status validation
-            $status = strtolower(trim($row['Status'] ?? $row['status'] ?? 'open'));
-            if (! in_array($status, $validStatuses)) {
-                $status = 'open';
-            }
-
-            // Parse release date
             $releaseDate = null;
-            $rawDate = trim($row['Tanggal Release'] ?? $row['release_date'] ?? '');
-            if ($rawDate && $rawDate !== '-') {
+            $rawDate = $row['Tanggal Release'] ?? $row['Release Date'] ?? null;
+            if ($rawDate) {
                 try {
                     $releaseDate = Carbon::parse($rawDate)->format('Y-m-d');
-                } catch (\Exception) {
-                    // Invalid date, skip
+                } catch (\Exception $e) {
+                    $releaseDate = null;
                 }
             }
-
             Task::create([
-                'title' => $title,
-                'description' => trim($row['Deskripsi'] ?? $row['description'] ?? '') ?: null,
-                'modul' => trim($row['Modul / Fitur'] ?? $row['modul'] ?? '') ?: null,
-                'task_url' => trim($row['URL'] ?? $row['task_url'] ?? '') ?: '-',
-                'category' => $category,
-                'priority' => $priority,
-                'status' => $status,
-                'client_id' => $clientId,
-                'product_id' => $productId,
-                'engineer_id' => $engineerId,
+                'title'        => $title,
+                'description'  => $row['Deskripsi'] ?? $row['Description'] ?? null,
+                'modul'        => $row['Modul'] ?? $row['Modul / Fitur'] ?? null,
+                'product_id'   => $productId,
+                'client_id'    => $clientId,
+                'engineer_id'  => $engineerId,
+                'category'     => $category,
+                'priority'     => $priority,
+                'status'       => 'open',
+                'task_url'     => $row['URL'] ?? $row['Task URL'] ?? '-',
                 'release_date' => $releaseDate,
-                'completed_at' => $status === 'completed' ? now() : null,
-                'created_by' => $user->id,
+                'created_by'   => $request->user()->id,
             ]);
-
             $imported++;
         }
-
-        // Cleanup
-        @unlink($fullPath);
-
-        ActivityLogger::log('imported', 'task', null, 'Import Task', "Import {$imported} task dari file: {$file->getClientOriginalName()}");
-
+        // Cleanup temp file
+        \Illuminate\Support\Facades\Storage::delete($path);
+        ActivityLogger::log('imported', 'task', null, 'Import Task', "Mengimport {$imported} task dari file", null, [
+            'imported' => $imported,
+            'skipped' => $skipped,
+        ]);
         $message = "Berhasil mengimport {$imported} task.";
         if ($skipped > 0) {
             $message .= " {$skipped} baris dilewati.";
         }
-
-        return back()->with('success', $message)
-            ->with('import_errors', $errors);
+        return back()->with('success', $message)->with('import_errors', $errors);
     }
 }

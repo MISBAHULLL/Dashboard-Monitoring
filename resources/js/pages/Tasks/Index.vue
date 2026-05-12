@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, watch, computed } from 'vue';
 import { Head, Link, useForm, router } from '@inertiajs/vue3';
-import { ListTodo, Plus, Edit, Trash2, Filter, RotateCcw, ExternalLink, Lock, CheckCircle2, AlertCircle, Download, Upload, X, FileSpreadsheet } from 'lucide-vue-next';
+import { ListTodo, Plus, Edit, Trash2, Filter, RotateCcw, ExternalLink, Lock, CheckCircle2, AlertCircle, Download, Upload } from 'lucide-vue-next';
 import { dashboard } from '@/routes';
 import { show as showTask, bulkDestroy, bulkUpdateStatus, bulkAssign } from '@/actions/App/Http/Controllers/TaskController';
 
@@ -56,8 +56,8 @@ watch(filterForm, (newVal) => {
         preserveScroll: true,
         replace: true,
     });
-}, { deep: true });
-
+}, 
+{ deep: true });
 const resetFilter = () => {
     filterForm.value = {
         search: '',
@@ -171,26 +171,16 @@ const getAvatarColor = (name: string) => {
     return colors[Math.abs(hash) % colors.length];
 };
 
-// ── Import Modal ──
+// --- Import CSV ---
 const showImportModal = ref(false);
 const importForm = useForm({ file: null as File | null });
-const dragOver = ref(false);
-
-const handleImportFile = (e: Event) => {
-    const target = e.target as HTMLInputElement;
-    if (target.files?.[0]) {
+const importFileInput = ref<HTMLInputElement | null>(null);
+const onImportFileSelected = (event: Event) => {
+    const target = event.target as HTMLInputElement;
+    if (target.files && target.files[0]) {
         importForm.file = target.files[0];
     }
 };
-
-const handleDrop = (e: DragEvent) => {
-    dragOver.value = false;
-    const file = e.dataTransfer?.files?.[0];
-    if (file && (file.name.endsWith('.xlsx') || file.name.endsWith('.xls') || file.name.endsWith('.csv'))) {
-        importForm.file = file;
-    }
-};
-
 const submitImport = () => {
     if (!importForm.file) return;
     importForm.post('/tasks/import', {
@@ -221,10 +211,10 @@ const submitImport = () => {
             </div>
             <div class="flex items-center gap-3">
                 <a :href="exportUrl" target="_blank" class="flex items-center gap-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 shadow-sm rounded-xl transition-all hover:-translate-y-0.5 h-10 px-4">
-                    <Download class="h-4 w-4 text-emerald-600" /> <span class="font-medium tracking-wide text-sm">Export Excel</span>
+                    <Download class="h-4 w-4 text-emerald-600" /> <span class="font-medium tracking-wide text-sm">Export</span>
                 </a>
                 <button v-if="permissions.can_create" @click="showImportModal = true" class="flex items-center gap-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 shadow-sm rounded-xl transition-all hover:-translate-y-0.5 h-10 px-4">
-                    <Upload class="h-4 w-4 text-sky-600" /> <span class="font-medium tracking-wide text-sm">Import Excel</span>
+                    <Upload class="h-4 w-4 text-blue-600" /> <span class="font-medium tracking-wide text-sm">Import</span>
                 </button>
                 <Link v-if="permissions.can_create" href="/tasks/create">
                     <Button class="flex items-center gap-2 bg-gradient-to-r from-sky-600 to-blue-700 hover:from-sky-500 hover:to-blue-600 text-white shadow-lg shadow-sky-500/20 rounded-xl transition-all hover:-translate-y-0.5 border-0 h-10 px-5">
@@ -292,8 +282,10 @@ const submitImport = () => {
                         <select v-model="filterForm.status" class="w-full text-sm border-0 ring-1 ring-inset ring-slate-200 focus:ring-2 focus:ring-inset focus:ring-sky-500 rounded-xl bg-slate-50/50 hover:bg-slate-50 h-9 px-3 transition-all cursor-pointer text-slate-700">
                             <option value="">Semua Status</option>
                             <option value="open">Belum Di Cek</option>
+                            <option value="in_progress">In Progress</option>
                             <option value="revision">Revisi</option>
                             <option value="completed">Selesai</option>
+                            <option value="overdue">Overdue</option>
                         </select>
                     </div>
                     <div class="space-y-1.5 lg:col-span-2">
@@ -595,110 +587,33 @@ const submitImport = () => {
                 </div>
             </div>
         </div>
-
-        <!-- Import Modal -->
-        <Teleport to="body">
-            <div v-if="showImportModal" class="fixed inset-0 z-50 flex items-center justify-center p-4">
-                <!-- Backdrop -->
-                <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" @click="showImportModal = false"></div>
-
-                <!-- Modal Content -->
-                <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg border border-slate-200 overflow-hidden">
-                    <!-- Header -->
-                    <div class="flex items-center justify-between p-5 border-b border-slate-100 bg-gradient-to-r from-sky-50 to-blue-50">
-                        <div class="flex items-center gap-3">
-                            <div class="p-2 bg-sky-100 rounded-xl text-sky-600">
-                                <FileSpreadsheet class="h-5 w-5" />
-                            </div>
-                            <div>
-                                <h3 class="font-bold text-slate-800 text-base">Import Task dari Excel</h3>
-                                <p class="text-xs text-slate-500 mt-0.5">Upload file .xlsx, .xls, atau .csv</p>
-                            </div>
-                        </div>
-                        <button @click="showImportModal = false" class="p-1.5 rounded-lg hover:bg-slate-200/80 transition-colors text-slate-400 hover:text-slate-600">
-                            <X class="h-5 w-5" />
-                        </button>
-                    </div>
-
-                    <!-- Body -->
-                    <div class="p-5 space-y-4">
-                        <!-- Drop Zone -->
-                        <div
-                            @dragover.prevent="dragOver = true"
-                            @dragleave.prevent="dragOver = false"
-                            @drop.prevent="handleDrop"
-                            :class="[
-                                'relative border-2 border-dashed rounded-xl p-8 text-center transition-all duration-200 cursor-pointer',
-                                dragOver ? 'border-sky-400 bg-sky-50/50' : importForm.file ? 'border-emerald-300 bg-emerald-50/30' : 'border-slate-200 bg-slate-50/50 hover:border-sky-300 hover:bg-sky-50/30'
-                            ]"
-                            @click="($refs.fileInput as HTMLInputElement)?.click()"
-                        >
-                            <input ref="fileInput" type="file" class="hidden" accept=".xlsx,.xls,.csv" @change="handleImportFile" />
-
-                            <div v-if="importForm.file" class="flex flex-col items-center gap-2">
-                                <div class="h-12 w-12 rounded-xl bg-emerald-100 flex items-center justify-center">
-                                    <CheckCircle2 class="h-6 w-6 text-emerald-600" />
-                                </div>
-                                <p class="font-bold text-slate-800 text-sm">{{ importForm.file.name }}</p>
-                                <p class="text-xs text-slate-500">{{ (importForm.file.size / 1024).toFixed(1) }} KB — Klik untuk ganti file</p>
-                            </div>
-                            <div v-else class="flex flex-col items-center gap-2">
-                                <div class="h-12 w-12 rounded-xl bg-slate-100 flex items-center justify-center">
-                                    <Upload class="h-6 w-6 text-slate-400" />
-                                </div>
-                                <p class="font-semibold text-slate-700 text-sm">Drag & drop file atau klik untuk pilih</p>
-                                <p class="text-xs text-slate-400">Maksimal 5MB • .xlsx, .xls, .csv</p>
-                            </div>
-                        </div>
-
-                        <!-- Error -->
-                        <div v-if="importForm.errors.file" class="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
-                            {{ importForm.errors.file }}
-                        </div>
-
-                        <!-- Format Hint -->
-                        <div class="bg-slate-50 border border-slate-200 rounded-xl p-4">
-                            <p class="text-xs font-bold text-slate-600 mb-2">📋 Format Kolom yang Didukung:</p>
-                            <div class="grid grid-cols-2 gap-1 text-[11px] text-slate-500">
-                                <span>• <b>Judul Task</b> (wajib)</span>
-                                <span>• <b>Client / Faskes</b> (wajib)</span>
-                                <span>• <b>Product</b> (wajib)</span>
-                                <span>• Deskripsi</span>
-                                <span>• Modul / Fitur</span>
-                                <span>• URL</span>
-                                <span>• Jenis</span>
-                                <span>• Prioritas</span>
-                                <span>• Status</span>
-                                <span>• Engineer</span>
-                                <span>• Tanggal Release</span>
-                            </div>
-                            <p class="text-[11px] text-sky-600 mt-2 font-medium">💡 Tip: Export dulu data task, lalu gunakan sebagai template format.</p>
-                        </div>
-
-                        <!-- Progress -->
-                        <div v-if="importForm.progress" class="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
-                            <div class="bg-sky-500 h-2 rounded-full transition-all duration-300" :style="{ width: importForm.progress.percentage + '%' }"></div>
-                        </div>
-                    </div>
-
-                    <!-- Footer -->
-                    <div class="flex items-center justify-end gap-3 p-5 border-t border-slate-100 bg-slate-50/50">
-                        <button @click="showImportModal = false; importForm.reset()" class="h-9 px-4 text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-lg transition-colors">
-                            Batal
-                        </button>
-                        <button
-                            @click="submitImport"
-                            :disabled="!importForm.file || importForm.processing"
-                            class="h-9 px-5 text-sm font-bold text-white bg-sky-600 hover:bg-sky-500 rounded-lg shadow-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-                        >
-                            <Upload v-if="!importForm.processing" class="h-4 w-4" />
-                            <svg v-else class="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
-                            {{ importForm.processing ? 'Mengimport...' : 'Import Sekarang' }}
-                        </button>
-                    </div>
+    </div>
+    
+    <!-- Import Modal -->
+    <Teleport to="body">
+        <div v-if="showImportModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm" @click.self="showImportModal = false">
+            <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 space-y-5">
+                <div>
+                    <h2 class="text-lg font-bold text-slate-800">Import Task dari File</h2>
+                    <p class="text-sm text-slate-500 mt-1">Upload file CSV atau Excel (.xlsx) dengan kolom: Judul Task, Product, Client, Jenis, Prioritas, dll.</p>
+                </div>
+                <div class="space-y-3">
+                    <label class="block">
+                        <span class="text-sm font-semibold text-slate-700">Pilih File</span>
+                        <input ref="importFileInput" type="file" accept=".csv,.xlsx,.xls" @change="onImportFileSelected"
+                            class="mt-1 block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-sky-50 file:text-sky-700 hover:file:bg-sky-100 cursor-pointer" />
+                    </label>
+                    <p v-if="importForm.errors.file" class="text-sm text-red-500">{{ importForm.errors.file }}</p>
+                </div>
+                <div class="flex justify-end gap-3 pt-2 border-t">
+                    <Button variant="outline" @click="showImportModal = false" class="h-10 px-5 rounded-xl">Batal</Button>
+                    <Button @click="submitImport" :disabled="!importForm.file || importForm.processing"
+                        class="h-10 px-5 bg-sky-600 hover:bg-sky-700 text-white rounded-xl flex items-center gap-2">
+                        <Upload class="h-4 w-4" />
+                        {{ importForm.processing ? 'Memproses...' : 'Import Sekarang' }}
+                    </Button>
                 </div>
             </div>
-        </Teleport>
-
-    </div>
+        </div>
+    </Teleport>
 </template>

@@ -260,20 +260,20 @@ class TaskController extends Controller
         }
 
         $oldValues = $task->getOriginal();
-        $oldReleaeDate = $task->getOriginal('release_date');
+        $oldReleaseDate = $task->getOriginal('release_date');
         $previousAssigneeId = $task->assigned_to;
         $task->update($validated);
         $task->loadMissing('client');
 
         // Catat perubahan tanggal release jika berubah
         $newReleaseDate = $validated['release_date'] ?? null;
-        if ($oldReleaseDate && $newReleaseDate && $oldReleaseDate != $newReleaseDate) {
+        if ($oldReleaseDate && $newReleaseDate && Carbon::parse($oldReleaseDate)->toDateString() !== Carbon::parse($newReleaseDate)->toDateString()) {
             \App\Models\ReleaseDateLog::create([
                 'task_id'    => $task->id,
                 'changed_by' => $request->user()->id,
                 'old_date'   => $oldReleaseDate,
                 'new_date'   => $newReleaseDate,
-                'reason'     => $request->input('release_reason', 'Tidak ada alasan'),
+                'reason'     => $request->input('release_reason') ?? 'Tidak ada alasan',
             ]);
         }
 
@@ -455,6 +455,12 @@ class TaskController extends Controller
             $query->where('assigned_to', $user->id);
         }
 
+        // Jika ada ids spesifik (dari checkbox), filter hanya task tersebut
+        if ($request->filled('ids')) {
+            $ids = is_array($request->ids) ? $request->ids : explode(',', $request->ids);
+            $query->whereIn('id', array_map('intval', $ids));
+        }
+
         // Menerapkan Filter Berjenjang
         if ($request->filled('product_id')) {
             $query->where('product_id', $request->product_id);
@@ -508,7 +514,15 @@ class TaskController extends Controller
 
         ActivityLogger::log('exported', 'task', null, 'Daftar Task', 'Mengunduh laporan excel daftar task');
 
-        $writer = SimpleExcelWriter::streamDownload('laporan_task_'.date('Y-m-d_His').'.xlsx');
+        $fileName = 'laporan_task_'.date('Y-m-d_His').'.csv';
+        $filePath = storage_path('app/temp/'.$fileName);
+
+        // Pastikan folder temp ada
+        if (!is_dir(storage_path('app/temp'))) {
+            mkdir(storage_path('app/temp'), 0755, true);
+        }
+
+        $writer = SimpleExcelWriter::create($filePath);
 
         foreach ($tasks as $task) {
             $writer->addRow([
@@ -531,16 +545,27 @@ class TaskController extends Controller
             ]);
         }
 
-        return $writer->toBrowser();
+        $writer->close();
+
+        return response()->download($filePath, $fileName, [
+            'Content-Type' => 'text/csv',
+        ])->deleteFileAfterSend(true);
     }
     public function import(Request $request)
     {
         $this->authorize('create', Task::class);
         $request->validate([
-            'file' => 'required|file|mimes:csv,xlsx,xls|max:10240',
+            'file' => 'required|file|mimes:csv,txt,xlsx,xls|max:10240',
         ]);
-        $path = $request->file('file')->store('temp');
-        $fullPath = storage_path('app/' . $path);
+        $file = $request->file('file');
+        $extension = $file->getClientOriginalExtension() ?: 'csv';
+        $tempFileName = uniqid('import_') . '.' . $extension;
+        $tempDir = storage_path('app/temp');
+        if (!is_dir($tempDir)) {
+            mkdir($tempDir, 0755, true);
+        }
+        $fullPath = $tempDir . DIRECTORY_SEPARATOR . $tempFileName;
+        $file->move($tempDir, $tempFileName);
         // Buat lookup maps: nama → id (case-insensitive)
         $productMap = Team::where('type', 'PRODUCT')->pluck('id', 'name')->mapWithKeys(fn($id, $name) => [strtolower($name) => $id]);
         $engineerMap = Team::where('type', 'ENGINEER')->pluck('id', 'name')->mapWithKeys(fn($id, $name) => [strtolower($name) => $id]);
@@ -599,7 +624,10 @@ class TaskController extends Controller
             $imported++;
         }
         // Cleanup temp file
-        \Illuminate\Support\Facades\Storage::delete($path);
+        if (file_exists($fullPath)) {
+            unlink($fullPath);
+        }
+
         ActivityLogger::log('imported', 'task', null, 'Import Task', "Mengimport {$imported} task dari file", null, [
             'imported' => $imported,
             'skipped' => $skipped,

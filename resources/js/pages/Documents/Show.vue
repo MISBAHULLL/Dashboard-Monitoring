@@ -118,10 +118,18 @@ function handleFileChange(e: Event) {
     if (t.files?.[0]) uploadForm.file = t.files[0];
 }
 function submitUpload() {
-    uploadForm.post(`/documents/${editingDoc.value!.id}`, {
-        forceFormData: true,
-        onSuccess: () => { isUploadOpen.value = false; },
-    });
+    if (uploadForm.file) {
+        uploadForm
+            .transform((data) => ({ ...data, _method: 'put' }))
+            .post(`/documents/${editingDoc.value!.id}`, {
+                forceFormData: true,
+                onSuccess: () => { isUploadOpen.value = false; },
+            });
+    } else {
+        uploadForm.put(`/documents/${editingDoc.value!.id}`, {
+            onSuccess: () => { isUploadOpen.value = false; },
+        });
+    }
 }
 
 // ── Modal Hubungkan Task ─────────────────────────────────────

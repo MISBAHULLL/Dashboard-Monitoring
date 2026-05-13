@@ -84,13 +84,23 @@ function handleFileChange(event: Event) {
 
 function submit() {
     if (editingDocument.value) {
-        form.post(`/documents/${editingDocument.value.id}`, {
-            forceFormData: true,
-            onSuccess: () => closeModal(),
-        });
+        if (form.file) {
+            // Ada file → harus pakai POST + _method spoofing (multipart)
+            form
+                .transform((data) => ({ ...data, _method: 'put' }))
+                .post(`/documents/${editingDocument.value.id}`, {
+                    forceFormData: true,
+                    onSuccess: () => closeModal(),
+                });
+        } else {
+            // Tanpa file → langsung PUT (lebih cepat)
+            form.put(`/documents/${editingDocument.value.id}`, {
+                onSuccess: () => closeModal(),
+            });
+        }
     } else {
         form.post('/documents', {
-            forceFormData: true,
+            forceFormData: !!form.file,
             onSuccess: () => closeModal(),
         });
     }

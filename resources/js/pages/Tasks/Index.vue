@@ -9,6 +9,7 @@ import { show as showTask, bulkDestroy, bulkUpdateStatus, bulkAssign } from '@/a
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import ConfirmDialog from '@/components/ConfirmDialog.vue';
 
 const props = defineProps<{
     tasks: {
@@ -74,6 +75,13 @@ const resetFilter = () => {
 
 const selectedTasks = ref<number[]>([]);
 
+const confirmAction = ref({
+    open: false,
+    title: '',
+    description: '',
+    onConfirm: () => {},
+});
+
 const selectAll = computed({
     get: () => props.tasks.data.length > 0 && selectedTasks.value.length === props.tasks.data.length,
     set: (val) => {
@@ -92,13 +100,21 @@ const bulkActionForm = useForm({
 });
 
 const handleBulkDelete = () => {
-    if (confirm(`Hapus ${selectedTasks.value.length} task secara massal?`)) {
-        bulkActionForm.ids = selectedTasks.value;
-        bulkActionForm.post(bulkDestroy.url(), {
-            preserveScroll: true,
-            onSuccess: () => selectedTasks.value = [],
-        });
-    }
+    confirmAction.value = {
+        open: true,
+        title: 'Hapus Task Massal',
+        description: `Apakah Anda yakin ingin menghapus ${selectedTasks.value.length} task yang dipilih? Tindakan ini tidak dapat dibatalkan.`,
+        onConfirm: () => {
+            bulkActionForm.ids = selectedTasks.value;
+            bulkActionForm.post(bulkDestroy.url(), {
+                preserveScroll: true,
+                onSuccess: () => {
+                    selectedTasks.value = [];
+                    confirmAction.value.open = false;
+                },
+            });
+        },
+    };
 };
 
 const handleBulkStatus = (status: string) => {
@@ -147,13 +163,26 @@ const exportUrl = computed(() => {
             params.append(key, String(value));
         }
     }
+    // Jika ada task yang dicentang, export hanya yang dipilih
+    if (selectedTasks.value.length > 0) {
+        params.append('ids', selectedTasks.value.join(','));
+    }
     return `/tasks/export?${params.toString()}`;
 });
 
 const deleteTask = (id: number, title: string) => {
-    if (confirm(`Apakah Anda yakin ingin menghapus Task: "${title}"?`)) {
-        useForm({}).delete(`/tasks/${id}`);
-    }
+    confirmAction.value = {
+        open: true,
+        title: 'Hapus Task',
+        description: `Apakah Anda yakin ingin menghapus task "${title}"? Tindakan ini tidak dapat dibatalkan.`,
+        onConfirm: () => {
+            useForm({}).delete(`/tasks/${id}`, {
+                onSuccess: () => {
+                    confirmAction.value.open = false;
+                },
+            });
+        },
+    };
 };
 
 // Helper untuk Avatar Initials
@@ -616,4 +645,17 @@ const submitImport = () => {
             </div>
         </div>
     </Teleport>
+
+    <!-- Confirm Dialog -->
+    <ConfirmDialog
+        :open="confirmAction.open"
+        :title="confirmAction.title"
+        :description="confirmAction.description"
+        confirm-label="Hapus"
+        cancel-label="Batal"
+        variant="danger"
+        @update:open="(val) => confirmAction.open = val"
+        @confirm="confirmAction.onConfirm"
+        @cancel="confirmAction.open = false"
+    />
 </template>

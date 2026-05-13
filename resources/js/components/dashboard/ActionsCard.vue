@@ -58,7 +58,7 @@ const defaultActions: ActionItem[] = [
     },
     {
         label: 'Export data',
-        description: 'Export Excel',
+        description: 'Export CSV',
         icon: FileUp,
         href: tasksExport.url(),
         external: true,

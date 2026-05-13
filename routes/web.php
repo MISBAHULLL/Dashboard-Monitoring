@@ -1,19 +1,19 @@
 <?php
 
-use App\Http\Controllers\ActivityLogController;
-use App\Http\Controllers\BackupController;
-use App\Http\Controllers\ClientController;
-use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\DocumentController;
-use App\Http\Controllers\NotificationController;
-use App\Http\Controllers\SearchController;
-use App\Http\Controllers\SlaConfigController;
-use App\Http\Controllers\TaskCommentController;
-use App\Http\Controllers\TaskController;
-use App\Http\Controllers\TaskTemplateController;
-use App\Http\Controllers\TeamController;
-use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\ActivityLogController;
+use App\Http\Controllers\UserController;
+use App\Http\Controllers\TeamController;
+use App\Http\Controllers\ClientController;
+use App\Http\Controllers\SearchController;
+use App\Http\Controllers\TaskController;
+use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\TaskCommentController;
+use App\Http\Controllers\DocumentController;
+use App\Http\Controllers\BackupController;
+use App\Http\Controllers\SlaConfigController;
+use App\Http\Controllers\TaskTemplateController;
 
 Route::get('/', function () {
     return redirect()->route('login');
@@ -21,7 +21,7 @@ Route::get('/', function () {
 
 // Group route yang wajib login
 Route::middleware(['auth'])->group(function () {
-
+    
     // Dashboard
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
@@ -50,21 +50,22 @@ Route::middleware(['auth'])->group(function () {
     Route::delete('/tasks/{task}/comments/{comment}', [TaskCommentController::class, 'destroy'])->name('tasks.comments.destroy');
     Route::patch('/tasks/{task}/comments/{comment}/pin', [TaskCommentController::class, 'togglePin'])->name('tasks.comments.pin');
     Route::resource('tasks', TaskController::class);
-    Route::post('/task-templates', [TaskTemplateController::class, 'store'])->name('task-templates.store');
-    Route::delete('/task-templates/{taskTemplate}', [TaskTemplateController::class, 'destroy'])->name('task-templates.destroy');
+    Route::post('/task-templates', [\App\Http\Controllers\TaskTemplateController::class, 'store'])->name('task-templates.store');
+    Route::delete('/task-templates/{taskTemplate}', [\App\Http\Controllers\TaskTemplateController::class, 'destroy'])->name('task-templates.destroy');
 
     // Documents (File Versioning)
     Route::post('/documents/{document}/sync-tasks', [DocumentController::class, 'syncTasks'])->name('documents.syncTasks');
     Route::resource('documents', DocumentController::class)->except(['create', 'edit']);
 
+
     // Group khusus Admin (Menggunakan alias middleware 'role' yang kita buat)
     Route::middleware(['role:admin'])->group(function () {
-
+        
         // Master Data (Hanya Index, Store, Update, Destroy)
         Route::resource('users', UserController::class)->except(['create', 'show', 'edit']);
         Route::resource('teams', TeamController::class)->except(['create', 'show', 'edit']);
         Route::resource('clients', ClientController::class)->except(['create', 'show', 'edit']);
-
+        
         // Backup & Restore
         Route::post('/settings/backup/create', [BackupController::class, 'create'])->name('backup.create');
         Route::get('/settings/backup/download', [BackupController::class, 'download'])->name('backup.download');

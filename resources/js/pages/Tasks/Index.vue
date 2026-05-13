@@ -484,7 +484,7 @@ const submitImport = () => {
                                         'bg-red-100 text-red-700 border border-red-200': task.sla_status === 'overdue',
                                         'bg-slate-100 text-slate-500 border border-slate-200': task.sla_status === 'unknown',
                                     }" :title="'Batas waktu SLA: ' + (task.sla ? task.sla.max_days + ' hari' : 'tidak ada config')">
-                                    {{ task.sla_status.replace(/_/g, ' ').toUpperCase() }}
+                                    {{ (task.sla_status || 'unknown').replace(/_/g, ' ').toUpperCase() }}
                                 </span>
                             </td>
 

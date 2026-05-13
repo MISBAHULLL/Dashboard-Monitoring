@@ -6,7 +6,6 @@ use App\Models\Client;
 use App\Models\Document;
 use App\Models\Task;
 use App\Models\Team;
-use App\Models\User;
 use Illuminate\Http\Request;
 
 class SearchController extends Controller
@@ -19,7 +18,6 @@ class SearchController extends Controller
             return response()->json([]);
         }
 
-        /** @var User $user */
         $user = $request->user();
         $searchTerm = "%{$query}%";
         $results = [];
@@ -58,8 +56,11 @@ class SearchController extends Controller
         // 2. Search Clients (Admin only)
         if ($user->isAdmin()) {
             $clients = Client::select('id', 'name', 'city', 'type')
-                ->where('name', 'like', $searchTerm)
-                ->orWhere('city', 'like', $searchTerm)
+                ->where(function ($q) use ($searchTerm) {
+                    $q->where('name', 'like', $searchTerm)
+                      ->orWhere('city', 'like', $searchTerm);
+                })
+                
                 ->latest()
                 ->limit(5)
                 ->get();
@@ -74,7 +75,7 @@ class SearchController extends Controller
                         'subtitle' => $client->city ?? '-',
                         'meta' => $client->type,
                         'type' => 'client',
-                        'url' => route('clients.index'),
+                        'url' => '/clients',
                     ])->toArray(),
                 ];
             }
@@ -96,7 +97,7 @@ class SearchController extends Controller
                         'subtitle' => $team->type,
                         'meta' => null,
                         'type' => 'team',
-                        'url' => route('teams.index'),
+                        'url' => '/teams',
                     ])->toArray(),
                 ];
             }
@@ -119,7 +120,7 @@ class SearchController extends Controller
                         'subtitle' => $doc->client?->name ?? '-',
                         'meta' => $doc->type,
                         'type' => 'document',
-                        'url' => route('documents.show', $doc->id),
+                        'url' => '/clients',
                     ])->toArray(),
                 ];
             }

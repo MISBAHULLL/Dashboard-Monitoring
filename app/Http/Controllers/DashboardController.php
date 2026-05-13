@@ -59,18 +59,32 @@ class DashboardController extends Controller
                 $stats['completed_tasks']
             ];
 
-            // Data untuk Area Chart (Tren pembuatan Task 7 hari terakhir)
-            $trendData = Task::selectRaw('DATE(created_at) as date, COUNT(*) as count')
-                ->where('created_at', '>=', now()->subDays(6))
+            // Data untuk Chart — Tren 7 hari (Week)
+            $weekTrendData = Task::selectRaw('DATE(created_at) as date, COUNT(*) as count')
+                ->where('created_at', '>=', now()->subDays(6)->startOfDay())
                 ->groupBy('date')
                 ->orderBy('date')
                 ->pluck('count', 'date');
-                
+
             $chartArea = ['categories' => [], 'data' => []];
             for ($i = 6; $i >= 0; $i--) {
                 $dateStr = now()->subDays($i)->format('Y-m-d');
                 $chartArea['categories'][] = now()->subDays($i)->format('d M');
-                $chartArea['data'][] = $trendData->get($dateStr, 0);
+                $chartArea['data'][] = (int) $weekTrendData->get($dateStr, 0);
+            }
+
+            // Data untuk Chart — Tren 30 hari (Month): per-minggu agar tidak terlalu padat
+            $monthTrendData = Task::selectRaw('DATE(created_at) as date, COUNT(*) as count')
+                ->where('created_at', '>=', now()->subDays(29)->startOfDay())
+                ->groupBy('date')
+                ->orderBy('date')
+                ->pluck('count', 'date');
+
+            $chartMonth = ['categories' => [], 'data' => []];
+            for ($i = 29; $i >= 0; $i--) {
+                $dateStr = now()->subDays($i)->format('Y-m-d');
+                $chartMonth['categories'][] = now()->subDays($i)->format('d M');
+                $chartMonth['data'][] = (int) $monthTrendData->get($dateStr, 0);
             }
 
             $overdueBaseQuery = Task::query()
@@ -146,6 +160,7 @@ class DashboardController extends Controller
                 'trends' => $trends,
                 'chart_donut' => $chartDonut,
                 'chart_area' => $chartArea,
+                'chart_month' => $chartMonth,
                 'overdue_count' => (clone $overdueBaseQuery)->count(),
                 'due_soon_count' => (clone $dueSoonBaseQuery)->count(),
                 'overdue_tasks' => $overdueTasks,

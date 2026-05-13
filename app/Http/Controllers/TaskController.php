@@ -82,6 +82,12 @@ class TaskController extends Controller
             });
         }
 
+        // Filter by specific task IDs (used by dashboard "Lihat Semua" link)
+        if ($request->filled('ids')) {
+            $ids = is_array($request->ids) ? $request->ids : explode(',', $request->ids);
+            $query->whereIn('id', array_map('intval', $ids));
+        }
+
         $tasks = $query->latest()->paginate(10)->withQueryString();
         $tasks->through(function (Task $task) use ($user) {
             return [

@@ -36,8 +36,8 @@ const props = withDefaults(defineProps<Props>(), {
     loading: false,
 });
 
-/** Limit visible tasks to 3 to keep card compact */
-const displayTasks = computed(() => props.tasks.slice(0, 3));
+/** Limit visible tasks to 5 */
+const displayTasks = computed(() => props.tasks.slice(0, 5));
 
 /** Whether the list is empty */
 const isEmpty = computed(() => props.count === 0 || props.tasks.length === 0);
@@ -171,10 +171,10 @@ const formatDate = (date?: string): string => {
             </Link>
         </div>
 
-        <!-- Task list (left side ~72% width, leaving space for big count) -->
+        <!-- Task list — scrollable, shows up to 5 tasks -->
         <div
-            class="task-list-scroll flex flex-col gap-2 pr-[20%] overflow-y-auto"
-            style="max-height: 180px; padding-bottom: 8px;"
+            class="task-list-scroll flex flex-col gap-2 overflow-y-auto"
+            style="max-height: 280px; padding-bottom: 4px;"
             role="list"
             aria-label="Daftar task overdue"
         >
@@ -208,23 +208,26 @@ const formatDate = (date?: string): string => {
             </div>
         </div>
 
-        <!-- More indicator -->
-        <Link
-            v-if="tasks.length > 3 && viewAllLink"
-            :href="viewAllLink"
-            class="mt-1.5 inline-block rounded px-1.5 py-0.5 text-[11.5px] font-semibold text-[#f24040] transition-all duration-200 hover:text-emerald-300 dark:hover:text-red-300"
-        >
-            +{{ tasks.length - 3 }} task lainnya → lihat semua
-        </Link>
+        <!-- More indicator + big count row -->
+        <div class="flex items-end justify-between mt-2 flex-shrink-0">
+            <Link
+                v-if="tasks.length > 5 && viewAllLink"
+                :href="viewAllLink"
+                class="inline-block rounded px-1.5 py-0.5 text-[11.5px] font-semibold text-[#f24040] transition-all duration-200 hover:text-red-700 dark:hover:text-red-300"
+            >
+                +{{ tasks.length - 5 }} task lainnya → lihat semua
+            </Link>
+            <span v-else class="flex-1" />
 
-        <!-- Big count number bottom-right -->
-        <span
-            class="absolute bottom-2 right-[18px] select-none font-['Plus_Jakarta_Sans',sans-serif] font-bold leading-none text-[#f24040]"
-            style="font-size: clamp(28px, 4vw, 48px)"
-            aria-hidden="true"
-        >
-            {{ count }}
-        </span>
+            <!-- Big count number bottom-right -->
+            <span
+                class="select-none font-['Plus_Jakarta_Sans',sans-serif] font-bold leading-none text-[#f24040]"
+                style="font-size: clamp(28px, 4vw, 48px)"
+                aria-hidden="true"
+            >
+                {{ count }}
+            </span>
+        </div>
     </article>
 </template>
 

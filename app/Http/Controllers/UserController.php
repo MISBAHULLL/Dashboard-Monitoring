@@ -2,13 +2,13 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Team;
 use App\Models\User;
+use App\Models\Team;
 use App\Services\ActivityLogger;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
-use Inertia\Inertia;
 
 class UserController extends Controller
 {
@@ -36,10 +36,10 @@ class UserController extends Controller
         ]);
 
         $validated['password'] = Hash::make($validated['password']);
-
+        
         $user = User::create($validated);
 
-        ActivityLogger::created('user', $user->id, $user->name, "Menambahkan user '{$user->name}'", collect($validated)->except('password')->toArray());
+         ActivityLogger::created('user', $user->id, $user->name, "Menambahkan user '{$user->name}'", collect($validated)->except('password')->toArray());
 
         return back()->with('success', 'User berhasil ditambahkan.');
     }
@@ -63,8 +63,9 @@ class UserController extends Controller
         $oldValues = $user->getOriginal();
         $user->update($validated);
 
-        ActivityLogger::updated('user', $user->id, $user->name, $oldValues, $user->fresh()->toArray(), "Mengupdate user '{$user->name}'");
-
+        $safeOld = collect($oldValues)->except(['password', 'remember_token'])->toArray();
+        $safeNew = collect($user->fresh()->toArray())->except(['password', 'remember_token'])->toArray();
+        ActivityLogger::updated('user', $user->id, $user->name, $safeOld, $safeNew, "Mengupdate user '{$user->name}'");
         return back()->with('success', 'User berhasil diupdate.');
     }
 
@@ -72,10 +73,7 @@ class UserController extends Controller
     {
         $this->authorize('delete', $user);
 
-        /** @var User $currentUser */
-        $currentUser = request()->user();
-
-        if ($user->id === $currentUser->id) {
+        if ($user->id === request()->user()->id) {
             return back()->with('error', 'Anda tidak bisa menghapus akun sendiri.');
         }
 

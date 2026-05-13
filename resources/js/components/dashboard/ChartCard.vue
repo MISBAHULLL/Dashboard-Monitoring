@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue';
+import ClientOnly from '@/components/ClientOnly.vue';
 import VueApexCharts from 'vue3-apexcharts';
 import type { ApexOptions } from 'apexcharts';
 import type { ChartType } from '@/types/dashboard';
@@ -125,12 +126,20 @@ const ariaLabel = computed(() => {
         class="w-full"
         :class="{ 'flex justify-center': chartType === 'donut' }"
       >
-        <VueApexCharts
-          :type="chartType"
-          :height="height"
-          :options="options"
-          :series="series"
-        />
+        <ClientOnly>
+          <VueApexCharts
+            :type="chartType"
+            :height="height"
+            :options="options"
+            :series="series"
+          />
+          <template #fallback>
+            <div
+              class="w-full animate-pulse rounded bg-muted/30"
+              :style="{ height: `${height}px` }"
+            />
+          </template>
+        </ClientOnly>
       </div>
     </template>
   </article>

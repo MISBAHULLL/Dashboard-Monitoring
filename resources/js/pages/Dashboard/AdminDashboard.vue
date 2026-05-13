@@ -4,14 +4,12 @@ import { computed } from 'vue';
 import { usePage } from '@inertiajs/vue3';
 import { dashboard } from '@/routes';
 import { index as tasksIndex } from '@/routes/tasks';
-import type { ApexOptions } from 'apexcharts';
-
 import HeroCard from '@/components/dashboard/HeroCard.vue';
 import ActionsCard from '@/components/dashboard/ActionsCard.vue';
 import GridTaskCard from '@/components/dashboard/GridTaskCard.vue';
 import TaskOverdueCard from '@/components/dashboard/TaskOverdueCard.vue';
 import TaskDueSoonCard from '@/components/dashboard/TaskDueSoonCard.vue';
-import ChartCard from '@/components/dashboard/ChartCard.vue';
+import TaskTrendCard from '@/components/dashboard/TaskTrendCard.vue';
 import RasioStatusTaskCard from '@/components/dashboard/RasioStatusTaskCard.vue';
 import TeamPerformanceCard from '@/components/dashboard/TeamPerformanceCard.vue';
 import TaskListCard from '@/components/dashboard/TaskListCard.vue';
@@ -43,6 +41,10 @@ const props = defineProps<{
     };
     chart_donut: number[];
     chart_area: {
+        categories: string[];
+        data: number[];
+    };
+    chart_month: {
         categories: string[];
         data: number[];
     };
@@ -80,19 +82,6 @@ const props = defineProps<{
         created_at: string;
     }>;
 }>();
-
-const areaOptions: ApexOptions = {
-    chart: { type: 'area', fontFamily: 'inherit', toolbar: { show: false } },
-    colors: ['#0ea5e9'],
-    dataLabels: { enabled: false },
-    stroke: { curve: 'smooth', width: 2 },
-    xaxis: { categories: props.chart_area.categories },
-    fill: {
-        type: 'gradient',
-        gradient: { shadeIntensity: 1, opacityFrom: 0.7, opacityTo: 0.1, stops: [0, 90, 100] }
-    }
-};
-const areaSeries = [{ name: 'Task Dibuat', data: props.chart_area.data }];
 
 const heroChartData = computed(() => props.chart_area.data.slice(-6));
 
@@ -159,8 +148,8 @@ defineOptions({
                 />
             </div>
 
-            <!-- Task Overdue (row 6-7, col 1 — lebar mengikuti HeroCard / kolom pertama 2fr) -->
-            <div class="col-span-1 md:col-span-1 lg:col-span-1 row-span-2">
+            <!-- Task Overdue (row 6-7, col 1 — sejajar lebar Hero / kolom pertama 2fr) -->
+            <div class="col-span-1 md:col-span-1 lg:col-span-1 row-span-3">
                 <TaskOverdueCard
                     :count="overdue_count"
                     :tasks="overdue_tasks"
@@ -168,25 +157,19 @@ defineOptions({
                 />
             </div>
 
-            <!-- Tren Task 7 Days (row 5-6, col 3-4) -->
-            <div class="col-span-1 md:col-span-2 lg:col-span-2 row-span-2">
-                <ChartCard
-                    title="Tren Task 7 Days"
-                    subtitle="Perkembangan pembuatan task"
-                    chartType="area"
-                    :options="areaOptions"
-                    :series="areaSeries"
-                    :height="200"
+            <!-- Tren Task 7 Days (row 6-7, col 2-3-4 — memanjang mengisi sisa ruang di samping Overdue) -->
+            <div class="col-span-1 md:col-span-2 lg:col-span-3 row-span-3">
+                <TaskTrendCard
+                    :categories="chart_area.categories"
+                    :data="chart_area.data"
+                    :monthly-categories="chart_month.categories"
+                    :monthly-data="chart_month.data"
                 />
             </div>
 
-            <!-- Ringkasan Performa Team (row 7-9, col 1-2) -->
-            <div class="col-span-1 md:col-span-1 lg:col-span-2 row-span-3">
+            <!-- Ringkasan Performa Team + 5 Task Terbaru — 50/50 di semua breakpoint -->
+            <div class="col-span-1 md:col-span-2 lg:col-span-4 row-span-3 grid grid-cols-1 md:grid-cols-2 gap-3">
                 <TeamPerformanceCard :teams="team_performance" />
-            </div>
-
-            <!-- 5 Task Terbaru (row 7-9, col 3-4) -->
-            <div class="col-span-1 md:col-span-1 lg:col-span-2 row-span-3">
                 <TaskListCard variant="recent" :tasks="recent_tasks" />
             </div>
 

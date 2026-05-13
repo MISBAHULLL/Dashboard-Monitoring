@@ -1,11 +1,15 @@
 <script setup lang="ts">
 import { Head, Link, useForm, router } from '@inertiajs/vue3';
 import { ArrowLeft, Save, BookmarkPlus } from 'lucide-vue-next';
+import { ref } from 'vue';
+import { toast } from 'vue-sonner';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
+import ConfirmDialog from '@/components/ConfirmDialog.vue';
 import { store as taskTemplatesStore } from '@/actions/App/Http/Controllers/TaskTemplateController';
 
 const props = defineProps<{
@@ -51,11 +55,15 @@ const applyTemplate = (templateId: number) => {
 };
 
 const saveAsTemplate = () => {
-    const name = prompt('Masukkan nama template untuk pola form ini:');
-    if (!name) return;
+    showTemplateModal.value = true;
+    templateName.value = '';
+};
+
+const submitTemplate = () => {
+    if (!templateName.value.trim()) return;
 
     router.post(taskTemplatesStore.url(), {
-        name,
+        name: templateName.value.trim(),
         client_id: form.client_id,
         product_id: form.product_id,
         engineer_id: form.engineer_id,
@@ -65,21 +73,45 @@ const saveAsTemplate = () => {
     }, {
         preserveScroll: true,
         preserveState: true,
-        onSuccess: () => alert('Template berhasil disimpan dan bisa digunakan!'),
-        onError: (err) => {
-            alert('Gagal menyimpan template. Pastikan Faskes dan Divisi Produk sudah diisi.');
+        onSuccess: () => {
+            showTemplateModal.value = false;
+            toast.success('Template berhasil disimpan dan bisa digunakan!');
+        },
+        onError: () => {
+            toast.error('Gagal menyimpan template. Pastikan Faskes dan Divisi Produk sudah diisi.');
         }
     });
 };
 
 const deleteTemplate = (id: number) => {
-    if (confirm('Apakah Anda yakin ingin menghapus template ini?')) {
-        router.delete(`/task-templates/${id}`, {
-            preserveScroll: true,
-            preserveState: true,
-        });
-    }
+    confirmAction.value = {
+        open: true,
+        title: 'Hapus Template',
+        description: 'Apakah Anda yakin ingin menghapus template ini? Tindakan ini tidak dapat dibatalkan.',
+        onConfirm: () => {
+            router.delete(`/task-templates/${id}`, {
+                preserveScroll: true,
+                preserveState: true,
+                onSuccess: () => {
+                    confirmAction.value.open = false;
+                    toast.success('Template berhasil dihapus.');
+                },
+            });
+        },
+    };
 };
+
+// State untuk modal template
+const showTemplateModal = ref(false);
+const templateName = ref('');
+
+// State untuk confirm dialog
+const confirmAction = ref({
+    open: false,
+    title: '',
+    description: '',
+    onConfirm: () => {},
+});
 </script>
 
 <template>
@@ -270,4 +302,45 @@ const deleteTemplate = (id: number) => {
             </div>
         </form>
     </div>
+
+    <!-- Modal Simpan Template -->
+    <Dialog :open="showTemplateModal" @update:open="(val) => showTemplateModal = val">
+        <DialogContent class="sm:max-w-[425px]">
+            <DialogHeader>
+                <DialogTitle class="text-lg font-semibold">Simpan Sebagai Template</DialogTitle>
+                <DialogDescription class="text-sm text-slate-500 mt-1">
+                    Beri nama untuk template ini agar mudah dikenali saat digunakan nanti.
+                </DialogDescription>
+            </DialogHeader>
+            <div class="py-4">
+                <Label for="template-name" class="text-sm font-medium">Nama Template</Label>
+                <Input
+                    id="template-name"
+                    v-model="templateName"
+                    placeholder="Contoh: Faskes A - Fitur Berbayar"
+                    class="mt-2"
+                    @keyup.enter="submitTemplate"
+                />
+            </div>
+            <DialogFooter class="flex gap-3 sm:justify-end">
+                <Button variant="outline" @click="showTemplateModal = false">Batal</Button>
+                <Button @click="submitTemplate" :disabled="!templateName.trim()" class="bg-sky-600 hover:bg-sky-700 text-white">
+                    Simpan Template
+                </Button>
+            </DialogFooter>
+        </DialogContent>
+    </Dialog>
+
+    <!-- Confirm Dialog -->
+    <ConfirmDialog
+        :open="confirmAction.open"
+        :title="confirmAction.title"
+        :description="confirmAction.description"
+        confirm-label="Hapus"
+        cancel-label="Batal"
+        variant="danger"
+        @update:open="(val) => confirmAction.open = val"
+        @confirm="confirmAction.onConfirm"
+        @cancel="confirmAction.open = false"
+    />
 </template>

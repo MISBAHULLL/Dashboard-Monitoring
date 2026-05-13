@@ -3,8 +3,16 @@ import { Head, router, useForm } from '@inertiajs/vue3';
 import { FileText, Plus, Download, Trash2, Eye, Upload } from 'lucide-vue-next';
 import { Button } from '@/components/ui/button';
 import { dashboard } from '@/routes';
-import AppLayout from '@/layouts/AppLayout.vue';
 import { ref } from 'vue';
+
+defineOptions({
+    layout: {
+        breadcrumbs: [
+            { title: 'Dashboard', href: dashboard() },
+            { title: 'Dokumen', href: '#' },
+        ],
+    },
+});
 
 interface Document {
     id: number;

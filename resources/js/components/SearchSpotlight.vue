@@ -60,7 +60,7 @@ function close() {
 function highlight(text: string, term: string): string {
     if (!term) return text;
     const regex = new RegExp(`(${escapeRegex(term)})`, 'gi');
-    return text.replace(regex, '<mark class="bg-emerald-200 text-emerald-900 rounded px-0.5">$1</mark>');
+    return text.replace(regex, '<mark class="bg-amber-200 text-amber-900 rounded px-0.5">$1</mark>');
 }
 
 function escapeRegex(str: string): string {
@@ -203,16 +203,40 @@ defineExpose({ open });
 </script>
 
 <template>
+    <!-- Search Trigger Button (Neo-brutalist style) -->
+    <button
+        class="group relative cursor-pointer"
+        @click="open"
+    >
+        <!-- Shadow layer -->
+        <div
+            class="absolute left-[2px] top-[2px] h-full w-full rounded-md border border-slate-900 bg-slate-900"
+        />
+        <!-- Main button -->
+        <div
+            class="relative flex items-center gap-2 rounded-md border border-slate-900 bg-white px-3 py-1.5 transition-transform group-hover:-translate-x-[1px] group-hover:-translate-y-[1px] group-active:translate-x-[2px] group-active:translate-y-[2px]"
+        >
+            <Search class="h-3.5 w-3.5 text-slate-400" />
+            <span class="text-xs text-slate-400 font-normal">Search...</span>
+            <kbd
+                class="ml-4 inline-flex items-center gap-0.5 rounded border border-slate-200 bg-slate-50 px-1.5 py-0.5 text-[10px] font-semibold text-slate-500"
+            >
+                <span class="text-xs">⌘</span>K
+            </kbd>
+        </div>
+    </button>
+
+    <!-- Search Dialog -->
     <Dialog :open="isOpen" @update:open="isOpen = $event">
         <DialogContent
-            class="max-w-2xl! gap-0 overflow-hidden border border-slate-200 p-0 shadow-2xl dark:border-slate-700"
+            class="max-w-2xl! gap-0 overflow-hidden rounded-xl border-2 border-slate-900 p-0 shadow-[4px_4px_0px_0px_#0f172a]"
             :show-close-button="false"
         >
             <DialogTitle class="sr-only">Pencarian Global</DialogTitle>
 
             <!-- Search Input Header -->
-            <div class="flex items-center gap-3 border-b border-slate-100 px-4 py-3 dark:border-slate-700">
-                <Search class="h-5 w-5 text-slate-400" />
+            <div class="flex items-center gap-3 border-b-2 border-slate-900 px-4 py-3">
+                <Search class="h-5 w-5 text-slate-500" />
                 <input
                     ref="inputRef"
                     v-model="query"
@@ -221,11 +245,11 @@ defineExpose({ open });
                     class="flex-1 bg-transparent text-sm text-slate-900 outline-none placeholder:text-slate-400 dark:text-slate-100"
                 />
                 <div class="flex items-center gap-1">
-                    <kbd class="hidden rounded border border-slate-200 bg-slate-50 px-1.5 py-0.5 text-[10px] font-semibold text-slate-500 dark:border-slate-600 dark:bg-slate-800 sm:inline-block">
+                    <kbd class="hidden rounded border border-slate-300 bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold text-slate-500 sm:inline-block">
                         ESC
                     </kbd>
                     <button
-                        class="rounded p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-700"
+                        class="rounded p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
                         @click="close"
                     >
                         <X class="h-4 w-4" />
@@ -234,7 +258,7 @@ defineExpose({ open });
             </div>
 
             <!-- Results Area -->
-            <div class="max-h-[60vh] overflow-y-auto">
+            <div class="max-h-[60vh] overflow-y-auto bg-white">
                 <!-- Loading -->
                 <div v-if="isLoading" class="flex items-center justify-center py-12">
                     <Loader2 class="h-6 w-6 animate-spin text-slate-400" />
@@ -257,7 +281,7 @@ defineExpose({ open });
                 <template v-else>
                     <div v-for="(group, gIndex) in results" :key="group.label">
                         <!-- Group Header -->
-                        <div class="sticky top-0 z-10 flex items-center gap-2 bg-slate-50/95 px-4 py-1.5 text-xs font-semibold uppercase tracking-wider text-slate-500 backdrop-blur-sm dark:bg-slate-800/95 dark:text-slate-400">
+                        <div class="sticky top-0 z-10 flex items-center gap-2 border-b border-slate-100 bg-slate-50/95 px-4 py-1.5 text-xs font-bold uppercase tracking-wider text-slate-600 backdrop-blur-sm">
                             <component :is="getGroupIcon(group.icon)" class="h-3.5 w-3.5" />
                             {{ group.label }}
                         </div>
@@ -270,8 +294,8 @@ defineExpose({ open });
                                 :data-selected="isSelected(gIndex, iIndex)"
                                 class="group flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-colors"
                                 :class="isSelected(gIndex, iIndex)
-                                    ? 'bg-emerald-50 dark:bg-emerald-900/20'
-                                    : 'hover:bg-slate-50 dark:hover:bg-slate-800/50'"
+                                    ? 'bg-amber-50 border border-amber-200'
+                                    : 'hover:bg-slate-50 border border-transparent'"
                                 @click="navigate(item.url)"
                                 @mouseenter="selectedIndex = (() => {
                                     let current = 0;
@@ -279,11 +303,11 @@ defineExpose({ open });
                                     return current + iIndex;
                                 })()"
                             >
-                                <component :is="getGroupIcon(group.icon)" class="h-4 w-4 shrink-0 text-slate-400 group-hover:text-emerald-600" />
+                                <component :is="getGroupIcon(group.icon)" class="h-4 w-4 shrink-0 text-slate-400 group-hover:text-amber-600" />
 
                                 <div class="min-w-0 flex-1">
                                     <div class="flex items-center gap-2">
-                                        <p class="truncate text-sm font-medium text-slate-800 dark:text-slate-200" v-html="highlight(item.title, query)"></p>
+                                        <p class="truncate text-sm font-medium text-slate-800" v-html="highlight(item.title, query)"></p>
                                         <span v-if="item.status" class="inline-flex items-center rounded border px-1.5 py-0 text-[10px] font-semibold capitalize" :class="getStatusColor(item.status)">
                                             {{ item.status.replace('_', ' ') }}
                                         </span>
@@ -291,7 +315,7 @@ defineExpose({ open });
                                     <p class="truncate text-xs text-slate-500" v-html="highlight(item.subtitle + (item.meta ? ` · ${item.meta}` : ''), query)"></p>
                                 </div>
 
-                                <CornerDownLeft v-if="isSelected(gIndex, iIndex)" class="h-3.5 w-3.5 shrink-0 text-emerald-600" />
+                                <CornerDownLeft v-if="isSelected(gIndex, iIndex)" class="h-3.5 w-3.5 shrink-0 text-amber-600" />
                             </button>
                         </div>
                     </div>
@@ -299,7 +323,7 @@ defineExpose({ open });
             </div>
 
             <!-- Footer Keyboard Hints -->
-            <div class="flex items-center justify-between border-t border-slate-100 bg-slate-50/80 px-4 py-2 text-[10px] text-slate-400 dark:border-slate-700 dark:bg-slate-800/50">
+            <div class="flex items-center justify-between border-t-2 border-slate-900 bg-slate-50 px-4 py-2 text-[10px] text-slate-500">
                 <div class="flex items-center gap-3">
                     <span class="flex items-center gap-1">
                         <ArrowUp class="h-3 w-3" />
@@ -312,8 +336,8 @@ defineExpose({ open });
                     </span>
                 </div>
                 <span class="flex items-center gap-1">
-                    <kbd class="rounded border border-slate-200 bg-white px-1 py-0 text-[9px] font-semibold dark:border-slate-600 dark:bg-slate-700">Ctrl</kbd>
-                    <kbd class="rounded border border-slate-200 bg-white px-1 py-0 text-[9px] font-semibold dark:border-slate-600 dark:bg-slate-700">K</kbd>
+                    <kbd class="rounded border border-slate-300 bg-white px-1 py-0 text-[9px] font-semibold">Ctrl</kbd>
+                    <kbd class="rounded border border-slate-300 bg-white px-1 py-0 text-[9px] font-semibold">K</kbd>
                     Buka Pencarian
                 </span>
             </div>

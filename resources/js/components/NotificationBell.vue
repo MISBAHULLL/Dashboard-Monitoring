@@ -2,7 +2,6 @@
 import { computed } from 'vue';
 import { router, usePage } from '@inertiajs/vue3';
 import { Bell, BellRing, CheckCheck, Clock3, Ticket } from 'lucide-vue-next';
-import { Button } from '@/components/ui/button';
 import {
     markAllAsRead as markAllNotificationsAsRead,
     markAsRead as markNotificationAsRead,
@@ -11,7 +10,6 @@ import {
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuItem,
-    DropdownMenuLabel,
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
@@ -108,30 +106,38 @@ const markAllAsRead = () => {
 <template>
     <DropdownMenu>
         <DropdownMenuTrigger as-child>
-            <Button
-                variant="ghost"
-                size="icon"
-                class="relative h-10 w-10 rounded-full border border-slate-200/80 bg-white text-slate-600 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-800 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
-            >
-                <BellRing v-if="unreadCount > 0" class="h-4.5 w-4.5" />
-                <Bell v-else class="h-4.5 w-4.5" />
+            <!-- Neo-brutalist notification button -->
+            <button class="group relative cursor-pointer focus:outline-none">
+                <!-- Shadow layer -->
+                <div
+                    class="absolute left-[3px] top-[3px] h-[42px] w-[42px] rounded-xl border border-slate-900 bg-slate-900"
+                />
+                <!-- Main yellow button -->
+                <div
+                    class="relative flex h-[42px] w-[42px] items-center justify-center rounded-xl border-[1.5px] border-slate-900 bg-amber-400 transition-transform group-hover:-translate-x-[1px] group-hover:-translate-y-[1px] group-active:translate-x-[3px] group-active:translate-y-[3px]"
+                >
+                    <BellRing v-if="unreadCount > 0" class="h-5 w-5 text-slate-900" />
+                    <Bell v-else class="h-5 w-5 text-slate-900" />
+                </div>
+
+                <!-- Red notification badge -->
                 <span
                     v-if="unreadCount > 0"
-                    class="absolute -right-1 -top-1 inline-flex min-w-5 items-center justify-center rounded-full bg-red-500 px-1.5 py-0.5 text-[10px] font-bold text-white shadow-sm"
+                    class="absolute -right-1 -top-1 z-10 inline-flex min-w-[20px] items-center justify-center rounded-full border-2 border-white bg-red-500 px-1 py-0.5 text-[10px] font-bold leading-none text-white"
                 >
                     {{ unreadCount > 9 ? '9+' : unreadCount }}
                 </span>
                 <span class="sr-only">Notifications</span>
-            </Button>
+            </button>
         </DropdownMenuTrigger>
 
-        <DropdownMenuContent align="end" class="w-[22rem] rounded-2xl p-0">
-            <div class="flex items-center justify-between px-4 py-3">
-                <DropdownMenuLabel class="p-0 text-sm font-semibold text-slate-800 dark:text-slate-100">
+        <DropdownMenuContent align="end" class="w-[22rem] rounded-xl border-2 border-slate-900 p-0 shadow-[4px_4px_0px_0px_#0f172a]">
+            <div class="flex items-center justify-between border-b-2 border-slate-900 px-4 py-3">
+                <span class="text-sm font-bold text-slate-800 dark:text-slate-100">
                     Notifikasi
-                </DropdownMenuLabel>
+                </span>
                 <button
-                    class="text-xs font-semibold text-sky-600 transition hover:text-sky-700 disabled:cursor-not-allowed disabled:opacity-50"
+                    class="text-xs font-semibold text-amber-600 transition hover:text-amber-700 disabled:cursor-not-allowed disabled:opacity-50"
                     :disabled="unreadCount === 0"
                     @click="markAllAsRead"
                 >
@@ -142,8 +148,6 @@ const markAllAsRead = () => {
                 </button>
             </div>
 
-            <DropdownMenuSeparator />
-
             <div v-if="items.length === 0" class="px-4 py-8 text-center text-sm text-slate-500 dark:text-slate-400">
                 Belum ada notifikasi baru.
             </div>
@@ -152,12 +156,12 @@ const markAllAsRead = () => {
                 <DropdownMenuItem
                     v-for="notification in items"
                     :key="notification.id"
-                    class="mx-2 mb-1 flex cursor-pointer items-start gap-3 rounded-xl px-3 py-3"
-                    :class="notification.is_read ? 'opacity-75' : 'bg-sky-50/70 dark:bg-sky-950/20'"
+                    class="mx-2 mb-1 flex cursor-pointer items-start gap-3 rounded-lg px-3 py-3 transition-colors"
+                    :class="notification.is_read ? 'opacity-70' : 'bg-amber-50/70 dark:bg-amber-950/20'"
                     @select="openNotification(notification)"
                 >
                     <div
-                        class="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full"
+                        class="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-slate-200"
                         :class="notification.type === 'deadline_soon'
                             ? 'bg-amber-100 text-amber-700 dark:bg-amber-950/30 dark:text-amber-300'
                             : 'bg-sky-100 text-sky-700 dark:bg-sky-950/30 dark:text-sky-300'"
@@ -172,7 +176,7 @@ const markAllAsRead = () => {
                             </p>
                             <span
                                 v-if="!notification.is_read"
-                                class="mt-1 h-2 w-2 shrink-0 rounded-full bg-sky-500"
+                                class="mt-1 h-2 w-2 shrink-0 rounded-full bg-amber-500"
                             />
                         </div>
                         <p class="line-clamp-2 text-xs leading-5 text-slate-500 dark:text-slate-400">

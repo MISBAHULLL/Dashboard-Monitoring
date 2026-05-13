@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { ref, watch, computed } from 'vue';
-import { Head, Link, useForm, router } from '@inertiajs/vue3';
+import { Head, Link, useForm, router, usePage } from '@inertiajs/vue3';
 import { ListTodo, Plus, Edit, Trash2, Filter, RotateCcw, ExternalLink, Lock, CheckCircle2, AlertCircle, Download, Upload } from 'lucide-vue-next';
+import { toast } from 'vue-sonner';
 import { dashboard } from '@/routes';
 import { show as showTask, bulkDestroy, bulkUpdateStatus, bulkAssign } from '@/actions/App/Http/Controllers/TaskController';
 
@@ -202,7 +203,7 @@ const getAvatarColor = (name: string) => {
 
 // --- Import CSV ---
 const showImportModal = ref(false);
-const importForm = useForm({ file: null as File | null });
+const importForm = useForm({ file: null as File | null, force_duplicate: false });
 const importFileInput = ref<HTMLInputElement | null>(null);
 const onImportFileSelected = (event: Event) => {
     const target = event.target as HTMLInputElement;
@@ -214,9 +215,13 @@ const submitImport = () => {
     if (!importForm.file) return;
     importForm.post('/tasks/import', {
         forceFormData: true,
-        onSuccess: () => {
+        onSuccess: (page) => {
             showImportModal.value = false;
             importForm.reset();
+            const flash = (page as any).props?.flash;
+            if (flash?.success) {
+                toast.success(flash.success);
+            }
         },
     });
 };
@@ -633,6 +638,11 @@ const submitImport = () => {
                             class="mt-1 block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-sky-50 file:text-sky-700 hover:file:bg-sky-100 cursor-pointer" />
                     </label>
                     <p v-if="importForm.errors.file" class="text-sm text-red-500">{{ importForm.errors.file }}</p>
+
+                    <label class="flex items-center gap-2 cursor-pointer mt-2">
+                        <input type="checkbox" v-model="importForm.force_duplicate" class="rounded border-slate-300 text-sky-600 focus:ring-sky-500" />
+                        <span class="text-sm text-slate-600">Abaikan pengecekan duplikat (paksa import semua baris)</span>
+                    </label>
                 </div>
                 <div class="flex justify-end gap-3 pt-2 border-t">
                     <Button variant="outline" @click="showImportModal = false" class="h-10 px-5 rounded-xl">Batal</Button>

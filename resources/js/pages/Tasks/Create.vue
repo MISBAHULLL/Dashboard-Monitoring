@@ -31,6 +31,7 @@ const form = useForm({
     priority: 'medium', // Default value
     status: 'open', // Default value
     release_date: '',
+    force_duplicate: false,
 });
 
 const submitForm = () => {
@@ -244,14 +245,28 @@ const deleteTemplate = (id: number) => {
             </div>
 
             <!-- Bagian Footer Form -->
-            <div class="mt-8 flex justify-end gap-4 border-t pt-6">
-                <Link href="/tasks">
-                    <Button type="button" variant="outline" class="h-11 px-8">Batal</Button>
-                </Link>
-                <Button type="submit" :disabled="form.processing" class="h-11 px-8 bg-sky-600 hover:bg-sky-700 text-white flex items-center gap-2">
-                    <Save class="h-4 w-4" />
-                    {{ form.processing ? 'Menyimpan Data...' : 'Simpan Tiket Task' }}
-                </Button>
+            <div class="mt-8 flex flex-col gap-4 border-t pt-6">
+                <!-- Duplicate Warning -->
+                <div v-if="form.errors.duplicate" class="flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 p-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink-0 text-amber-600 mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
+                    <div class="flex-1">
+                        <p class="text-sm font-medium text-amber-800">{{ form.errors.duplicate }}</p>
+                        <label class="mt-3 flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" v-model="form.force_duplicate" class="rounded border-amber-300 text-amber-600 focus:ring-amber-500" />
+                            <span class="text-sm font-medium text-amber-700">Abaikan pengecekan duplikat (paksa simpan)</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="flex justify-end gap-4">
+                    <Link href="/tasks">
+                        <Button type="button" variant="outline" class="h-11 px-8">Batal</Button>
+                    </Link>
+                    <Button type="submit" :disabled="form.processing" class="h-11 px-8 bg-sky-600 hover:bg-sky-700 text-white flex items-center gap-2">
+                        <Save class="h-4 w-4" />
+                        {{ form.processing ? 'Menyimpan Data...' : 'Simpan Tiket Task' }}
+                    </Button>
+                </div>
             </div>
         </form>
     </div>

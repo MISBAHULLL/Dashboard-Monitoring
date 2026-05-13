@@ -146,9 +146,28 @@ class TaskController extends Controller
             'priority' => ['required', Rule::in(['urgent', 'high', 'medium', 'low'])],
             'status' => ['required', Rule::in(['open', 'in_progress', 'revision', 'completed'])],
             'release_date' => 'nullable|date',
+            'force_duplicate' => 'nullable|boolean',
         ]);
 
         $validated['created_by'] = $request->user()->id;
+
+        // Cek duplikat (kecuali force_duplicate = true)
+        if (empty($validated['force_duplicate'])) {
+            $duplicate = Task::where('title', $validated['title'])
+                ->where('client_id', $validated['client_id'])
+                ->where('product_id', $validated['product_id'])
+                ->where('category', $validated['category'])
+                ->when(!empty($validated['modul']), fn ($q) => $q->where('modul', $validated['modul']))
+                ->first();
+
+            if ($duplicate) {
+                return back()->withErrors([
+                    'duplicate' => "Task serupa sudah ada: \"{$duplicate->title}\" (ID: {$duplicate->id}). Centang opsi 'Abaikan pengecekan duplikat' jika memang ingin membuat task ini.",
+                ])->withInput();
+            }
+        }
+
+        unset($validated['force_duplicate']);
 
         // Cegah error SQL "Column task_url cannot be null" karena database lama mewajibkan isi
         if (empty($validated['task_url'])) {
@@ -556,7 +575,9 @@ class TaskController extends Controller
         $this->authorize('create', Task::class);
         $request->validate([
             'file' => 'required|file|mimes:csv,txt,xlsx,xls|max:10240',
+            'force_duplicate' => 'nullable|boolean',
         ]);
+        $forceDuplicate = $request->boolean('force_duplicate', false);
         $file = $request->file('file');
         $extension = $file->getClientOriginalExtension() ?: 'csv';
         $tempFileName = uniqid('import_') . '.' . $extension;
@@ -574,6 +595,7 @@ class TaskController extends Controller
         $validPriorities = ['urgent', 'high', 'medium', 'low'];
         $imported = 0;
         $skipped = 0;
+        $duplicates = 0;
         $errors = [];
         $reader = \Spatie\SimpleExcel\SimpleExcelReader::create($fullPath);
         foreach ($reader->getRows() as $index => $row) {
@@ -598,6 +620,24 @@ class TaskController extends Controller
             if (!in_array($priority, $validPriorities)) {
                 $priority = 'medium';
             }
+            $modul = $row['Modul'] ?? $row['Modul / Fitur'] ?? null;
+
+            // Cek duplikat (kecuali force_duplicate)
+            if (!$forceDuplicate) {
+                $existingTask = Task::where('title', $title)
+                    ->where('client_id', $clientId)
+                    ->where('product_id', $productId)
+                    ->where('category', $category)
+                    ->when(!empty($modul), fn ($q) => $q->where('modul', $modul))
+                    ->exists();
+
+                if ($existingTask) {
+                    $duplicates++;
+                    $errors[] = "Baris {$rowNum}: Duplikat - task \"{$title}\" sudah ada.";
+                    continue;
+                }
+            }
+
             $releaseDate = null;
             $rawDate = $row['Tanggal Release'] ?? $row['Release Date'] ?? null;
             if ($rawDate) {
@@ -610,7 +650,7 @@ class TaskController extends Controller
             Task::create([
                 'title'        => $title,
                 'description'  => $row['Deskripsi'] ?? $row['Description'] ?? null,
-                'modul'        => $row['Modul'] ?? $row['Modul / Fitur'] ?? null,
+                'modul'        => $modul,
                 'product_id'   => $productId,
                 'client_id'    => $clientId,
                 'engineer_id'  => $engineerId,
@@ -631,10 +671,14 @@ class TaskController extends Controller
         ActivityLogger::log('imported', 'task', null, 'Import Task', "Mengimport {$imported} task dari file", null, [
             'imported' => $imported,
             'skipped' => $skipped,
+            'duplicates' => $duplicates,
         ]);
         $message = "Berhasil mengimport {$imported} task.";
+        if ($duplicates > 0) {
+            $message .= " {$duplicates} baris dilewati karena duplikat.";
+        }
         if ($skipped > 0) {
-            $message .= " {$skipped} baris dilewati.";
+            $message .= " {$skipped} baris dilewati karena data tidak lengkap.";
         }
         return back()->with('success', $message)->with('import_errors', $errors);
     }

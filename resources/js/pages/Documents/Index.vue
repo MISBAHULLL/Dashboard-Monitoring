@@ -42,11 +42,6 @@ const props = defineProps<{
     documentTypes: string[];
 }>();
 
-const breadcrumbs = [
-    { title: 'Dashboard', href: dashboard() },
-    { title: 'Dokumen', href: '#' },
-];
-
 const showModal = ref(false);
 const editingDocument = ref<Document | null>(null);
 
@@ -122,10 +117,9 @@ function formatDate(iso: string): string {
 </script>
 
 <template>
-    <AppLayout :breadcrumbs="breadcrumbs">
-        <Head title="Dokumen" />
+    <Head title="Dokumen" />
 
-        <div class="flex h-full flex-1 flex-col gap-6 overflow-x-auto rounded-xl p-4 md:p-8">
+    <div class="flex h-full flex-1 flex-col gap-6 overflow-x-auto rounded-xl p-4 md:p-8">
             <!-- Header -->
             <div class="flex items-center justify-between">
                 <div>
@@ -276,5 +270,4 @@ function formatDate(iso: string): string {
                 </form>
             </div>
         </div>
-    </AppLayout>
 </template>

@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Document extends Model
@@ -38,9 +39,11 @@ class Document extends Model
         return $this->belongsTo(User::class, 'created_by');
     }
 
-    public function tasks(): HasMany
+    public function tasks(): BelongsToMany
     {
-        return $this->hasMany(Task::class);
+        return $this->belongsToMany(Task::class, 'document_task')
+            ->withPivot('status')
+            ->withTimestamps();
     }
 
     public function versions(): HasMany

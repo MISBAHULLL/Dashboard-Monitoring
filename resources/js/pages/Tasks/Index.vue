@@ -10,6 +10,7 @@ import { show as showTask, bulkDestroy, bulkUpdateStatus, bulkAssign } from '@/a
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import ConfirmDialog from '@/components/ConfirmDialog.vue';
 
 const props = defineProps<{
@@ -42,18 +43,22 @@ defineOptions({
 
 const filterForm = ref({
     search: props.filters.search || '',
-    product_id: props.filters.product_id || '',
-    client_id: props.filters.client_id || '',
-    engineer_id: props.filters.engineer_id || '',
-    category: props.filters.category || '',
-    status: props.filters.status || '',
-    has_link: props.filters.has_link || '',
+    product_id: props.filters.product_id || 'all',
+    client_id: props.filters.client_id || 'all',
+    engineer_id: props.filters.engineer_id || 'all',
+    category: props.filters.category || 'all',
+    status: props.filters.status || 'all',
+    has_link: props.filters.has_link || 'all',
     date_from: props.filters.date_from || '',
     date_to: props.filters.date_to || '',
 });
 
 watch(filterForm, (newVal) => {
-    router.get('/tasks', newVal, {
+    const params: Record<string, string> = {};
+    for (const [key, value] of Object.entries(newVal)) {
+        params[key] = value === 'all' ? '' : value;
+    }
+    router.get('/tasks', params, {
         preserveState: true,
         preserveScroll: true,
         replace: true,
@@ -63,12 +68,12 @@ watch(filterForm, (newVal) => {
 const resetFilter = () => {
     filterForm.value = {
         search: '',
-        product_id: '',
-        client_id: '',
-        engineer_id: '',
-        category: '',
-        status: '',
-        has_link: '',
+        product_id: 'all',
+        client_id: 'all',
+        engineer_id: 'all',
+        category: 'all',
+        status: 'all',
+        has_link: 'all',
         date_from: '',
         date_to: '',
     };
@@ -160,8 +165,9 @@ const toggleCekStatus = (task: any, newStatus: string) => {
 const exportUrl = computed(() => {
     const params = new URLSearchParams();
     for (const [key, value] of Object.entries(filterForm.value)) {
-        if (value) {
-            params.append(key, String(value));
+        const cleanValue = value === 'all' ? '' : value;
+        if (cleanValue) {
+            params.append(key, String(cleanValue));
         }
     }
     // Jika ada task yang dicentang, export hanya yang dipilih
@@ -274,67 +280,97 @@ const submitImport = () => {
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-4">
                     <div class="space-y-1.5">
                         <Label class="text-[11px] font-bold text-tm-text-secondary uppercase tracking-wider ml-1">Product</Label>
-                        <select v-model="filterForm.product_id" class="w-full text-sm border-0 ring-1 ring-inset ring-tm-border focus:ring-2 focus:ring-inset focus:ring-tm-navy rounded-xl bg-slate-50/50 hover:bg-slate-50 h-9 px-3 transition-all cursor-pointer text-slate-700">
-                            <option value="">Semua Product</option>
-                            <option v-for="team in product_teams" :key="team.id" :value="team.id">{{ team.name }}</option>
-                        </select>
+                        <Select v-model="filterForm.product_id">
+                            <SelectTrigger class="w-full h-9 border-[1.5px] border-black/70 rounded-lg bg-white hover:bg-slate-50 text-sm text-slate-700 shadow-[1px_2px_0_0_rgba(0,0,0,0.06)] hover:shadow-[2px_3px_0_0_rgba(0,0,0,0.08)] hover:-translate-y-px transition-all cursor-pointer">
+                                <SelectValue placeholder="Semua Product" />
+                            </SelectTrigger>
+                            <SelectContent class="border-[1.5px] border-black rounded-lg shadow-[3px_4px_0_0_rgba(0,0,0,0.1)]">
+                                <SelectItem value="all">Semua Product</SelectItem>
+                                <SelectItem v-for="team in product_teams" :key="team.id" :value="String(team.id)">{{ team.name }}</SelectItem>
+                            </SelectContent>
+                        </Select>
                     </div>
                     <div class="space-y-1.5">
                         <Label class="text-[11px] font-bold text-tm-text-secondary uppercase tracking-wider ml-1">Client / Faskes</Label>
-                        <select v-model="filterForm.client_id" class="w-full text-sm border-0 ring-1 ring-inset ring-tm-border focus:ring-2 focus:ring-inset focus:ring-tm-navy rounded-xl bg-slate-50/50 hover:bg-slate-50 h-9 px-3 transition-all cursor-pointer text-slate-700">
-                            <option value="">Semua Faskes</option>
-                            <option v-for="client in clients" :key="client.id" :value="client.id">{{ client.name }}</option>
-                        </select>
+                        <Select v-model="filterForm.client_id">
+                            <SelectTrigger class="w-full h-9 border-[1.5px] border-black/70 rounded-lg bg-white hover:bg-slate-50 text-sm text-slate-700 shadow-[1px_2px_0_0_rgba(0,0,0,0.06)] hover:shadow-[2px_3px_0_0_rgba(0,0,0,0.08)] hover:-translate-y-px transition-all cursor-pointer">
+                                <SelectValue placeholder="Semua Faskes" />
+                            </SelectTrigger>
+                            <SelectContent class="border-[1.5px] border-black rounded-lg shadow-[3px_4px_0_0_rgba(0,0,0,0.1)]">
+                                <SelectItem value="all">Semua Faskes</SelectItem>
+                                <SelectItem v-for="client in clients" :key="client.id" :value="String(client.id)">{{ client.name }}</SelectItem>
+                            </SelectContent>
+                        </Select>
                     </div>
                     <div class="space-y-1.5">
                         <Label class="text-[11px] font-bold text-tm-text-secondary uppercase tracking-wider ml-1">Engineer</Label>
-                        <select v-model="filterForm.engineer_id" class="w-full text-sm border-0 ring-1 ring-inset ring-tm-border focus:ring-2 focus:ring-inset focus:ring-tm-navy rounded-xl bg-slate-50/50 hover:bg-slate-50 h-9 px-3 transition-all cursor-pointer text-slate-700">
-                            <option value="">Semua Engineer</option>
-                            <option v-for="team in engineer_teams" :key="team.id" :value="team.id">{{ team.name }}</option>
-                        </select>
+                        <Select v-model="filterForm.engineer_id">
+                            <SelectTrigger class="w-full h-9 border-[1.5px] border-black/70 rounded-lg bg-white hover:bg-slate-50 text-sm text-slate-700 shadow-[1px_2px_0_0_rgba(0,0,0,0.06)] hover:shadow-[2px_3px_0_0_rgba(0,0,0,0.08)] hover:-translate-y-px transition-all cursor-pointer">
+                                <SelectValue placeholder="Semua Engineer" />
+                            </SelectTrigger>
+                            <SelectContent class="border-[1.5px] border-black rounded-lg shadow-[3px_4px_0_0_rgba(0,0,0,0.1)]">
+                                <SelectItem value="all">Semua Engineer</SelectItem>
+                                <SelectItem v-for="team in engineer_teams" :key="team.id" :value="String(team.id)">{{ team.name }}</SelectItem>
+                            </SelectContent>
+                        </Select>
                     </div>
                     <div class="space-y-1.5">
                         <Label class="text-[11px] font-bold text-tm-text-secondary uppercase tracking-wider ml-1">Jenis Task</Label>
-                        <select v-model="filterForm.category" class="w-full text-sm border-0 ring-1 ring-inset ring-tm-border focus:ring-2 focus:ring-inset focus:ring-tm-navy rounded-xl bg-slate-50/50 hover:bg-slate-50 h-9 px-3 transition-all cursor-pointer text-slate-700">
-                            <option value="">Semua Jenis</option>
-                            <option value="Fitur Berbayar">Fitur Berbayar</option>
-                            <option value="Regulasi">Regulasi</option>
-                            <option value="Saran Fitur">Saran Fitur</option>
-                        </select>
+                        <Select v-model="filterForm.category">
+                            <SelectTrigger class="w-full h-9 border-[1.5px] border-black/70 rounded-lg bg-white hover:bg-slate-50 text-sm text-slate-700 shadow-[1px_2px_0_0_rgba(0,0,0,0.06)] hover:shadow-[2px_3px_0_0_rgba(0,0,0,0.08)] hover:-translate-y-px transition-all cursor-pointer">
+                                <SelectValue placeholder="Semua Jenis" />
+                            </SelectTrigger>
+                            <SelectContent class="border-[1.5px] border-black rounded-lg shadow-[3px_4px_0_0_rgba(0,0,0,0.1)]">
+                                <SelectItem value="all">Semua Jenis</SelectItem>
+                                <SelectItem value="Fitur Berbayar">Fitur Berbayar</SelectItem>
+                                <SelectItem value="Regulasi">Regulasi</SelectItem>
+                                <SelectItem value="Saran Fitur">Saran Fitur</SelectItem>
+                            </SelectContent>
+                        </Select>
                     </div>
 
                     <div class="space-y-1.5">
                         <Label class="text-[11px] font-bold text-tm-text-secondary uppercase tracking-wider ml-1">Status Link</Label>
-                        <select v-model="filterForm.has_link" class="w-full text-sm border-0 ring-1 ring-inset ring-tm-border focus:ring-2 focus:ring-inset focus:ring-tm-navy rounded-xl bg-slate-50/50 hover:bg-slate-50 h-9 px-3 transition-all cursor-pointer text-slate-700">
-                            <option value="">Semua</option>
-                            <option value="yes">Sudah Ada Link</option>
-                            <option value="no">Belum Ada Link</option>
-                        </select>
+                        <Select v-model="filterForm.has_link">
+                            <SelectTrigger class="w-full h-9 border-[1.5px] border-black/70 rounded-lg bg-white hover:bg-slate-50 text-sm text-slate-700 shadow-[1px_2px_0_0_rgba(0,0,0,0.06)] hover:shadow-[2px_3px_0_0_rgba(0,0,0,0.08)] hover:-translate-y-px transition-all cursor-pointer">
+                                <SelectValue placeholder="Semua" />
+                            </SelectTrigger>
+                            <SelectContent class="border-[1.5px] border-black rounded-lg shadow-[3px_4px_0_0_rgba(0,0,0,0.1)]">
+                                <SelectItem value="all">Semua</SelectItem>
+                                <SelectItem value="yes">Sudah Ada Link</SelectItem>
+                                <SelectItem value="no">Belum Ada Link</SelectItem>
+                            </SelectContent>
+                        </Select>
                     </div>
                     <div class="space-y-1.5">
                         <Label class="text-[11px] font-bold text-tm-text-secondary uppercase tracking-wider ml-1">Status Cek</Label>
-                        <select v-model="filterForm.status" class="w-full text-sm border-0 ring-1 ring-inset ring-tm-border focus:ring-2 focus:ring-inset focus:ring-tm-navy rounded-xl bg-slate-50/50 hover:bg-slate-50 h-9 px-3 transition-all cursor-pointer text-slate-700">
-                            <option value="">Semua Status</option>
-                            <option value="open">Belum Di Cek</option>
-                            <option value="in_progress">In Progress</option>
-                            <option value="revision">Revisi</option>
-                            <option value="completed">Selesai</option>
-                            <option value="overdue">Overdue</option>
-                        </select>
+                        <Select v-model="filterForm.status">
+                            <SelectTrigger class="w-full h-9 border-[1.5px] border-black/70 rounded-lg bg-white hover:bg-slate-50 text-sm text-slate-700 shadow-[1px_2px_0_0_rgba(0,0,0,0.06)] hover:shadow-[2px_3px_0_0_rgba(0,0,0,0.08)] hover:-translate-y-px transition-all cursor-pointer">
+                                <SelectValue placeholder="Semua Status" />
+                            </SelectTrigger>
+                            <SelectContent class="border-[1.5px] border-black rounded-lg shadow-[3px_4px_0_0_rgba(0,0,0,0.1)]">
+                                <SelectItem value="all">Semua Status</SelectItem>
+                                <SelectItem value="open">Belum Di Cek</SelectItem>
+                                <SelectItem value="in_progress">In Progress</SelectItem>
+                                <SelectItem value="revision">Revisi</SelectItem>
+                                <SelectItem value="completed">Selesai</SelectItem>
+                                <SelectItem value="overdue">Overdue</SelectItem>
+                            </SelectContent>
+                        </Select>
                     </div>
                     <div class="space-y-1.5 lg:col-span-2">
                         <Label class="text-[11px] font-bold text-tm-text-secondary uppercase tracking-wider ml-1">Rentang Tanggal Release</Label>
                         <div class="flex items-center gap-3">
-                            <Input type="date" v-model="filterForm.date_from" class="h-9 text-sm border-0 ring-1 ring-inset ring-tm-border focus:ring-2 focus:ring-inset focus:ring-tm-navy rounded-xl bg-slate-50/50 hover:bg-slate-50 transition-all cursor-pointer w-full text-slate-700" />
+                            <Input type="date" v-model="filterForm.date_from" class="h-9 text-sm border-[1.5px] border-black/70 focus:border-tm-navy focus:ring-1 focus:ring-tm-navy rounded-lg bg-white hover:bg-slate-50 transition-all cursor-pointer w-full text-slate-700 shadow-[1px_2px_0_0_rgba(0,0,0,0.06)] hover:shadow-[2px_3px_0_0_rgba(0,0,0,0.08)] hover:-translate-y-px" />
                             <span class="text-tm-text-secondary text-sm font-semibold">s/d</span>
-                            <Input type="date" v-model="filterForm.date_to" class="h-9 text-sm border-0 ring-1 ring-inset ring-tm-border focus:ring-2 focus:ring-inset focus:ring-tm-navy rounded-xl bg-slate-50/50 hover:bg-slate-50 transition-all cursor-pointer w-full text-slate-700" />
+                            <Input type="date" v-model="filterForm.date_to" class="h-9 text-sm border-[1.5px] border-black/70 focus:border-tm-navy focus:ring-1 focus:ring-tm-navy rounded-lg bg-white hover:bg-slate-50 transition-all cursor-pointer w-full text-slate-700 shadow-[1px_2px_0_0_rgba(0,0,0,0.06)] hover:shadow-[2px_3px_0_0_rgba(0,0,0,0.08)] hover:-translate-y-px" />
                         </div>
                     </div>
                 </div>
             </div>
             
             <div class="p-2 border-t border-slate-100 bg-slate-50/50 rounded-b-[16px]">
-                 <Input type="text" v-model="filterForm.search" placeholder="Pencarian cepat judul task atau deskripsi..." class="h-10 w-full bg-white border-0 ring-1 ring-inset ring-tm-border focus:ring-2 focus:ring-inset focus:ring-tm-navy shadow-sm rounded-xl px-4 text-sm transition-all text-slate-700" />
+                 <Input type="text" v-model="filterForm.search" placeholder="Pencarian cepat judul task atau deskripsi..." class="h-10 w-full bg-white border-[1.5px] border-black/70 focus:border-tm-navy focus:ring-1 focus:ring-tm-navy rounded-lg px-4 text-sm transition-all text-slate-700 shadow-[1px_2px_0_0_rgba(0,0,0,0.06)] hover:shadow-[2px_3px_0_0_rgba(0,0,0,0.08)] hover:-translate-y-px" />
             </div>
         </div>
 

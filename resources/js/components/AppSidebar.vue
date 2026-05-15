@@ -13,12 +13,12 @@ import {
 } from 'lucide-vue-next';
 import { computed } from 'vue';
 
-import { index as activityLogsIndex } from '@/actions/App/Http/Controllers/ActivityLogController';
-import { index as clientsIndex } from '@/actions/App/Http/Controllers/ClientController';
-import { index as documentsIndex } from '@/actions/App/Http/Controllers/DocumentController';
-import { index as tasksIndex } from '@/actions/App/Http/Controllers/TaskController';
-import { index as teamsIndex } from '@/actions/App/Http/Controllers/TeamController';
-import { index as usersIndex } from '@/actions/App/Http/Controllers/UserController';
+import { index as activityLogsIndex } from '@/routes/activity-logs';
+import { index as clientsIndex } from '@/routes/clients';
+import { index as documentsIndex } from '@/routes/documents';
+import { index as tasksIndex } from '@/routes/tasks';
+import { index as teamsIndex } from '@/routes/teams';
+import { index as usersIndex } from '@/routes/users';
 
 import NavUser from '@/components/NavUser.vue';
 import SidebarBrandLogo from '@/components/sidebar-lucide/SidebarBrandLogo.vue';

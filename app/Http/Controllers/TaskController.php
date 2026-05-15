@@ -323,27 +323,31 @@ class TaskController extends Controller
         $this->authorize('viewAny', Task::class);
 
         $user = request()->user();
-        $completedWindowDays = 7;
+        $completedDisplayLimit = 20;
 
         // Ambil semua task yang belum selesai
         $activeTasksQuery = Task::with(['client', 'assignee', 'product'])->withCount('comments')
             ->where('status', '!=', 'completed')
             ->orderBy('created_at', 'asc');
 
-        // Ambil task yang sudah selesai dalam 7 hari terakhir
+        // Ambil semua completed tasks, terbaru dulu, limit 20 untuk performa Kanban
         $completedTasksQuery = Task::with(['client', 'assignee', 'product'])->withCount('comments')
             ->where('status', 'completed')
-            ->where('completed_at', '>=', now()->subDays($completedWindowDays))
-            ->orderBy('created_at', 'asc');
+            ->orderByDesc('completed_at')
+            ->limit($completedDisplayLimit);
+
+        // Total semua completed tasks (tanpa limit, untuk meta count)
+        $totalCompletedQuery = Task::where('status', 'completed');
 
         if ($user->isMember()) {
             $activeTasksQuery->where('assigned_to', $user->id);
             $completedTasksQuery->where('assigned_to', $user->id);
+            $totalCompletedQuery->where('assigned_to', $user->id);
         }
 
         $activeTasks = $activeTasksQuery->get();
-
         $completedTasks = $completedTasksQuery->get();
+        $totalCompletedCount = $totalCompletedQuery->count();
 
         $tasks = $activeTasks->merge($completedTasks)->values()->map(function (Task $task) use ($user) {
             return [
@@ -357,10 +361,11 @@ class TaskController extends Controller
         return Inertia::render('Tasks/Kanban', [
             'tasks' => $tasks,
             'meta' => [
-                'completed_window_days' => $completedWindowDays,
+                'completed_display_limit' => $completedDisplayLimit,
                 'active_count' => $activeTasks->count(),
-                'recent_completed_count' => $completedTasks->count(),
-                'total_count' => $tasks->count(),
+                'completed_count' => $totalCompletedCount,
+                'completed_shown' => $completedTasks->count(),
+                'total_count' => $activeTasks->count() + $totalCompletedCount,
             ],
             'permissions' => [
                 'can_create' => $user->can('create', Task::class),

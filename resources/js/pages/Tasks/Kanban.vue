@@ -25,7 +25,7 @@ import {
     index as tasksIndex,
     show as tasksShow,
     updateStatus as tasksUpdateStatus,
-} from '@/actions/App/Http/Controllers/TaskController';
+} from '@/routes/tasks';
 
 // UI Components
 import { Button } from '@/components/ui/button';
@@ -59,9 +59,10 @@ type TaskItem = {
 const props = defineProps<{
     tasks: Array<TaskItem>;
     meta: {
-        completed_window_days: number;
+        completed_display_limit: number;
         active_count: number;
-        recent_completed_count: number;
+        completed_count: number;
+        completed_shown: number;
         total_count: number;
     };
     permissions: {
@@ -128,7 +129,7 @@ const columns: Array<{
     {
         id: 'completed',
         title: 'Completed',
-        subtitle: `Selesai ${props.meta.completed_window_days} hari terakhir`,
+        subtitle: `${props.meta.completed_shown} dari ${props.meta.completed_count} ditampilkan`,
         icon: Trophy,
         panelClass: 'border-[2px] border-[#2BAE6E]/30 bg-emerald-50/80',
         headerClass: 'bg-[#E4F7ED] text-[#166534]',
@@ -340,16 +341,16 @@ const onDrop = (e: DragEvent, newStatus: TaskStatus) => {
             <!-- Completed Window -->
             <div class="relative overflow-hidden rounded-[16px] border-[2px] border-black bg-white p-5 shadow-[3px_4px_0px_0px_rgba(43,174,110,0.15)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[4px_5px_0px_0px_rgba(43,174,110,0.2)] dark:bg-card dark:border-slate-700">
                 <div class="mb-3 h-[3px] w-10 rounded-full bg-[#2BAE6E]"></div>
-                <p class="text-[11px] font-bold uppercase tracking-[0.16em] text-[#2BAE6E]">Completed Window</p>
-                <p class="mt-1.5 text-3xl font-extrabold text-[#1B3A6B] dark:text-white">{{ meta.recent_completed_count }}</p>
-                <p class="mt-1 text-xs text-[#5C6B7A]">Task selesai {{ meta.completed_window_days }} hari terakhir.</p>
+                <p class="text-[11px] font-bold uppercase tracking-[0.16em] text-[#2BAE6E]">Completed</p>
+                <p class="mt-1.5 text-3xl font-extrabold text-[#1B3A6B] dark:text-white">{{ meta.completed_count }}</p>
+                <p class="mt-1 text-xs text-[#5C6B7A]">{{ meta.completed_shown }} terbaru ditampilkan di board.</p>
             </div>
             <!-- Total Ditampilkan -->
             <div class="relative overflow-hidden rounded-[16px] border-[2px] border-black bg-white p-5 shadow-[3px_4px_0px_0px_rgba(3,105,161,0.12)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[4px_5px_0px_0px_rgba(3,105,161,0.16)] dark:bg-card dark:border-slate-700">
                 <div class="mb-3 h-[3px] w-10 rounded-full bg-[#0369A1]"></div>
-                <p class="text-[11px] font-bold uppercase tracking-[0.16em] text-[#0369A1]">Total Ditampilkan</p>
+                <p class="text-[11px] font-bold uppercase tracking-[0.16em] text-[#0369A1]">Total Task</p>
                 <p class="mt-1.5 text-3xl font-extrabold text-[#1B3A6B] dark:text-white">{{ meta.total_count }}</p>
-                <p class="mt-1 text-xs text-[#5C6B7A]">Board ini fokus ke pekerjaan yang relevan sekarang.</p>
+                <p class="mt-1 text-xs text-[#5C6B7A]">Semua task aktif + completed.</p>
             </div>
             <!-- Mode Interaksi -->
             <div class="relative overflow-hidden rounded-[16px] border-[2px] border-black bg-white p-5 shadow-[3px_4px_0px_0px_rgba(217,119,6,0.12)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[4px_5px_0px_0px_rgba(217,119,6,0.16)] dark:bg-card dark:border-slate-700">

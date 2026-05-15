@@ -3,9 +3,9 @@ import { computed } from 'vue';
 import { router, usePage } from '@inertiajs/vue3';
 import { Bell, BellRing, CheckCheck, Clock3, Ticket } from 'lucide-vue-next';
 import {
-    markAllAsRead as markAllNotificationsAsRead,
-    markAsRead as markNotificationAsRead,
-} from '@/actions/App/Http/Controllers/NotificationController';
+    readAll as markAllNotificationsAsRead,
+    read as markNotificationAsRead,
+} from '@/routes/notifications';
 import {
     DropdownMenu,
     DropdownMenuContent,

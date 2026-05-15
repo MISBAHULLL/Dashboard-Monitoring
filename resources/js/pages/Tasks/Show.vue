@@ -17,12 +17,12 @@ import { Textarea } from '@/components/ui/textarea';
 import {
     destroy as destroyTaskComment,
     store as storeTaskComment,
-    togglePin as pinTaskComment,
-} from '@/actions/App/Http/Controllers/TaskCommentController';
+    pin as pinTaskComment,
+} from '@/routes/tasks/comments';
 import {
     edit as editTask,
     index as tasksIndex,
-} from '@/actions/App/Http/Controllers/TaskController';
+} from '@/routes/tasks';
 
 type TaskCommentItem = {
     id: number;

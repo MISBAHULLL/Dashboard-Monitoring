@@ -10,7 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import ConfirmDialog from '@/components/ConfirmDialog.vue';
-import { store as taskTemplatesStore } from '@/actions/App/Http/Controllers/TaskTemplateController';
+import { store as taskTemplatesStore } from '@/routes/task-templates';
 
 const props = defineProps<{
     clients: Array<{ id: number; name: string }>;

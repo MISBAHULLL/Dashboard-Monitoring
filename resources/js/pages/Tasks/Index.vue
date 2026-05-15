@@ -4,7 +4,7 @@ import { Head, Link, useForm, router, usePage } from '@inertiajs/vue3';
 import { ListTodo, Plus, Edit, Trash2, Filter, RotateCcw, ExternalLink, Lock, CheckCircle2, AlertCircle, Download, Upload } from 'lucide-vue-next';
 import { toast } from 'vue-sonner';
 import { dashboard } from '@/routes';
-import { show as showTask, bulkDestroy, bulkUpdateStatus, bulkAssign } from '@/actions/App/Http/Controllers/TaskController';
+import { show as showTask, bulkDestroy, bulkUpdateStatus, bulkAssign } from '@/routes/tasks';
 
 // UI Components
 import { Button } from '@/components/ui/button';
@@ -406,7 +406,7 @@ const submitImport = () => {
         <div class="bg-white rounded-[18px] border-[2.5px] border-black shadow-[2px_4px_4px_0_rgba(11,42,107,0.25)] overflow-hidden flex-1 flex flex-col transition-all duration-300 hover:-translate-y-1 hover:shadow-[3px_8px_12px_2px_rgba(11,42,107,0.3)]">
             <div class="overflow-x-auto flex-1">
                 <table class="w-full text-left text-sm whitespace-nowrap">
-                    <thead class="bg-tm-navy-pale border-b border-tm-border">
+                    <thead class="bg-tm-navy-pale border-b-[2px] border-black/80">
                         <tr class="text-[11px] font-bold text-tm-navy uppercase tracking-wider">
                             <th class="py-3 px-4 w-10 text-center">
                                 <input type="checkbox" v-model="selectAll" class="rounded border-slate-300 text-tm-navy focus:ring-tm-navy w-4 h-4 cursor-pointer" />
@@ -425,7 +425,7 @@ const submitImport = () => {
                             <th class="py-3 px-4 text-center">Aksi</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-slate-100/80">
+                    <tbody class="divide-y divide-black/10">
                         <tr v-for="task in tasks.data" :key="task.id" 
                             class="group transition-all duration-200 hover:bg-tm-navy-pale/40 relative"
                             :class="{
@@ -639,7 +639,7 @@ const submitImport = () => {
             </div>
 
             <!-- Modern Pagination Footer -->
-            <div class="bg-slate-50/80 border-t border-tm-border p-3 px-5 flex flex-col sm:flex-row justify-between items-center text-xs font-semibold text-tm-text-secondary">
+            <div class="bg-slate-50/80 border-t-[2px] border-black/80 p-3 px-5 flex flex-col sm:flex-row justify-between items-center text-xs font-semibold text-tm-text-secondary">
                 <div>
                     Menampilkan <span class="font-extrabold text-tm-navy">{{ tasks.data.length > 0 ? (tasks.current_page - 1) * tasks.per_page + 1 : 0 }}</span> - 
                     <span class="font-extrabold text-tm-navy">{{ Math.min(tasks.current_page * tasks.per_page, tasks.total) }}</span> dari <span class="font-extrabold text-tm-navy">{{ tasks.total }}</span> tiket

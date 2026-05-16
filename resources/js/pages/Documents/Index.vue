@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head, router, useForm } from '@inertiajs/vue3';
-import { FileText, Plus, Download, Trash2, Eye, Upload } from 'lucide-vue-next';
+import { FileText, Plus, Download, Trash2, Eye, Upload, X, File, FolderOpen } from 'lucide-vue-next';
 import { Button } from '@/components/ui/button';
 import { dashboard } from '@/routes';
 import { ref } from 'vue';
@@ -85,7 +85,6 @@ function handleFileChange(event: Event) {
 function submit() {
     if (editingDocument.value) {
         if (form.file) {
-            // Ada file → harus pakai POST + _method spoofing (multipart)
             form
                 .transform((data) => ({ ...data, _method: 'put' }))
                 .post(`/documents/${editingDocument.value.id}`, {
@@ -93,7 +92,6 @@ function submit() {
                     onSuccess: () => closeModal(),
                 });
         } else {
-            // Tanpa file → langsung PUT (lebih cepat)
             form.put(`/documents/${editingDocument.value.id}`, {
                 onSuccess: () => closeModal(),
             });
@@ -124,160 +122,311 @@ function formatDate(iso: string): string {
         day: '2-digit', month: 'short', year: 'numeric',
     });
 }
+
+function getTypeColor(type: string): string {
+    const colors: Record<string, string> = {
+        UAT: 'bg-tm-navy-pale text-tm-navy border-tm-navy/20',
+        SOP: 'bg-tm-green-pale text-[#1E8A54] border-tm-green/20',
+        Regulasi: 'bg-tm-warning-pale text-[#92610A] border-[#F59E0B]/20',
+        Kontrak: 'bg-[#F3E8FF] text-[#6B21A8] border-[#A855F7]/20',
+    };
+    return colors[type] || 'bg-tm-navy-pale text-tm-navy border-tm-navy/20';
+}
 </script>
 
 <template>
     <Head title="Dokumen" />
 
-    <div class="flex h-full flex-1 flex-col gap-6 overflow-x-auto rounded-xl p-4 md:p-8">
-            <!-- Header -->
-            <div class="flex items-center justify-between">
-                <div>
-                    <h1 class="text-2xl font-bold">Dokumen</h1>
-                    <p class="text-sm text-slate-500">Kelola dokumen dan riwayat versinya</p>
+    <div class="flex h-full flex-1 flex-col gap-6 overflow-x-auto p-4 md:p-8">
+        <!-- Header -->
+        <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
+            <div>
+                <h1 class="text-2xl font-extrabold tracking-tight text-tm-navy flex items-center gap-3 dark:text-foreground">
+                    <div class="flex h-10 w-10 items-center justify-center rounded-[12px] border-2 border-black bg-tm-navy-pale shadow-[2px_2px_0px_0px_rgba(0,0,0,0.8)] dark:bg-tm-navy dark:border-border">
+                        <FileText class="h-5 w-5 text-tm-navy dark:text-white" />
+                    </div>
+                    Dokumen
+                </h1>
+                <p class="text-sm text-tm-text-secondary mt-1.5 ml-[52px] dark:text-muted-foreground">
+                    Kelola dokumen dan riwayat versinya.
+                    <span class="font-semibold text-tm-navy dark:text-foreground">{{ documents.total }}</span> dokumen tersimpan.
+                </p>
+            </div>
+            <button
+                @click="openCreate"
+                class="inline-flex items-center gap-2 rounded-[10px] border-2 border-black bg-tm-green px-4 py-2.5 text-sm font-bold text-white shadow-[2px_2px_0px_0px_rgba(0,0,0,0.8)] transition-all hover:-translate-y-0.5 hover:shadow-[3px_4px_0px_0px_rgba(0,0,0,0.8)] active:translate-y-0 active:shadow-[1px_1px_0px_0px_rgba(0,0,0,0.8)] dark:border-border dark:shadow-none"
+            >
+                <Plus class="h-4 w-4" />
+                Tambah Dokumen
+            </button>
+        </div>
+
+        <!-- Table Card -->
+        <div class="rounded-[14px] border-2 border-black bg-white shadow-[2px_3px_0px_0px_rgba(0,0,0,0.8)] overflow-hidden dark:bg-card dark:border-border dark:shadow-none">
+            <!-- Empty State -->
+            <div v-if="documents.data.length === 0" class="py-20 text-center">
+                <div class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-[14px] border-2 border-black bg-tm-navy-pale shadow-[2px_3px_0px_0px_rgba(0,0,0,0.8)] dark:bg-card dark:border-border">
+                    <FolderOpen class="h-7 w-7 text-tm-navy dark:text-muted-foreground" />
                 </div>
-                <Button @click="openCreate">
-                    <Plus class="mr-2 h-4 w-4" /> Tambah Dokumen
-                </Button>
+                <p class="text-sm font-semibold text-tm-text-secondary dark:text-muted-foreground">Belum ada dokumen.</p>
+                <p class="text-xs text-tm-text-muted mt-1 dark:text-muted-foreground">Klik "Tambah Dokumen" untuk memulai.</p>
             </div>
 
             <!-- Table -->
-            <div class="rounded-xl border bg-card shadow-sm overflow-hidden">
-                <div v-if="documents.data.length === 0" class="py-16 text-center text-slate-400">
-                    <FileText class="mx-auto mb-3 h-10 w-10 opacity-40" />
-                    <p class="text-sm">Belum ada dokumen. Tambahkan dokumen pertama!</p>
-                </div>
-
-                <table v-else class="w-full text-sm">
-                    <thead class="border-b bg-slate-50 dark:bg-slate-800/50">
-                        <tr>
-                            <th class="px-4 py-3 text-left font-semibold text-slate-600 dark:text-slate-300">Judul</th>
-                            <th class="px-4 py-3 text-left font-semibold text-slate-600 dark:text-slate-300">Tipe</th>
-                            <th class="px-4 py-3 text-left font-semibold text-slate-600 dark:text-slate-300">Faskes</th>
-                            <th class="px-4 py-3 text-left font-semibold text-slate-600 dark:text-slate-300">Versi</th>
-                            <th class="px-4 py-3 text-left font-semibold text-slate-600 dark:text-slate-300">Ukuran</th>
-                            <th class="px-4 py-3 text-left font-semibold text-slate-600 dark:text-slate-300">Tanggal</th>
-                            <th class="px-4 py-3 text-right font-semibold text-slate-600 dark:text-slate-300">Aksi</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-slate-100 dark:divide-slate-700">
-                        <tr v-for="doc in documents.data" :key="doc.id"
-                            class="transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/30">
-                            <td class="px-4 py-3">
-                                <div class="flex items-center gap-2">
-                                    <FileText class="h-4 w-4 shrink-0 text-sky-500" />
-                                    <span class="font-medium">{{ doc.title }}</span>
+            <table v-else class="w-full text-sm">
+                <thead>
+                    <tr class="border-b-2 border-black bg-tm-navy-pale dark:bg-secondary dark:border-border">
+                        <th class="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-tm-navy dark:text-foreground">Judul</th>
+                        <th class="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-tm-navy dark:text-foreground">Tipe</th>
+                        <th class="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-tm-navy dark:text-foreground">Faskes</th>
+                        <th class="px-4 py-3.5 text-center text-xs font-bold uppercase tracking-wider text-tm-navy dark:text-foreground">Versi</th>
+                        <th class="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-tm-navy dark:text-foreground">Ukuran</th>
+                        <th class="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-tm-navy dark:text-foreground">Tanggal</th>
+                        <th class="px-4 py-3.5 text-right text-xs font-bold uppercase tracking-wider text-tm-navy dark:text-foreground">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr
+                        v-for="doc in documents.data"
+                        :key="doc.id"
+                        class="group border-b border-tm-border transition-colors hover:bg-tm-navy-pale/40 dark:border-border dark:hover:bg-secondary/50"
+                    >
+                        <td class="px-4 py-3.5">
+                            <div class="flex items-center gap-2.5">
+                                <div class="flex h-8 w-8 items-center justify-center rounded-[8px] bg-tm-navy-pale border border-tm-navy/10 dark:bg-secondary">
+                                    <File class="h-4 w-4 text-tm-navy dark:text-foreground" />
                                 </div>
-                            </td>
-                            <td class="px-4 py-3">
-                                <span class="rounded bg-sky-100 px-2 py-0.5 text-xs font-semibold text-sky-700 dark:bg-sky-900/30 dark:text-sky-400">
-                                    {{ doc.type }}
-                                </span>
-                            </td>
-                            <td class="px-4 py-3 text-slate-600 dark:text-slate-400">{{ doc.client?.name ?? '-' }}</td>
-                            <td class="px-4 py-3">
-                                <span class="rounded bg-amber-100 px-2 py-0.5 text-xs font-bold text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
-                                    v{{ doc.current_version }}
-                                </span>
-                            </td>
-                            <td class="px-4 py-3 text-slate-500">{{ formatBytes(doc.file_size) }}</td>
-                            <td class="px-4 py-3 text-slate-500">{{ formatDate(doc.created_at) }}</td>
-                            <td class="px-4 py-3">
-                                <div class="flex items-center justify-end gap-1">
-                                    <Button variant="ghost" size="sm" @click="router.visit(`/documents/${doc.id}`)">
-                                        <Eye class="h-4 w-4" />
-                                    </Button>
-                                    <Button variant="ghost" size="sm" @click="openEdit(doc)">
-                                        <Upload class="h-4 w-4" />
-                                    </Button>
-                                    <a v-if="doc.file_path" :href="`/storage/${doc.file_path}`" target="_blank" download>
-                                        <Button variant="ghost" size="sm">
-                                            <Download class="h-4 w-4" />
-                                        </Button>
-                                    </a>
-                                    <Button variant="ghost" size="sm" @click="deleteDocument(doc.id, doc.title)">
-                                        <Trash2 class="h-4 w-4 text-red-500" />
-                                    </Button>
-                                </div>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-
-            <!-- Pagination -->
-            <div v-if="documents.last_page > 1" class="flex items-center justify-between text-sm text-slate-500">
-                <span>Total {{ documents.total }} dokumen</span>
-                <div class="flex gap-1">
-                    <template v-for="link in documents.links" :key="link.label">
-                        <button
-                            v-if="link.url"
-                            @click="router.visit(link.url)"
-                            :class="['rounded px-3 py-1 border transition-colors', link.active ? 'bg-primary text-primary-foreground border-primary' : 'hover:bg-slate-100 dark:hover:bg-slate-800']"
-                            v-html="link.label"
-                        />
-                        <span v-else class="rounded px-3 py-1 border opacity-40 cursor-not-allowed" v-html="link.label" />
-                    </template>
-                </div>
-            </div>
+                                <span class="font-semibold text-tm-navy dark:text-foreground">{{ doc.title }}</span>
+                            </div>
+                        </td>
+                        <td class="px-4 py-3.5">
+                            <span
+                                class="inline-flex items-center rounded-full border px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide"
+                                :class="getTypeColor(doc.type)"
+                            >
+                                {{ doc.type }}
+                            </span>
+                        </td>
+                        <td class="px-4 py-3.5 text-tm-text-secondary dark:text-muted-foreground">
+                            {{ doc.client?.name ?? '-' }}
+                        </td>
+                        <td class="px-4 py-3.5 text-center">
+                            <span class="inline-flex items-center justify-center h-6 w-8 rounded-full bg-tm-green-pale text-[11px] font-bold text-[#1E8A54] border border-tm-green/20 dark:bg-emerald-950/30 dark:text-emerald-400 dark:border-emerald-500/20">
+                                v{{ doc.current_version }}
+                            </span>
+                        </td>
+                        <td class="px-4 py-3.5 text-xs text-tm-text-muted dark:text-muted-foreground">
+                            {{ formatBytes(doc.file_size) }}
+                        </td>
+                        <td class="px-4 py-3.5 text-xs text-tm-text-muted dark:text-muted-foreground">
+                            {{ formatDate(doc.created_at) }}
+                        </td>
+                        <td class="px-4 py-3.5">
+                            <div class="flex items-center justify-end gap-1">
+                                <!-- View -->
+                                <button
+                                    @click="router.visit(`/documents/${doc.id}`)"
+                                    class="flex h-8 w-8 items-center justify-center rounded-[8px] border border-transparent text-tm-text-muted transition-all hover:border-tm-navy/20 hover:bg-tm-navy-pale hover:text-tm-navy dark:hover:bg-secondary dark:hover:text-foreground"
+                                    title="Lihat detail"
+                                >
+                                    <Eye class="h-4 w-4" />
+                                </button>
+                                <!-- Upload new version -->
+                                <button
+                                    @click="openEdit(doc)"
+                                    class="flex h-8 w-8 items-center justify-center rounded-[8px] border border-transparent text-tm-text-muted transition-all hover:border-tm-green/20 hover:bg-tm-green-pale hover:text-[#1E8A54] dark:hover:bg-emerald-950/30 dark:hover:text-emerald-400"
+                                    title="Upload versi baru"
+                                >
+                                    <Upload class="h-4 w-4" />
+                                </button>
+                                <!-- Download -->
+                                <a
+                                    v-if="doc.file_path"
+                                    :href="`/storage/${doc.file_path}`"
+                                    target="_blank"
+                                    download
+                                    class="flex h-8 w-8 items-center justify-center rounded-[8px] border border-transparent text-tm-text-muted transition-all hover:border-tm-navy/20 hover:bg-tm-navy-pale hover:text-tm-navy dark:hover:bg-secondary dark:hover:text-foreground"
+                                    title="Download"
+                                >
+                                    <Download class="h-4 w-4" />
+                                </a>
+                                <!-- Delete -->
+                                <button
+                                    @click="deleteDocument(doc.id, doc.title)"
+                                    class="flex h-8 w-8 items-center justify-center rounded-[8px] border border-transparent text-tm-text-muted transition-all hover:border-tm-danger/20 hover:bg-tm-danger-pale hover:text-tm-danger dark:hover:bg-red-950/30 dark:hover:text-red-400"
+                                    title="Hapus dokumen"
+                                >
+                                    <Trash2 class="h-4 w-4" />
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
         </div>
 
-        <!-- Modal Create/Edit -->
-        <div v-if="showModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-            <div class="w-full max-w-md rounded-xl bg-white shadow-xl dark:bg-slate-900">
-                <div class="border-b p-6 dark:border-slate-700">
-                    <h2 class="text-lg font-bold">
-                        {{ editingDocument ? 'Edit Dokumen' : 'Tambah Dokumen' }}
-                    </h2>
-                </div>
-                <form @submit.prevent="submit" class="space-y-4 p-6">
-                    <div>
-                        <label class="mb-1 block text-sm font-medium">Judul <span class="text-red-500">*</span></label>
-                        <input v-model="form.title" type="text" required
-                            class="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary dark:border-slate-600 dark:bg-slate-800" />
-                        <p v-if="form.errors.title" class="mt-1 text-xs text-red-500">{{ form.errors.title }}</p>
-                    </div>
-                    <div>
-                        <label class="mb-1 block text-sm font-medium">Tipe <span class="text-red-500">*</span></label>
-                        <input v-model="form.type" type="text" required list="doc-type-list"
-                            placeholder="Pilih atau ketik tipe baru..."
-                            class="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary dark:border-slate-600 dark:bg-slate-800" />
-                        <datalist id="doc-type-list">
-                            <option v-for="t in documentTypes" :key="t" :value="t" />
-                        </datalist>
-                        <p v-if="form.errors.type" class="mt-1 text-xs text-red-500">{{ form.errors.type }}</p>
-                    </div>
-                    <div>
-                        <label class="mb-1 block text-sm font-medium">Faskes <span class="text-red-500">*</span></label>
-                        <select v-model="form.client_id" required
-                            class="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary dark:border-slate-600 dark:bg-slate-800">
-                            <option value="">-- Pilih Faskes --</option>
-                            <option v-for="client in clients" :key="client.id" :value="String(client.id)">
-                                {{ client.name }}
-                            </option>
-                        </select>
-                        <p v-if="form.errors.client_id" class="mt-1 text-xs text-red-500">{{ form.errors.client_id }}</p>
-                    </div>
-                    <div>
-                        <label class="mb-1 block text-sm font-medium">
-                            File {{ editingDocument ? '(kosongkan jika tidak ingin update file)' : '' }}
-                        </label>
-                        <input type="file" @change="handleFileChange"
-                            class="block w-full text-sm text-slate-500 file:mr-4 file:rounded-md file:border-0 file:bg-slate-100 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-slate-700 hover:file:bg-slate-200" />
-                        <p v-if="form.errors.file" class="mt-1 text-xs text-red-500">{{ form.errors.file }}</p>
-                    </div>
-                    <div>
-                        <label class="mb-1 block text-sm font-medium">Catatan Versi</label>
-                        <input v-model="form.notes" type="text" placeholder="Contoh: Revisi klausul 3"
-                            class="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary dark:border-slate-600 dark:bg-slate-800" />
-                    </div>
-                    <div class="flex gap-3 pt-2">
-                        <Button type="button" variant="outline" class="flex-1" @click="closeModal">Batal</Button>
-                        <Button type="submit" class="flex-1" :disabled="form.processing">
-                            {{ form.processing ? 'Menyimpan...' : (editingDocument ? 'Update' : 'Simpan') }}
-                        </Button>
-                    </div>
-                </form>
+        <!-- Pagination -->
+        <div v-if="documents.last_page > 1" class="flex items-center justify-between">
+            <span class="text-xs font-medium text-tm-text-muted dark:text-muted-foreground">
+                Halaman {{ documents.current_page }} dari {{ documents.last_page }}
+            </span>
+            <div class="flex items-center gap-1.5">
+                <template v-for="link in documents.links" :key="link.label">
+                    <button
+                        v-if="link.url"
+                        @click="router.visit(link.url)"
+                        class="min-w-[2rem] h-8 flex items-center justify-center rounded-[8px] text-xs font-bold transition-all border-2"
+                        :class="link.active
+                            ? 'bg-tm-navy border-black text-white shadow-[1px_2px_0px_0px_rgba(0,0,0,0.8)] dark:bg-tm-green dark:border-border'
+                            : 'bg-white border-tm-border text-tm-navy hover:bg-tm-navy-pale hover:border-tm-navy/30 dark:bg-card dark:border-border dark:text-foreground dark:hover:bg-secondary'"
+                        v-html="link.label"
+                    />
+                    <span
+                        v-else
+                        class="min-w-[2rem] h-8 flex items-center justify-center rounded-[8px] text-xs font-bold text-tm-text-muted cursor-not-allowed border-2 border-transparent"
+                        v-html="link.label"
+                    />
+                </template>
             </div>
         </div>
+    </div>
+
+    <!-- Modal Create/Edit -->
+    <Teleport to="body">
+        <Transition
+            enter-active-class="transition duration-200 ease-out"
+            enter-from-class="opacity-0"
+            enter-to-class="opacity-100"
+            leave-active-class="transition duration-150 ease-in"
+            leave-from-class="opacity-100"
+            leave-to-class="opacity-0"
+        >
+            <div v-if="showModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
+                <Transition
+                    enter-active-class="transition duration-200 ease-out"
+                    enter-from-class="opacity-0 scale-95 translate-y-2"
+                    enter-to-class="opacity-100 scale-100 translate-y-0"
+                    leave-active-class="transition duration-150 ease-in"
+                    leave-from-class="opacity-100 scale-100 translate-y-0"
+                    leave-to-class="opacity-0 scale-95 translate-y-2"
+                >
+                    <div v-if="showModal" class="w-full max-w-md rounded-[18px] border-2 border-black bg-white shadow-[4px_6px_0px_0px_rgba(0,0,0,0.8)] dark:bg-card dark:border-border dark:shadow-none">
+                        <!-- Modal Header -->
+                        <div class="flex items-center justify-between border-b-2 border-black bg-tm-navy-pale px-6 py-4 rounded-t-[16px] dark:bg-secondary dark:border-border">
+                            <h2 class="text-lg font-extrabold text-tm-navy dark:text-foreground">
+                                {{ editingDocument ? 'Edit Dokumen' : 'Tambah Dokumen' }}
+                            </h2>
+                            <button
+                                @click="closeModal"
+                                class="flex h-8 w-8 items-center justify-center rounded-[8px] border-2 border-black bg-white text-tm-navy transition-all hover:bg-tm-danger-pale hover:text-tm-danger hover:border-tm-danger dark:bg-card dark:border-border dark:text-foreground"
+                            >
+                                <X class="h-4 w-4" />
+                            </button>
+                        </div>
+
+                        <!-- Modal Body -->
+                        <form @submit.prevent="submit" class="space-y-4 p-6">
+                            <!-- Title -->
+                            <div>
+                                <label class="mb-1.5 block text-xs font-bold uppercase tracking-wide text-tm-navy dark:text-foreground">
+                                    Judul <span class="text-tm-danger">*</span>
+                                </label>
+                                <input
+                                    v-model="form.title"
+                                    type="text"
+                                    required
+                                    class="w-full rounded-[10px] border-2 border-tm-border bg-white px-3 py-2.5 text-sm font-medium text-tm-navy transition-all focus:border-tm-green focus:outline-none focus:ring-2 focus:ring-tm-green/20 dark:border-border dark:bg-background dark:text-foreground"
+                                    placeholder="Nama dokumen..."
+                                />
+                                <p v-if="form.errors.title" class="mt-1 text-xs font-medium text-tm-danger">{{ form.errors.title }}</p>
+                            </div>
+
+                            <!-- Type -->
+                            <div>
+                                <label class="mb-1.5 block text-xs font-bold uppercase tracking-wide text-tm-navy dark:text-foreground">
+                                    Tipe <span class="text-tm-danger">*</span>
+                                </label>
+                                <input
+                                    v-model="form.type"
+                                    type="text"
+                                    required
+                                    list="doc-type-list"
+                                    placeholder="Pilih atau ketik tipe baru..."
+                                    class="w-full rounded-[10px] border-2 border-tm-border bg-white px-3 py-2.5 text-sm font-medium text-tm-navy transition-all focus:border-tm-green focus:outline-none focus:ring-2 focus:ring-tm-green/20 dark:border-border dark:bg-background dark:text-foreground"
+                                />
+                                <datalist id="doc-type-list">
+                                    <option v-for="t in documentTypes" :key="t" :value="t" />
+                                </datalist>
+                                <p v-if="form.errors.type" class="mt-1 text-xs font-medium text-tm-danger">{{ form.errors.type }}</p>
+                            </div>
+
+                            <!-- Client -->
+                            <div>
+                                <label class="mb-1.5 block text-xs font-bold uppercase tracking-wide text-tm-navy dark:text-foreground">
+                                    Faskes <span class="text-tm-danger">*</span>
+                                </label>
+                                <select
+                                    v-model="form.client_id"
+                                    required
+                                    class="w-full rounded-[10px] border-2 border-tm-border bg-white px-3 py-2.5 text-sm font-medium text-tm-navy transition-all focus:border-tm-green focus:outline-none focus:ring-2 focus:ring-tm-green/20 dark:border-border dark:bg-background dark:text-foreground"
+                                >
+                                    <option value="">-- Pilih Faskes --</option>
+                                    <option v-for="client in clients" :key="client.id" :value="String(client.id)">
+                                        {{ client.name }}
+                                    </option>
+                                </select>
+                                <p v-if="form.errors.client_id" class="mt-1 text-xs font-medium text-tm-danger">{{ form.errors.client_id }}</p>
+                            </div>
+
+                            <!-- File -->
+                            <div>
+                                <label class="mb-1.5 block text-xs font-bold uppercase tracking-wide text-tm-navy dark:text-foreground">
+                                    File {{ editingDocument ? '(opsional)' : '' }}
+                                </label>
+                                <div class="relative">
+                                    <input
+                                        type="file"
+                                        @change="handleFileChange"
+                                        class="block w-full rounded-[10px] border-2 border-dashed border-tm-border bg-tm-navy-pale/30 px-3 py-3 text-sm text-tm-text-secondary transition-all file:mr-3 file:rounded-[8px] file:border-2 file:border-black file:bg-white file:px-3 file:py-1.5 file:text-xs file:font-bold file:text-tm-navy file:shadow-[1px_1px_0px_0px_rgba(0,0,0,0.8)] hover:border-tm-green/50 hover:bg-tm-green-pale/20 dark:border-border dark:bg-secondary/30 dark:text-muted-foreground dark:file:bg-card dark:file:text-foreground dark:file:border-border"
+                                    />
+                                </div>
+                                <p v-if="form.errors.file" class="mt-1 text-xs font-medium text-tm-danger">{{ form.errors.file }}</p>
+                            </div>
+
+                            <!-- Notes -->
+                            <div>
+                                <label class="mb-1.5 block text-xs font-bold uppercase tracking-wide text-tm-navy dark:text-foreground">
+                                    Catatan Versi
+                                </label>
+                                <input
+                                    v-model="form.notes"
+                                    type="text"
+                                    placeholder="Contoh: Revisi klausul 3"
+                                    class="w-full rounded-[10px] border-2 border-tm-border bg-white px-3 py-2.5 text-sm font-medium text-tm-navy transition-all focus:border-tm-green focus:outline-none focus:ring-2 focus:ring-tm-green/20 dark:border-border dark:bg-background dark:text-foreground"
+                                />
+                            </div>
+
+                            <!-- Actions -->
+                            <div class="flex gap-3 pt-3">
+                                <button
+                                    type="button"
+                                    @click="closeModal"
+                                    class="flex-1 rounded-[10px] border-2 border-black bg-white px-4 py-2.5 text-sm font-bold text-tm-navy shadow-[2px_2px_0px_0px_rgba(0,0,0,0.8)] transition-all hover:-translate-y-0.5 hover:shadow-[3px_3px_0px_0px_rgba(0,0,0,0.8)] active:translate-y-0 active:shadow-[1px_1px_0px_0px_rgba(0,0,0,0.8)] dark:bg-card dark:border-border dark:text-foreground dark:shadow-none"
+                                >
+                                    Batal
+                                </button>
+                                <button
+                                    type="submit"
+                                    :disabled="form.processing"
+                                    class="flex-1 rounded-[10px] border-2 border-black bg-tm-green px-4 py-2.5 text-sm font-bold text-white shadow-[2px_2px_0px_0px_rgba(0,0,0,0.8)] transition-all hover:-translate-y-0.5 hover:shadow-[3px_3px_0px_0px_rgba(0,0,0,0.8)] active:translate-y-0 active:shadow-[1px_1px_0px_0px_rgba(0,0,0,0.8)] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,0.8)] dark:border-border dark:shadow-none"
+                                >
+                                    {{ form.processing ? 'Menyimpan...' : (editingDocument ? 'Update' : 'Simpan') }}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </Transition>
+            </div>
+        </Transition>
+    </Teleport>
 </template>

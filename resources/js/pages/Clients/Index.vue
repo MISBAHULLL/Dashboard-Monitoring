@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
 import { Head, useForm, router } from '@inertiajs/vue3';
-import { Building2, Plus, Edit, Trash2, CheckCircle, XCircle, Search, ChevronLeft, ChevronRight, Eye, FilePlus, FileText } from 'lucide-vue-next';
+import { Building2, Plus, Edit, Trash2, Search, ChevronLeft, ChevronRight, Eye, FilePlus, FileText } from 'lucide-vue-next';
 import { dashboard } from '@/routes';
 
 // Import komponen UI dari shadcn-vue
@@ -208,181 +208,192 @@ const submitDoc = () => {
 <template>
     <Head title="Master Faskes" />
 
-    <div class="flex h-full flex-1 flex-col gap-6 overflow-x-auto rounded-xl p-4 md:p-8">
+    <div class="flex h-full flex-1 flex-col gap-0 overflow-x-auto">
         
-        <!-- Header & Tombol Tambah -->
-        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div>
-                <h1 class="text-3xl font-bold tracking-tight text-primary flex items-center gap-2">
-                    <Building2 class="h-8 w-8 text-emerald-600" />
-                    Master Faskes (Client)
-                </h1>
-                <p class="text-muted-foreground mt-1">Kelola data Fasilitas Kesehatan yang menjadi pelanggan Anda.</p>
-            </div>
-            <Button @click="openAddModal" class="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700">
-                <Plus class="h-4 w-4" /> Tambah Faskes
-            </Button>
-        </div>
-
-        <!-- Filter Bar -->
-        <div class="rounded-xl border border-sidebar-border bg-card shadow-sm p-4">
-            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                <!-- Filter Kota -->
-                <Select v-model="filterCity" @update:modelValue="applyFilter">
-                    <SelectTrigger class="h-9 text-sm">
-                        <SelectValue placeholder="Semua Kota" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="all">Semua Kota</SelectItem>
-                        <SelectItem v-for="city in uniqueCities" :key="city" :value="city">{{ city }}</SelectItem>
-                    </SelectContent>
-                </Select>
-
-                <!-- Filter Tipe -->
-                <Select v-model="filterType" @update:modelValue="applyFilter">
-                    <SelectTrigger class="h-9 text-sm">
-                        <SelectValue placeholder="Semua Tipe" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="all">Semua Tipe</SelectItem>
-                        <SelectItem value="PRATAMA">PRATAMA</SelectItem>
-                        <SelectItem value="A">Tipe A</SelectItem>
-                        <SelectItem value="B">Tipe B</SelectItem>
-                        <SelectItem value="C">Tipe C</SelectItem>
-                    </SelectContent>
-                </Select>
-
-                <!-- Filter PIC -->
-                <Select v-model="filterPic" @update:modelValue="applyFilter">
-                    <SelectTrigger class="h-9 text-sm">
-                        <SelectValue placeholder="Semua PIC" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="all">Semua PIC</SelectItem>
-                        <SelectItem v-for="pic in uniquePics" :key="pic" :value="pic">{{ pic }}</SelectItem>
-                    </SelectContent>
-                </Select>
-
-                <!-- Filter Status -->
-                <Select v-model="filterStatus" @update:modelValue="applyFilter">
-                    <SelectTrigger class="h-9 text-sm">
-                        <SelectValue placeholder="Semua Status" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="all">Semua Status</SelectItem>
-                        <SelectItem value="aktif">Aktif</SelectItem>
-                        <SelectItem value="nonaktif">Nonaktif</SelectItem>
-                    </SelectContent>
-                </Select>
-            </div>
-
-            <!-- Info hasil filter + tombol reset -->
-            <div class="flex items-center justify-between mt-3">
-                <p class="text-xs text-muted-foreground">
-                    Menampilkan <span class="font-semibold text-foreground">{{ filteredClients.length }}</span> dari <span class="font-semibold text-foreground">{{ clients.length }}</span> data
-                </p>
-                <Button v-if="filterCity !== 'all' || filterType !== 'all' || filterPic !== 'all' || filterStatus !== 'all'" variant="ghost" size="sm" @click="resetFilters" class="h-7 text-xs text-muted-foreground hover:text-foreground">
-                    Reset Filter
+        <!-- Header dengan background gradient -->
+        <div class="bg-gradient-to-r from-slate-800 to-slate-900 px-6 py-5 sm:px-8">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div>
+                    <h1 class="text-2xl font-bold text-white flex items-center gap-2.5">
+                        <Building2 class="h-7 w-7 text-emerald-400" />
+                        Master Faskes (Client)
+                    </h1>
+                    <p class="text-slate-300 text-sm mt-1">Kelola data Fasilitas Kesehatan yang menjadi pelanggan Anda.</p>
+                </div>
+                <Button @click="openAddModal" class="flex items-center gap-2 bg-emerald-500 hover:bg-emerald-600 text-white shadow-md">
+                    <Plus class="h-4 w-4" /> Tambah Faskes
                 </Button>
             </div>
         </div>
 
-        <!-- Tabel Data -->
-        <div class="relative flex-1 rounded-xl border border-sidebar-border bg-card shadow-sm">
-            <div class="overflow-x-auto p-4">
-                <table class="w-full text-left text-sm">
-                    <thead class="bg-muted/50 text-muted-foreground border-b border-border">
-                        <tr>
-                            <th class="py-3 px-4 font-medium">No</th>
-                            <th class="py-3 px-4 font-medium">Nama Faskes</th>
-                            <th class="py-3 px-4 font-medium">Kota</th>
-                            <th class="py-3 px-4 font-medium">Tipe</th>
-                            <th class="py-3 px-4 font-medium">PIC</th>
-                            <th class="py-3 px-4 font-medium">Telp PIC</th>
-                            <th class="py-3 px-4 font-medium">Tasks</th>
-                            <th class="py-3 px-4 font-medium">Dokumen</th>
-                            <th class="py-3 px-4 font-medium">Status</th>
-                            <th class="py-3 px-4 font-medium text-right">Aksi</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr v-for="(client, index) in paginatedClients" :key="client.id" class="border-b border-border last:border-0 hover:bg-muted/30">
-                            <td class="py-3 px-4">{{ (currentPage - 1) * 10 + index + 1 }}</td>
-                            <td class="py-3 px-4">
-                                <div class="font-bold text-primary">{{ client.name }}</div>
-                                <div class="text-xs text-muted-foreground">{{ client.address || '-' }}</div>
-                            </td>
-                            <td class="py-3 px-4">{{ client.city || '-' }}</td>
-                            <td class="py-3 px-4">
-                                <span v-if="client.type" class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-blue-100 text-blue-700">{{ client.type }}</span>
-                                <span v-else class="text-muted-foreground">-</span>
-                            </td>
-                            <td class="py-3 px-4">{{ client.pic_name || '-' }}</td>
-                            <td class="py-3 px-4">{{ client.pic_phone || '-' }}</td>
-                            <td class="py-3 px-4 text-center">{{ client.tasks_count }}</td>
-                            <td class="py-3 px-4">
-                                <div class="flex items-center gap-1">
-                                    <span class="text-sm font-medium mr-1">{{ client.documents_count }}</span>
-                                    <Button variant="ghost" size="sm" class="h-7 w-7 p-0 text-sky-600 hover:bg-sky-50" @click="router.visit(`/documents?client_id=${client.id}`)" title="Lihat Dokumen">
-                                        <Eye class="h-3.5 w-3.5" />
-                                    </Button>
-                                    <Button variant="ghost" size="sm" class="h-7 w-7 p-0 text-emerald-600 hover:bg-emerald-50" @click="openDocModal(client)" title="Tambah Dokumen">
-                                        <FilePlus class="h-3.5 w-3.5" />
-                                    </Button>
-                                </div>
-                            </td>
-                            <td class="py-3 px-4">
-                                <span v-if="client.is_active" class="inline-flex items-center gap-1 text-emerald-600 text-xs font-medium">
-                                    <CheckCircle class="h-3.5 w-3.5" /> Aktif
-                                </span>
-                                <span v-else class="inline-flex items-center gap-1 text-red-500 text-xs font-medium">
-                                    <XCircle class="h-3.5 w-3.5" /> Nonaktif
-                                </span>
-                            </td>
-                            <td class="py-3 px-4 text-right space-x-2">
-                                <Button variant="outline" size="sm" @click="openEditModal(client)" class="h-8 px-2 text-blue-600 border-blue-200 hover:bg-blue-50">
-                                    <Edit class="h-4 w-4" />
-                                </Button>
-                                <Button variant="outline" size="sm" @click="deleteClient(client.id, client.name)" class="h-8 px-2 text-red-600 border-red-200 hover:bg-red-50">
-                                    <Trash2 class="h-4 w-4" />
-                                </Button>
-                            </td>
-                        </tr>
-                        <tr v-if="filteredClients.length === 0">
-                            <td colspan="10" class="py-8 text-center text-muted-foreground">
-                                <Search class="h-8 w-8 mx-auto mb-2 opacity-30" />
-                                {{ clients.length === 0 ? 'Belum ada data Faskes.' : 'Tidak ada data yang sesuai filter.' }}
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
+        <!-- Content area -->
+        <div class="flex flex-col gap-4 p-4 sm:p-6">
+            <!-- Filter Bar -->
+            <div class="rounded-lg border border-border bg-card p-4">
+                <div class="flex flex-wrap items-center gap-3">
+                    <!-- Filter Kota -->
+                    <Select v-model="filterCity" @update:modelValue="applyFilter">
+                        <SelectTrigger class="h-9 w-[140px] text-sm border-dashed">
+                            <SelectValue placeholder="Semua Kota" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="all">Semua Kota</SelectItem>
+                            <SelectItem v-for="city in uniqueCities" :key="city" :value="city">{{ city }}</SelectItem>
+                        </SelectContent>
+                    </Select>
+
+                    <!-- Filter Tipe -->
+                    <Select v-model="filterType" @update:modelValue="applyFilter">
+                        <SelectTrigger class="h-9 w-[140px] text-sm border-dashed">
+                            <SelectValue placeholder="Semua Tipe" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="all">Semua Tipe</SelectItem>
+                            <SelectItem value="PRATAMA">PRATAMA</SelectItem>
+                            <SelectItem value="A">Tipe A</SelectItem>
+                            <SelectItem value="B">Tipe B</SelectItem>
+                            <SelectItem value="C">Tipe C</SelectItem>
+                        </SelectContent>
+                    </Select>
+
+                    <!-- Filter PIC -->
+                    <Select v-model="filterPic" @update:modelValue="applyFilter">
+                        <SelectTrigger class="h-9 w-[140px] text-sm border-dashed">
+                            <SelectValue placeholder="Semua PIC" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="all">Semua PIC</SelectItem>
+                            <SelectItem v-for="pic in uniquePics" :key="pic" :value="pic">{{ pic }}</SelectItem>
+                        </SelectContent>
+                    </Select>
+
+                    <!-- Filter Status -->
+                    <Select v-model="filterStatus" @update:modelValue="applyFilter">
+                        <SelectTrigger class="h-9 w-[140px] text-sm border-dashed">
+                            <SelectValue placeholder="Semua Status" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="all">Semua Status</SelectItem>
+                            <SelectItem value="aktif">Aktif</SelectItem>
+                            <SelectItem value="nonaktif">Nonaktif</SelectItem>
+                        </SelectContent>
+                    </Select>
+
+                    <!-- Reset Filter -->
+                    <Button v-if="filterCity !== 'all' || filterType !== 'all' || filterPic !== 'all' || filterStatus !== 'all'" variant="ghost" size="sm" @click="resetFilters" class="h-9 text-xs text-muted-foreground hover:text-foreground">
+                        Reset Filter
+                    </Button>
+                </div>
+
+                <!-- Info hasil filter -->
+                <p class="text-xs text-muted-foreground mt-2.5">
+                    Menampilkan <span class="font-semibold text-foreground">{{ filteredClients.length }}</span> dari <span class="font-semibold text-foreground">{{ clients.length }}</span> data
+                </p>
             </div>
 
-            <!-- Pagination -->
-            <div v-if="totalPages > 1" class="flex items-center justify-between border-t border-border px-4 py-3">
-                <p class="text-xs text-muted-foreground">
-                    Halaman {{ currentPage }} dari {{ totalPages }}
-                </p>
-                <div class="flex items-center gap-1">
-                    <Button variant="outline" size="sm" class="h-8 w-8 p-0" :disabled="currentPage === 1" @click="currentPage--">
-                        <ChevronLeft class="h-4 w-4" />
-                    </Button>
-                    <template v-for="page in totalPages" :key="page">
-                        <Button
-                            v-if="page === 1 || page === totalPages || Math.abs(page - currentPage) <= 1"
-                            variant="outline"
-                            size="sm"
-                            class="h-8 w-8 p-0"
-                            :class="{ 'bg-emerald-600 text-white border-emerald-600 hover:bg-emerald-700': page === currentPage }"
-                            @click="currentPage = page"
-                        >
-                            {{ page }}
+            <!-- Tabel Data -->
+            <div class="rounded-lg border border-border bg-card shadow-sm overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-sm">
+                        <thead>
+                            <tr class="border-b border-border bg-muted/40">
+                                <th class="py-3 px-4 font-semibold text-muted-foreground text-xs uppercase tracking-wider">No</th>
+                                <th class="py-3 px-4 font-semibold text-muted-foreground text-xs uppercase tracking-wider">Nama Faskes</th>
+                                <th class="py-3 px-4 font-semibold text-muted-foreground text-xs uppercase tracking-wider">Kota</th>
+                                <th class="py-3 px-4 font-semibold text-muted-foreground text-xs uppercase tracking-wider">Tipe</th>
+                                <th class="py-3 px-4 font-semibold text-muted-foreground text-xs uppercase tracking-wider">PIC</th>
+                                <th class="py-3 px-4 font-semibold text-muted-foreground text-xs uppercase tracking-wider">Telp PIC</th>
+                                <th class="py-3 px-4 font-semibold text-muted-foreground text-xs uppercase tracking-wider text-center">Tasks</th>
+                                <th class="py-3 px-4 font-semibold text-muted-foreground text-xs uppercase tracking-wider">Dokumen</th>
+                                <th class="py-3 px-4 font-semibold text-muted-foreground text-xs uppercase tracking-wider">Status</th>
+                                <th class="py-3 px-4 font-semibold text-muted-foreground text-xs uppercase tracking-wider text-right">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-border">
+                            <tr v-for="(client, index) in paginatedClients" :key="client.id" class="hover:bg-muted/20 transition-colors">
+                                <td class="py-3.5 px-4 text-muted-foreground">{{ (currentPage - 1) * perPage + index + 1 }}</td>
+                                <td class="py-3.5 px-4">
+                                    <div class="font-semibold text-foreground">{{ client.name }}</div>
+                                    <div class="text-xs text-muted-foreground mt-0.5">{{ client.address || '-' }}</div>
+                                </td>
+                                <td class="py-3.5 px-4 text-foreground">{{ client.city || '-' }}</td>
+                                <td class="py-3.5 px-4">
+                                    <span v-if="client.type === 'PRATAMA'" class="inline-flex items-center rounded px-2 py-0.5 text-xs font-bold bg-teal-100 text-teal-700 dark:bg-teal-900/40 dark:text-teal-300">PRATAMA</span>
+                                    <span v-else-if="client.type" class="inline-flex items-center justify-center h-6 w-6 rounded-full text-xs font-bold bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">{{ client.type }}</span>
+                                    <span v-else class="text-muted-foreground">-</span>
+                                </td>
+                                <td class="py-3.5 px-4 text-foreground">{{ client.pic_name || '-' }}</td>
+                                <td class="py-3.5 px-4 text-foreground">{{ client.pic_phone || '-' }}</td>
+                                <td class="py-3.5 px-4 text-center font-medium text-foreground">{{ client.tasks_count }}</td>
+                                <td class="py-3.5 px-4">
+                                    <div class="flex items-center gap-1.5">
+                                        <span class="text-sm font-medium text-foreground">{{ client.documents_count }}</span>
+                                        <Button variant="ghost" size="sm" class="h-6 w-6 p-0 text-sky-600 hover:text-sky-700 hover:bg-sky-50 dark:hover:bg-sky-950" @click="router.visit(`/documents?client_id=${client.id}`)" title="Lihat Dokumen">
+                                            <Eye class="h-3.5 w-3.5" />
+                                        </Button>
+                                        <Button variant="ghost" size="sm" class="h-6 w-6 p-0 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-950" @click="openDocModal(client)" title="Tambah Dokumen">
+                                            <FilePlus class="h-3.5 w-3.5" />
+                                        </Button>
+                                    </div>
+                                </td>
+                                <td class="py-3.5 px-4">
+                                    <span v-if="client.is_active" class="inline-flex items-center gap-1.5 text-xs font-medium text-emerald-600 dark:text-emerald-400">
+                                        <span class="h-2 w-2 rounded-full bg-emerald-500"></span>
+                                        Aktif
+                                    </span>
+                                    <span v-else class="inline-flex items-center gap-1.5 text-xs font-medium text-red-500 dark:text-red-400">
+                                        <span class="h-2 w-2 rounded-full bg-red-500"></span>
+                                        Nonaktif
+                                    </span>
+                                </td>
+                                <td class="py-3.5 px-4 text-right">
+                                    <div class="flex items-center justify-end gap-1">
+                                        <Button variant="ghost" size="sm" @click="openEditModal(client)" class="h-8 w-8 p-0 text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-950">
+                                            <Edit class="h-4 w-4" />
+                                        </Button>
+                                        <Button variant="ghost" size="sm" @click="deleteClient(client.id, client.name)" class="h-8 w-8 p-0 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950">
+                                            <Trash2 class="h-4 w-4" />
+                                        </Button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr v-if="filteredClients.length === 0">
+                                <td colspan="10" class="py-12 text-center text-muted-foreground">
+                                    <Search class="h-10 w-10 mx-auto mb-3 opacity-30" />
+                                    <p class="text-sm">{{ clients.length === 0 ? 'Belum ada data Faskes.' : 'Tidak ada data yang sesuai filter.' }}</p>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination -->
+                <div v-if="totalPages > 1" class="flex items-center justify-between border-t border-border px-4 py-3">
+                    <p class="text-xs text-muted-foreground">
+                        Halaman {{ currentPage }} dari {{ totalPages }}
+                    </p>
+                    <div class="flex items-center gap-1">
+                        <Button variant="outline" size="sm" class="h-8 w-8 p-0" :disabled="currentPage === 1" @click="currentPage--">
+                            <ChevronLeft class="h-4 w-4" />
                         </Button>
-                        <span v-else-if="page === currentPage - 2 || page === currentPage + 2" class="px-1 text-muted-foreground text-sm">…</span>
-                    </template>
-                    <Button variant="outline" size="sm" class="h-8 w-8 p-0" :disabled="currentPage === totalPages" @click="currentPage++">
-                        <ChevronRight class="h-4 w-4" />
-                    </Button>
+                        <template v-for="page in totalPages" :key="page">
+                            <Button
+                                v-if="page === 1 || page === totalPages || Math.abs(page - currentPage) <= 1"
+                                size="sm"
+                                class="h-8 w-8 p-0"
+                                :class="page === currentPage
+                                    ? 'bg-emerald-600 text-white border-emerald-600 hover:bg-emerald-700 hover:text-white'
+                                    : 'bg-transparent border border-border text-foreground hover:bg-muted'"
+                                @click="currentPage = page"
+                            >
+                                {{ page }}
+                            </Button>
+                            <span v-else-if="page === currentPage - 2 || page === currentPage + 2" class="px-1 text-muted-foreground text-sm">…</span>
+                        </template>
+                        <Button variant="outline" size="sm" class="h-8 w-8 p-0" :disabled="currentPage === totalPages" @click="currentPage++">
+                            <ChevronRight class="h-4 w-4" />
+                        </Button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -465,6 +476,7 @@ const submitDoc = () => {
                 </form>
             </DialogContent>
         </Dialog>
+
         <!-- MODAL TAMBAH DOKUMEN -->
         <Dialog :open="isDocModalOpen" @update:open="isDocModalOpen = $event">
             <DialogContent class="sm:max-w-[480px]">

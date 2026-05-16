@@ -208,192 +208,192 @@ const submitDoc = () => {
 <template>
     <Head title="Master Faskes" />
 
-    <div class="flex h-full flex-1 flex-col gap-0 overflow-x-auto">
+    <div class="flex h-full flex-1 flex-col gap-6 overflow-x-auto p-4 md:p-8">
         
-        <!-- Header dengan background gradient -->
-        <div class="bg-gradient-to-r from-slate-800 to-slate-900 px-6 py-5 sm:px-8">
-            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                <div>
-                    <h1 class="text-2xl font-bold text-white flex items-center gap-2.5">
-                        <Building2 class="h-7 w-7 text-emerald-400" />
-                        Master Faskes (Client)
-                    </h1>
-                    <p class="text-slate-300 text-sm mt-1">Kelola data Fasilitas Kesehatan yang menjadi pelanggan Anda.</p>
-                </div>
-                <Button @click="openAddModal" class="flex items-center gap-2 bg-emerald-500 hover:bg-emerald-600 text-white shadow-md">
-                    <Plus class="h-4 w-4" /> Tambah Faskes
+        <!-- Header -->
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+                <h1 class="text-2xl font-extrabold tracking-tight text-tm-navy flex items-center gap-3 dark:text-foreground">
+                    <div class="flex h-10 w-10 items-center justify-center rounded-[12px] border-2 border-black bg-tm-navy-pale shadow-[2px_2px_0px_0px_rgba(0,0,0,0.8)] dark:bg-tm-navy dark:border-border">
+                        <Building2 class="h-5 w-5 text-tm-navy dark:text-white" />
+                    </div>
+                    Master Faskes (Client)
+                </h1>
+                <p class="text-sm text-tm-text-secondary mt-1.5 ml-[52px] dark:text-muted-foreground">Kelola data Fasilitas Kesehatan yang menjadi pelanggan Anda.</p>
+            </div>
+            <button
+                @click="openAddModal"
+                class="inline-flex items-center gap-2 rounded-[10px] border-2 border-black bg-tm-green px-4 py-2.5 text-sm font-bold text-white shadow-[2px_2px_0px_0px_rgba(0,0,0,0.8)] transition-all hover:-translate-y-0.5 hover:shadow-[3px_4px_0px_0px_rgba(0,0,0,0.8)] active:translate-y-0 active:shadow-[1px_1px_0px_0px_rgba(0,0,0,0.8)] dark:border-border dark:shadow-none"
+            >
+                <Plus class="h-4 w-4" /> Tambah Faskes
+            </button>
+        </div>
+        <!-- Filter Bar -->
+        <div class="rounded-[14px] border-2 border-black bg-white p-4 shadow-[2px_3px_0px_0px_rgba(0,0,0,0.8)] dark:bg-card dark:border-border dark:shadow-none">
+            <div class="flex flex-wrap items-center gap-3">
+                <!-- Filter Kota -->
+                <Select v-model="filterCity" @update:modelValue="applyFilter">
+                    <SelectTrigger class="h-9 w-[140px] text-sm rounded-[8px] border-2 border-tm-border font-medium dark:border-border">
+                        <SelectValue placeholder="Semua Kota" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="all">Semua Kota</SelectItem>
+                        <SelectItem v-for="city in uniqueCities" :key="city" :value="city">{{ city }}</SelectItem>
+                    </SelectContent>
+                </Select>
+
+                <!-- Filter Tipe -->
+                <Select v-model="filterType" @update:modelValue="applyFilter">
+                    <SelectTrigger class="h-9 w-[140px] text-sm rounded-[8px] border-2 border-tm-border font-medium dark:border-border">
+                        <SelectValue placeholder="Semua Tipe" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="all">Semua Tipe</SelectItem>
+                        <SelectItem value="PRATAMA">PRATAMA</SelectItem>
+                        <SelectItem value="A">Tipe A</SelectItem>
+                        <SelectItem value="B">Tipe B</SelectItem>
+                        <SelectItem value="C">Tipe C</SelectItem>
+                    </SelectContent>
+                </Select>
+
+                <!-- Filter PIC -->
+                <Select v-model="filterPic" @update:modelValue="applyFilter">
+                    <SelectTrigger class="h-9 w-[140px] text-sm rounded-[8px] border-2 border-tm-border font-medium dark:border-border">
+                        <SelectValue placeholder="Semua PIC" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="all">Semua PIC</SelectItem>
+                        <SelectItem v-for="pic in uniquePics" :key="pic" :value="pic">{{ pic }}</SelectItem>
+                    </SelectContent>
+                </Select>
+
+                <!-- Filter Status -->
+                <Select v-model="filterStatus" @update:modelValue="applyFilter">
+                    <SelectTrigger class="h-9 w-[140px] text-sm rounded-[8px] border-2 border-tm-border font-medium dark:border-border">
+                        <SelectValue placeholder="Semua Status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="all">Semua Status</SelectItem>
+                        <SelectItem value="aktif">Aktif</SelectItem>
+                        <SelectItem value="nonaktif">Nonaktif</SelectItem>
+                    </SelectContent>
+                </Select>
+
+                <!-- Reset Filter -->
+                <Button v-if="filterCity !== 'all' || filterType !== 'all' || filterPic !== 'all' || filterStatus !== 'all'" variant="ghost" size="sm" @click="resetFilters" class="h-9 text-xs font-semibold text-tm-text-secondary hover:text-tm-navy dark:text-muted-foreground dark:hover:text-foreground">
+                    Reset Filter
                 </Button>
             </div>
+
+            <!-- Info hasil filter -->
+            <p class="text-xs text-tm-text-secondary mt-2.5 dark:text-muted-foreground">
+                Menampilkan <span class="font-bold text-tm-navy dark:text-foreground">{{ filteredClients.length }}</span> dari <span class="font-bold text-tm-navy dark:text-foreground">{{ clients.length }}</span> data
+            </p>
         </div>
 
-        <!-- Content area -->
-        <div class="flex flex-col gap-4 p-4 sm:p-6">
-            <!-- Filter Bar -->
-            <div class="rounded-lg border border-border bg-card p-4">
-                <div class="flex flex-wrap items-center gap-3">
-                    <!-- Filter Kota -->
-                    <Select v-model="filterCity" @update:modelValue="applyFilter">
-                        <SelectTrigger class="h-9 w-[140px] text-sm border-dashed">
-                            <SelectValue placeholder="Semua Kota" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="all">Semua Kota</SelectItem>
-                            <SelectItem v-for="city in uniqueCities" :key="city" :value="city">{{ city }}</SelectItem>
-                        </SelectContent>
-                    </Select>
-
-                    <!-- Filter Tipe -->
-                    <Select v-model="filterType" @update:modelValue="applyFilter">
-                        <SelectTrigger class="h-9 w-[140px] text-sm border-dashed">
-                            <SelectValue placeholder="Semua Tipe" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="all">Semua Tipe</SelectItem>
-                            <SelectItem value="PRATAMA">PRATAMA</SelectItem>
-                            <SelectItem value="A">Tipe A</SelectItem>
-                            <SelectItem value="B">Tipe B</SelectItem>
-                            <SelectItem value="C">Tipe C</SelectItem>
-                        </SelectContent>
-                    </Select>
-
-                    <!-- Filter PIC -->
-                    <Select v-model="filterPic" @update:modelValue="applyFilter">
-                        <SelectTrigger class="h-9 w-[140px] text-sm border-dashed">
-                            <SelectValue placeholder="Semua PIC" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="all">Semua PIC</SelectItem>
-                            <SelectItem v-for="pic in uniquePics" :key="pic" :value="pic">{{ pic }}</SelectItem>
-                        </SelectContent>
-                    </Select>
-
-                    <!-- Filter Status -->
-                    <Select v-model="filterStatus" @update:modelValue="applyFilter">
-                        <SelectTrigger class="h-9 w-[140px] text-sm border-dashed">
-                            <SelectValue placeholder="Semua Status" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="all">Semua Status</SelectItem>
-                            <SelectItem value="aktif">Aktif</SelectItem>
-                            <SelectItem value="nonaktif">Nonaktif</SelectItem>
-                        </SelectContent>
-                    </Select>
-
-                    <!-- Reset Filter -->
-                    <Button v-if="filterCity !== 'all' || filterType !== 'all' || filterPic !== 'all' || filterStatus !== 'all'" variant="ghost" size="sm" @click="resetFilters" class="h-9 text-xs text-muted-foreground hover:text-foreground">
-                        Reset Filter
-                    </Button>
-                </div>
-
-                <!-- Info hasil filter -->
-                <p class="text-xs text-muted-foreground mt-2.5">
-                    Menampilkan <span class="font-semibold text-foreground">{{ filteredClients.length }}</span> dari <span class="font-semibold text-foreground">{{ clients.length }}</span> data
-                </p>
+        <!-- Tabel Data -->
+        <div class="rounded-[14px] border-2 border-black bg-white shadow-[2px_3px_0px_0px_rgba(0,0,0,0.8)] overflow-hidden dark:bg-card dark:border-border dark:shadow-none">
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                    <thead>
+                        <tr class="border-b-2 border-black bg-tm-navy-pale dark:bg-secondary dark:border-border">
+                            <th class="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-tm-navy dark:text-foreground">No</th>
+                            <th class="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-tm-navy dark:text-foreground">Nama Faskes</th>
+                            <th class="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-tm-navy dark:text-foreground">Kota</th>
+                            <th class="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-tm-navy dark:text-foreground">Tipe</th>
+                            <th class="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-tm-navy dark:text-foreground">PIC</th>
+                            <th class="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-tm-navy dark:text-foreground">Telp PIC</th>
+                            <th class="px-4 py-3.5 text-center text-xs font-bold uppercase tracking-wider text-tm-navy dark:text-foreground">Tasks</th>
+                            <th class="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-tm-navy dark:text-foreground">Dokumen</th>
+                            <th class="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-tm-navy dark:text-foreground">Status</th>
+                            <th class="px-4 py-3.5 text-right text-xs font-bold uppercase tracking-wider text-tm-navy dark:text-foreground">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr v-for="(client, index) in paginatedClients" :key="client.id" class="border-b border-tm-border transition-colors hover:bg-tm-navy-pale/40 dark:border-border dark:hover:bg-secondary/50">
+                            <td class="px-4 py-3.5 text-tm-text-secondary dark:text-muted-foreground">{{ (currentPage - 1) * perPage + index + 1 }}</td>
+                            <td class="px-4 py-3.5">
+                                <div class="font-bold text-tm-navy dark:text-foreground">{{ client.name }}</div>
+                                <div class="text-xs text-tm-text-muted mt-0.5 dark:text-muted-foreground">{{ client.address || '-' }}</div>
+                            </td>
+                            <td class="px-4 py-3.5 text-tm-text dark:text-foreground">{{ client.city || '-' }}</td>
+                            <td class="px-4 py-3.5">
+                                <span v-if="client.type === 'PRATAMA'" class="inline-flex items-center rounded-[6px] border-2 border-tm-green bg-tm-green-pale px-2 py-0.5 text-xs font-bold text-tm-green-dark dark:bg-tm-green/20 dark:border-tm-green/50 dark:text-tm-green">PRATAMA</span>
+                                <span v-else-if="client.type" class="inline-flex items-center justify-center h-7 w-7 rounded-full border-2 border-tm-navy bg-tm-navy-pale text-xs font-bold text-tm-navy dark:bg-tm-navy/20 dark:border-tm-navy-medium dark:text-tm-navy-medium">{{ client.type }}</span>
+                                <span v-else class="text-tm-text-muted dark:text-muted-foreground">-</span>
+                            </td>
+                            <td class="px-4 py-3.5 text-tm-text dark:text-foreground">{{ client.pic_name || '-' }}</td>
+                            <td class="px-4 py-3.5 text-tm-text dark:text-foreground">{{ client.pic_phone || '-' }}</td>
+                            <td class="px-4 py-3.5 text-center font-semibold text-tm-navy dark:text-foreground">{{ client.tasks_count }}</td>
+                            <td class="px-4 py-3.5">
+                                <div class="flex items-center gap-1.5">
+                                    <span class="text-sm font-semibold text-tm-navy dark:text-foreground">{{ client.documents_count }}</span>
+                                    <button @click="router.visit(`/documents?client_id=${client.id}`)" title="Lihat Dokumen" class="inline-flex h-6 w-6 items-center justify-center rounded-[6px] text-tm-navy-medium transition-colors hover:bg-tm-navy-pale dark:text-foreground dark:hover:bg-secondary">
+                                        <Eye class="h-3.5 w-3.5" />
+                                    </button>
+                                    <button @click="openDocModal(client)" title="Tambah Dokumen" class="inline-flex h-6 w-6 items-center justify-center rounded-[6px] text-tm-green transition-colors hover:bg-tm-green-pale dark:hover:bg-tm-green/10">
+                                        <FilePlus class="h-3.5 w-3.5" />
+                                    </button>
+                                </div>
+                            </td>
+                            <td class="px-4 py-3.5">
+                                <span v-if="client.is_active" class="inline-flex items-center gap-1.5 rounded-[6px] border border-tm-green bg-tm-green-pale px-2 py-0.5 text-xs font-bold text-tm-green-dark dark:bg-tm-green/20 dark:border-tm-green/50 dark:text-tm-green">
+                                    <span class="h-1.5 w-1.5 rounded-full bg-tm-green"></span>
+                                    Aktif
+                                </span>
+                                <span v-else class="inline-flex items-center gap-1.5 rounded-[6px] border border-tm-danger bg-tm-danger-pale px-2 py-0.5 text-xs font-bold text-tm-danger dark:bg-tm-danger/20 dark:border-tm-danger/50">
+                                    <span class="h-1.5 w-1.5 rounded-full bg-tm-danger"></span>
+                                    Nonaktif
+                                </span>
+                            </td>
+                            <td class="px-4 py-3.5 text-right">
+                                <div class="flex items-center justify-end gap-1">
+                                    <button @click="openEditModal(client)" title="Edit" class="inline-flex h-8 w-8 items-center justify-center rounded-[8px] border border-tm-border text-tm-navy-medium transition-all hover:border-tm-navy hover:bg-tm-navy-pale dark:border-border dark:text-foreground dark:hover:bg-secondary">
+                                        <Edit class="h-4 w-4" />
+                                    </button>
+                                    <button @click="deleteClient(client.id, client.name)" title="Hapus" class="inline-flex h-8 w-8 items-center justify-center rounded-[8px] border border-tm-border text-tm-danger transition-all hover:border-tm-danger hover:bg-tm-danger-pale dark:border-border dark:hover:bg-tm-danger/10">
+                                        <Trash2 class="h-4 w-4" />
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr v-if="filteredClients.length === 0">
+                            <td colspan="10" class="py-12 text-center">
+                                <div class="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-[12px] border-2 border-black bg-tm-navy-pale shadow-[2px_2px_0px_0px_rgba(0,0,0,0.8)] dark:bg-secondary dark:border-border">
+                                    <Search class="h-5 w-5 text-tm-navy dark:text-muted-foreground" />
+                                </div>
+                                <p class="text-sm font-semibold text-tm-text-secondary dark:text-muted-foreground">{{ clients.length === 0 ? 'Belum ada data Faskes.' : 'Tidak ada data yang sesuai filter.' }}</p>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>
 
-            <!-- Tabel Data -->
-            <div class="rounded-lg border border-border bg-card shadow-sm overflow-hidden">
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left text-sm">
-                        <thead>
-                            <tr class="border-b border-border bg-muted/40">
-                                <th class="py-3 px-4 font-semibold text-muted-foreground text-xs uppercase tracking-wider">No</th>
-                                <th class="py-3 px-4 font-semibold text-muted-foreground text-xs uppercase tracking-wider">Nama Faskes</th>
-                                <th class="py-3 px-4 font-semibold text-muted-foreground text-xs uppercase tracking-wider">Kota</th>
-                                <th class="py-3 px-4 font-semibold text-muted-foreground text-xs uppercase tracking-wider">Tipe</th>
-                                <th class="py-3 px-4 font-semibold text-muted-foreground text-xs uppercase tracking-wider">PIC</th>
-                                <th class="py-3 px-4 font-semibold text-muted-foreground text-xs uppercase tracking-wider">Telp PIC</th>
-                                <th class="py-3 px-4 font-semibold text-muted-foreground text-xs uppercase tracking-wider text-center">Tasks</th>
-                                <th class="py-3 px-4 font-semibold text-muted-foreground text-xs uppercase tracking-wider">Dokumen</th>
-                                <th class="py-3 px-4 font-semibold text-muted-foreground text-xs uppercase tracking-wider">Status</th>
-                                <th class="py-3 px-4 font-semibold text-muted-foreground text-xs uppercase tracking-wider text-right">Aksi</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-border">
-                            <tr v-for="(client, index) in paginatedClients" :key="client.id" class="hover:bg-muted/20 transition-colors">
-                                <td class="py-3.5 px-4 text-muted-foreground">{{ (currentPage - 1) * perPage + index + 1 }}</td>
-                                <td class="py-3.5 px-4">
-                                    <div class="font-semibold text-foreground">{{ client.name }}</div>
-                                    <div class="text-xs text-muted-foreground mt-0.5">{{ client.address || '-' }}</div>
-                                </td>
-                                <td class="py-3.5 px-4 text-foreground">{{ client.city || '-' }}</td>
-                                <td class="py-3.5 px-4">
-                                    <span v-if="client.type === 'PRATAMA'" class="inline-flex items-center rounded px-2 py-0.5 text-xs font-bold bg-teal-100 text-teal-700 dark:bg-teal-900/40 dark:text-teal-300">PRATAMA</span>
-                                    <span v-else-if="client.type" class="inline-flex items-center justify-center h-6 w-6 rounded-full text-xs font-bold bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">{{ client.type }}</span>
-                                    <span v-else class="text-muted-foreground">-</span>
-                                </td>
-                                <td class="py-3.5 px-4 text-foreground">{{ client.pic_name || '-' }}</td>
-                                <td class="py-3.5 px-4 text-foreground">{{ client.pic_phone || '-' }}</td>
-                                <td class="py-3.5 px-4 text-center font-medium text-foreground">{{ client.tasks_count }}</td>
-                                <td class="py-3.5 px-4">
-                                    <div class="flex items-center gap-1.5">
-                                        <span class="text-sm font-medium text-foreground">{{ client.documents_count }}</span>
-                                        <Button variant="ghost" size="sm" class="h-6 w-6 p-0 text-sky-600 hover:text-sky-700 hover:bg-sky-50 dark:hover:bg-sky-950" @click="router.visit(`/documents?client_id=${client.id}`)" title="Lihat Dokumen">
-                                            <Eye class="h-3.5 w-3.5" />
-                                        </Button>
-                                        <Button variant="ghost" size="sm" class="h-6 w-6 p-0 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-950" @click="openDocModal(client)" title="Tambah Dokumen">
-                                            <FilePlus class="h-3.5 w-3.5" />
-                                        </Button>
-                                    </div>
-                                </td>
-                                <td class="py-3.5 px-4">
-                                    <span v-if="client.is_active" class="inline-flex items-center gap-1.5 text-xs font-medium text-emerald-600 dark:text-emerald-400">
-                                        <span class="h-2 w-2 rounded-full bg-emerald-500"></span>
-                                        Aktif
-                                    </span>
-                                    <span v-else class="inline-flex items-center gap-1.5 text-xs font-medium text-red-500 dark:text-red-400">
-                                        <span class="h-2 w-2 rounded-full bg-red-500"></span>
-                                        Nonaktif
-                                    </span>
-                                </td>
-                                <td class="py-3.5 px-4 text-right">
-                                    <div class="flex items-center justify-end gap-1">
-                                        <Button variant="ghost" size="sm" @click="openEditModal(client)" class="h-8 w-8 p-0 text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-950">
-                                            <Edit class="h-4 w-4" />
-                                        </Button>
-                                        <Button variant="ghost" size="sm" @click="deleteClient(client.id, client.name)" class="h-8 w-8 p-0 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950">
-                                            <Trash2 class="h-4 w-4" />
-                                        </Button>
-                                    </div>
-                                </td>
-                            </tr>
-                            <tr v-if="filteredClients.length === 0">
-                                <td colspan="10" class="py-12 text-center text-muted-foreground">
-                                    <Search class="h-10 w-10 mx-auto mb-3 opacity-30" />
-                                    <p class="text-sm">{{ clients.length === 0 ? 'Belum ada data Faskes.' : 'Tidak ada data yang sesuai filter.' }}</p>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-
-                <!-- Pagination -->
-                <div v-if="totalPages > 1" class="flex items-center justify-between border-t border-border px-4 py-3">
-                    <p class="text-xs text-muted-foreground">
-                        Halaman {{ currentPage }} dari {{ totalPages }}
-                    </p>
-                    <div class="flex items-center gap-1">
-                        <Button variant="outline" size="sm" class="h-8 w-8 p-0" :disabled="currentPage === 1" @click="currentPage--">
-                            <ChevronLeft class="h-4 w-4" />
-                        </Button>
-                        <template v-for="page in totalPages" :key="page">
-                            <Button
-                                v-if="page === 1 || page === totalPages || Math.abs(page - currentPage) <= 1"
-                                size="sm"
-                                class="h-8 w-8 p-0"
-                                :class="page === currentPage
-                                    ? 'bg-emerald-600 text-white border-emerald-600 hover:bg-emerald-700 hover:text-white'
-                                    : 'bg-transparent border border-border text-foreground hover:bg-muted'"
-                                @click="currentPage = page"
-                            >
-                                {{ page }}
-                            </Button>
-                            <span v-else-if="page === currentPage - 2 || page === currentPage + 2" class="px-1 text-muted-foreground text-sm">…</span>
-                        </template>
-                        <Button variant="outline" size="sm" class="h-8 w-8 p-0" :disabled="currentPage === totalPages" @click="currentPage++">
-                            <ChevronRight class="h-4 w-4" />
-                        </Button>
-                    </div>
+            <!-- Pagination -->
+            <div v-if="totalPages > 1" class="flex items-center justify-between border-t-2 border-black px-4 py-3 dark:border-border">
+                <p class="text-xs font-medium text-tm-text-secondary dark:text-muted-foreground">
+                    Halaman {{ currentPage }} dari {{ totalPages }}
+                </p>
+                <div class="flex items-center gap-1">
+                    <button :disabled="currentPage === 1" @click="currentPage--" class="inline-flex h-8 w-8 items-center justify-center rounded-[8px] border-2 border-tm-border text-tm-navy transition-colors hover:bg-tm-navy-pale disabled:opacity-40 disabled:cursor-not-allowed dark:border-border dark:text-foreground dark:hover:bg-secondary">
+                        <ChevronLeft class="h-4 w-4" />
+                    </button>
+                    <template v-for="page in totalPages" :key="page">
+                        <button
+                            v-if="page === 1 || page === totalPages || Math.abs(page - currentPage) <= 1"
+                            @click="currentPage = page"
+                            class="inline-flex h-8 w-8 items-center justify-center rounded-[8px] border-2 text-xs font-bold transition-colors"
+                            :class="page === currentPage
+                                ? 'border-black bg-tm-green text-white shadow-[2px_2px_0px_0px_rgba(0,0,0,0.8)] dark:border-tm-green dark:shadow-none'
+                                : 'border-tm-border text-tm-navy hover:bg-tm-navy-pale dark:border-border dark:text-foreground dark:hover:bg-secondary'"
+                        >
+                            {{ page }}
+                        </button>
+                        <span v-else-if="page === currentPage - 2 || page === currentPage + 2" class="px-1 text-tm-text-muted text-sm">…</span>
+                    </template>
+                    <button :disabled="currentPage === totalPages" @click="currentPage++" class="inline-flex h-8 w-8 items-center justify-center rounded-[8px] border-2 border-tm-border text-tm-navy transition-colors hover:bg-tm-navy-pale disabled:opacity-40 disabled:cursor-not-allowed dark:border-border dark:text-foreground dark:hover:bg-secondary">
+                        <ChevronRight class="h-4 w-4" />
+                    </button>
                 </div>
             </div>
         </div>
@@ -402,7 +402,7 @@ const submitDoc = () => {
         <Dialog :open="isModalOpen" @update:open="isModalOpen = $event">
             <DialogContent class="sm:max-w-[560px]">
                 <DialogHeader>
-                    <DialogTitle>{{ isEditing ? 'Edit Faskes' : 'Tambah Faskes Baru' }}</DialogTitle>
+                    <DialogTitle class="text-tm-navy dark:text-foreground">{{ isEditing ? 'Edit Faskes' : 'Tambah Faskes Baru' }}</DialogTitle>
                     <DialogDescription>
                         Pastikan nama dan kontak Faskes sudah diisi dengan benar.
                     </DialogDescription>
@@ -411,22 +411,22 @@ const submitDoc = () => {
                 <form @submit.prevent="submitForm" class="space-y-4 py-4">
                     <!-- Input Nama -->
                     <div class="space-y-2">
-                        <Label for="name">Nama Faskes <span class="text-red-500">*</span></Label>
-                        <Input id="name" v-model="form.name" placeholder="Contoh: RSUD Dr. Soetomo" :class="{ 'border-red-500': form.errors.name }" />
-                        <p v-if="form.errors.name" class="text-sm text-red-500">{{ form.errors.name }}</p>
+                        <Label for="name">Nama Faskes <span class="text-tm-danger">*</span></Label>
+                        <Input id="name" v-model="form.name" placeholder="Contoh: RSUD Dr. Soetomo" :class="{ 'border-tm-danger': form.errors.name }" />
+                        <p v-if="form.errors.name" class="text-sm text-tm-danger">{{ form.errors.name }}</p>
                     </div>
 
                     <!-- Input Kota & Tipe (2 kolom) -->
                     <div class="grid grid-cols-2 gap-4">
                         <div class="space-y-2">
                             <Label for="city">Kota</Label>
-                            <Input id="city" v-model="form.city" placeholder="Contoh: Surabaya" :class="{ 'border-red-500': form.errors.city }" />
-                            <p v-if="form.errors.city" class="text-sm text-red-500">{{ form.errors.city }}</p>
+                            <Input id="city" v-model="form.city" placeholder="Contoh: Surabaya" :class="{ 'border-tm-danger': form.errors.city }" />
+                            <p v-if="form.errors.city" class="text-sm text-tm-danger">{{ form.errors.city }}</p>
                         </div>
                         <div class="space-y-2">
                             <Label>Tipe Faskes</Label>
                             <Select v-model="form.type">
-                                <SelectTrigger :class="{ 'border-red-500': form.errors.type }">
+                                <SelectTrigger :class="{ 'border-tm-danger': form.errors.type }">
                                     <SelectValue placeholder="Pilih tipe" />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -436,7 +436,7 @@ const submitDoc = () => {
                                     <SelectItem value="C">Tipe C</SelectItem>
                                 </SelectContent>
                             </Select>
-                            <p v-if="form.errors.type" class="text-sm text-red-500">{{ form.errors.type }}</p>
+                            <p v-if="form.errors.type" class="text-sm text-tm-danger">{{ form.errors.type }}</p>
                         </div>
                     </div>
 
@@ -444,34 +444,34 @@ const submitDoc = () => {
                     <div class="grid grid-cols-2 gap-4">
                         <div class="space-y-2">
                             <Label for="pic_name">Nama PIC</Label>
-                            <Input id="pic_name" v-model="form.pic_name" placeholder="Nama penanggung jawab" :class="{ 'border-red-500': form.errors.pic_name }" />
-                            <p v-if="form.errors.pic_name" class="text-sm text-red-500">{{ form.errors.pic_name }}</p>
+                            <Input id="pic_name" v-model="form.pic_name" placeholder="Nama penanggung jawab" :class="{ 'border-tm-danger': form.errors.pic_name }" />
+                            <p v-if="form.errors.pic_name" class="text-sm text-tm-danger">{{ form.errors.pic_name }}</p>
                         </div>
                         <div class="space-y-2">
                             <Label for="pic_phone">Telepon PIC</Label>
-                            <Input id="pic_phone" v-model="form.pic_phone" placeholder="Contoh: 08123456789" :class="{ 'border-red-500': form.errors.pic_phone }" />
-                            <p v-if="form.errors.pic_phone" class="text-sm text-red-500">{{ form.errors.pic_phone }}</p>
+                            <Input id="pic_phone" v-model="form.pic_phone" placeholder="Contoh: 08123456789" :class="{ 'border-tm-danger': form.errors.pic_phone }" />
+                            <p v-if="form.errors.pic_phone" class="text-sm text-tm-danger">{{ form.errors.pic_phone }}</p>
                         </div>
                     </div>
 
                     <!-- Input Alamat -->
                     <div class="space-y-2">
                         <Label for="address">Alamat Lengkap</Label>
-                        <Textarea id="address" v-model="form.address" placeholder="Masukkan alamat lengkap" class="resize-none" :class="{ 'border-red-500': form.errors.address }" />
-                        <p v-if="form.errors.address" class="text-sm text-red-500">{{ form.errors.address }}</p>
+                        <Textarea id="address" v-model="form.address" placeholder="Masukkan alamat lengkap" class="resize-none" :class="{ 'border-tm-danger': form.errors.address }" />
+                        <p v-if="form.errors.address" class="text-sm text-tm-danger">{{ form.errors.address }}</p>
                     </div>
 
                     <!-- Toggle Status Aktif -->
                     <div class="flex items-center gap-3">
-                        <input type="checkbox" id="is_active" v-model="form.is_active" class="h-4 w-4 rounded border-gray-300 text-emerald-600" />
+                        <input type="checkbox" id="is_active" v-model="form.is_active" class="h-4 w-4 rounded border-gray-300 text-tm-green focus:ring-tm-green" />
                         <Label for="is_active" class="cursor-pointer">Faskes Aktif</Label>
                     </div>
 
                     <DialogFooter class="pt-4">
                         <Button type="button" variant="outline" @click="isModalOpen = false">Batal</Button>
-                        <Button type="submit" :disabled="form.processing" class="bg-emerald-600 hover:bg-emerald-700">
+                        <button type="submit" :disabled="form.processing" class="inline-flex items-center gap-2 rounded-[10px] border-2 border-black bg-tm-green px-4 py-2 text-sm font-bold text-white shadow-[2px_2px_0px_0px_rgba(0,0,0,0.8)] transition-all hover:-translate-y-0.5 hover:shadow-[3px_3px_0px_0px_rgba(0,0,0,0.8)] active:translate-y-0 active:shadow-[1px_1px_0px_0px_rgba(0,0,0,0.8)] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 dark:border-border dark:shadow-none">
                             {{ form.processing ? 'Menyimpan...' : (isEditing ? 'Simpan Perubahan' : 'Simpan Faskes') }}
-                        </Button>
+                        </button>
                     </DialogFooter>
                 </form>
             </DialogContent>
@@ -481,39 +481,39 @@ const submitDoc = () => {
         <Dialog :open="isDocModalOpen" @update:open="isDocModalOpen = $event">
             <DialogContent class="sm:max-w-[480px]">
                 <DialogHeader>
-                    <DialogTitle class="flex items-center gap-2">
-                        <FileText class="h-5 w-5 text-sky-600" />
+                    <DialogTitle class="flex items-center gap-2 text-tm-navy dark:text-foreground">
+                        <FileText class="h-5 w-5 text-tm-navy-medium" />
                         Tambah Dokumen
                     </DialogTitle>
                     <DialogDescription>
-                        Faskes: <span class="font-semibold text-foreground">{{ selectedClientName }}</span>
+                        Faskes: <span class="font-bold text-tm-navy dark:text-foreground">{{ selectedClientName }}</span>
                     </DialogDescription>
                 </DialogHeader>
 
                 <form @submit.prevent="submitDoc" class="space-y-4 py-4">
                     <div class="space-y-2">
-                        <Label for="doc_title">Judul Dokumen <span class="text-red-500">*</span></Label>
-                        <Input id="doc_title" v-model="docForm.title" placeholder="Contoh: Kontrak Kerjasama 2025" :class="{ 'border-red-500': docForm.errors.title }" />
-                        <p v-if="docForm.errors.title" class="text-sm text-red-500">{{ docForm.errors.title }}</p>
+                        <Label for="doc_title">Judul Dokumen <span class="text-tm-danger">*</span></Label>
+                        <Input id="doc_title" v-model="docForm.title" placeholder="Contoh: Kontrak Kerjasama 2025" :class="{ 'border-tm-danger': docForm.errors.title }" />
+                        <p v-if="docForm.errors.title" class="text-sm text-tm-danger">{{ docForm.errors.title }}</p>
                     </div>
 
                     <div class="space-y-2">
-                        <Label for="doc_type">Tipe Dokumen <span class="text-red-500">*</span></Label>
+                        <Label for="doc_type">Tipe Dokumen <span class="text-tm-danger">*</span></Label>
                         <input id="doc_type" v-model="docForm.type" type="text" required list="client-doc-type-list"
                             placeholder="Pilih atau ketik tipe baru..."
                             class="w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs focus:outline-none focus:ring-2 focus:ring-ring"
-                            :class="{ 'border-red-500': docForm.errors.type }" />
+                            :class="{ 'border-tm-danger': docForm.errors.type }" />
                         <datalist id="client-doc-type-list">
                             <option v-for="t in documentTypes" :key="t" :value="t" />
                         </datalist>
-                        <p v-if="docForm.errors.type" class="text-sm text-red-500">{{ docForm.errors.type }}</p>
+                        <p v-if="docForm.errors.type" class="text-sm text-tm-danger">{{ docForm.errors.type }}</p>
                     </div>
 
                     <div class="space-y-2">
                         <Label>File Dokumen</Label>
                         <input type="file" @change="handleFileChange"
                             class="block w-full text-sm text-muted-foreground file:mr-4 file:rounded-md file:border-0 file:bg-muted file:px-3 file:py-1.5 file:text-sm file:font-medium hover:file:bg-muted/80" />
-                        <p v-if="docForm.errors.file" class="text-sm text-red-500">{{ docForm.errors.file }}</p>
+                        <p v-if="docForm.errors.file" class="text-sm text-tm-danger">{{ docForm.errors.file }}</p>
                     </div>
 
                     <div class="space-y-2">
@@ -523,9 +523,9 @@ const submitDoc = () => {
 
                     <DialogFooter class="pt-2">
                         <Button type="button" variant="outline" @click="isDocModalOpen = false">Batal</Button>
-                        <Button type="submit" :disabled="docForm.processing" class="bg-sky-600 hover:bg-sky-700">
+                        <button type="submit" :disabled="docForm.processing" class="inline-flex items-center gap-2 rounded-[10px] border-2 border-black bg-tm-navy px-4 py-2 text-sm font-bold text-white shadow-[2px_2px_0px_0px_rgba(0,0,0,0.8)] transition-all hover:-translate-y-0.5 hover:shadow-[3px_3px_0px_0px_rgba(0,0,0,0.8)] active:translate-y-0 active:shadow-[1px_1px_0px_0px_rgba(0,0,0,0.8)] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 dark:border-border dark:shadow-none">
                             {{ docForm.processing ? 'Menyimpan...' : 'Simpan Dokumen' }}
-                        </Button>
+                        </button>
                     </DialogFooter>
                 </form>
             </DialogContent>

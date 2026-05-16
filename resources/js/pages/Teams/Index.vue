@@ -8,7 +8,6 @@ import { dashboard } from '@/routes';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
 import {
   Dialog,
   DialogContent,
@@ -107,61 +106,80 @@ const deleteTeam = (id: number, name: string) => {
 <template>
     <Head title="Master Team" />
 
-    <div class="flex h-full flex-1 flex-col gap-6 overflow-x-auto rounded-xl p-4 md:p-8">
+    <div class="flex h-full flex-1 flex-col gap-6 overflow-x-auto p-4 md:p-8">
         
+        <!-- Header -->
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-                <h1 class="text-3xl font-bold tracking-tight text-primary flex items-center gap-2">
-                    <UsersRound class="h-8 w-8 text-indigo-600" />
+                <h1 class="text-2xl font-extrabold tracking-tight text-tm-navy flex items-center gap-3 dark:text-foreground">
+                    <div class="flex h-10 w-10 items-center justify-center rounded-[12px] border-2 border-black bg-tm-navy-pale shadow-[2px_2px_0px_0px_rgba(0,0,0,0.8)] dark:bg-tm-navy dark:border-border">
+                        <UsersRound class="h-5 w-5 text-tm-navy dark:text-white" />
+                    </div>
                     Master Team
                 </h1>
-                <p class="text-muted-foreground mt-1">Kelola departemen atau divisi tim internal Anda.</p>
+                <p class="text-sm text-tm-text-secondary mt-1.5 ml-[52px] dark:text-muted-foreground">Kelola departemen atau divisi tim internal Anda.</p>
             </div>
-            <Button @click="openAddModal" class="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white">
+            <button
+                @click="openAddModal"
+                class="inline-flex items-center gap-2 rounded-[10px] border-2 border-black bg-tm-green px-4 py-2.5 text-sm font-bold text-white shadow-[2px_2px_0px_0px_rgba(0,0,0,0.8)] transition-all hover:-translate-y-0.5 hover:shadow-[3px_4px_0px_0px_rgba(0,0,0,0.8)] active:translate-y-0 active:shadow-[1px_1px_0px_0px_rgba(0,0,0,0.8)] dark:border-border dark:shadow-none"
+            >
                 <Plus class="h-4 w-4" /> Tambah Tim
-            </Button>
+            </button>
         </div>
 
-        <div class="relative flex-1 rounded-xl border border-sidebar-border bg-card shadow-sm">
-            <div class="overflow-x-auto p-4">
-                <table class="w-full text-left text-sm">
-                    <thead class="bg-muted/50 text-muted-foreground border-b border-border">
-                        <tr>
-                            <th class="py-3 px-4 font-medium">No</th>
-                            <th class="py-3 px-4 font-medium">Nama Tim</th>
-                            <th class="py-3 px-4 font-medium">Tipe / Divisi</th>
-                            <th class="py-3 px-4 font-medium text-center">Jumlah Anggota</th>
-                            <th class="py-3 px-4 font-medium">Status</th>
-                            <th class="py-3 px-4 font-medium text-right">Aksi</th>
+        <!-- Tabel Data -->
+        <div class="rounded-[14px] border-2 border-black bg-white shadow-[2px_3px_0px_0px_rgba(0,0,0,0.8)] overflow-hidden dark:bg-card dark:border-border dark:shadow-none">
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                    <thead>
+                        <tr class="border-b-2 border-black bg-tm-navy-pale dark:bg-secondary dark:border-border">
+                            <th class="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-tm-navy dark:text-foreground">No</th>
+                            <th class="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-tm-navy dark:text-foreground">Nama Tim</th>
+                            <th class="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-tm-navy dark:text-foreground">Tipe / Divisi</th>
+                            <th class="px-4 py-3.5 text-center text-xs font-bold uppercase tracking-wider text-tm-navy dark:text-foreground">Jumlah Anggota</th>
+                            <th class="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-tm-navy dark:text-foreground">Status</th>
+                            <th class="px-4 py-3.5 text-right text-xs font-bold uppercase tracking-wider text-tm-navy dark:text-foreground">Aksi</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <tr v-for="(team, index) in teams" :key="team.id" class="border-b border-border last:border-0 hover:bg-muted/30">
-                            <td class="py-3 px-4">{{ index + 1 }}</td>
-                            <td class="py-3 px-4 font-bold text-primary">{{ team.name }}</td>
-                            <td class="py-3 px-4 capitalize">{{ team.type || '-' }}</td>
-                            <td class="py-3 px-4 text-center">
-                                <span class="font-semibold text-indigo-600">{{ team.users_count || 0 }}</span> orang
+                        <tr v-for="(team, index) in teams" :key="team.id" class="border-b border-tm-border transition-colors hover:bg-tm-navy-pale/40 dark:border-border dark:hover:bg-secondary/50">
+                            <td class="px-4 py-3.5 text-tm-text-secondary dark:text-muted-foreground">{{ index + 1 }}</td>
+                            <td class="px-4 py-3.5 font-bold text-tm-navy dark:text-foreground">{{ team.name }}</td>
+                            <td class="px-4 py-3.5">
+                                <span v-if="team.type" class="inline-flex items-center rounded-[6px] border-2 border-tm-navy bg-tm-navy-pale px-2.5 py-0.5 text-xs font-bold uppercase text-tm-navy dark:bg-tm-navy/20 dark:border-tm-navy-medium dark:text-tm-navy-medium">{{ team.type }}</span>
+                                <span v-else class="text-tm-text-muted dark:text-muted-foreground">-</span>
                             </td>
-                            <td class="py-3 px-4">
-                                <!-- Menggunakan komponen Badge shadcn untuk Status -->
-                                <Badge :variant="team.is_active ? 'default' : 'secondary'" 
-                                       :class="team.is_active ? 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200' : 'bg-slate-100 text-slate-800'">
-                                    {{ team.is_active ? 'Aktif' : 'Non-Aktif' }}
-                                </Badge>
+                            <td class="px-4 py-3.5 text-center">
+                                <span class="font-semibold text-tm-navy dark:text-foreground">{{ team.users_count || 0 }}</span>
+                                <span class="text-tm-text-secondary dark:text-muted-foreground"> orang</span>
                             </td>
-                            <td class="py-3 px-4 text-right space-x-2 flex justify-end">
-                                <Button variant="outline" size="sm" @click="openEditModal(team)" class="h-8 px-2 text-blue-600 border-blue-200 hover:bg-blue-50">
-                                    <Edit class="h-4 w-4" />
-                                </Button>
-                                <Button variant="outline" size="sm" @click="deleteTeam(team.id, team.name)" class="h-8 px-2 text-red-600 border-red-200 hover:bg-red-50">
-                                    <Trash2 class="h-4 w-4" />
-                                </Button>
+                            <td class="px-4 py-3.5">
+                                <span v-if="team.is_active" class="inline-flex items-center gap-1.5 rounded-[6px] border border-tm-green bg-tm-green-pale px-2 py-0.5 text-xs font-bold text-tm-green-dark dark:bg-tm-green/20 dark:border-tm-green/50 dark:text-tm-green">
+                                    <span class="h-1.5 w-1.5 rounded-full bg-tm-green"></span>
+                                    Aktif
+                                </span>
+                                <span v-else class="inline-flex items-center gap-1.5 rounded-[6px] border border-tm-danger bg-tm-danger-pale px-2 py-0.5 text-xs font-bold text-tm-danger dark:bg-tm-danger/20 dark:border-tm-danger/50">
+                                    <span class="h-1.5 w-1.5 rounded-full bg-tm-danger"></span>
+                                    Non-Aktif
+                                </span>
+                            </td>
+                            <td class="px-4 py-3.5 text-right">
+                                <div class="flex items-center justify-end gap-1">
+                                    <button @click="openEditModal(team)" title="Edit" class="inline-flex h-8 w-8 items-center justify-center rounded-[8px] border border-tm-border text-tm-navy-medium transition-all hover:border-tm-navy hover:bg-tm-navy-pale dark:border-border dark:text-foreground dark:hover:bg-secondary">
+                                        <Edit class="h-4 w-4" />
+                                    </button>
+                                    <button @click="deleteTeam(team.id, team.name)" title="Hapus" class="inline-flex h-8 w-8 items-center justify-center rounded-[8px] border border-tm-border text-tm-danger transition-all hover:border-tm-danger hover:bg-tm-danger-pale dark:border-border dark:hover:bg-tm-danger/10">
+                                        <Trash2 class="h-4 w-4" />
+                                    </button>
+                                </div>
                             </td>
                         </tr>
                         <tr v-if="teams.length === 0">
-                            <td colspan="6" class="py-8 text-center text-muted-foreground">
-                                Belum ada data Tim.
+                            <td colspan="6" class="py-12 text-center">
+                                <div class="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-[12px] border-2 border-black bg-tm-navy-pale shadow-[2px_2px_0px_0px_rgba(0,0,0,0.8)] dark:bg-secondary dark:border-border">
+                                    <UsersRound class="h-5 w-5 text-tm-navy dark:text-muted-foreground" />
+                                </div>
+                                <p class="text-sm font-semibold text-tm-text-secondary dark:text-muted-foreground">Belum ada data Tim.</p>
                             </td>
                         </tr>
                     </tbody>
@@ -169,48 +187,48 @@ const deleteTeam = (id: number, name: string) => {
             </div>
         </div>
 
+        <!-- Modal Tambah/Edit Tim -->
         <Dialog :open="isModalOpen" @update:open="isModalOpen = $event">
             <DialogContent class="sm:max-w-[425px]">
                 <DialogHeader>
-                    <DialogTitle>{{ isEditing ? 'Edit Tim' : 'Tambah Tim Baru' }}</DialogTitle>
+                    <DialogTitle class="text-tm-navy dark:text-foreground">{{ isEditing ? 'Edit Tim' : 'Tambah Tim Baru' }}</DialogTitle>
                     <DialogDescription>Isi detail departemen atau tim internal.</DialogDescription>
                 </DialogHeader>
                 
                 <form @submit.prevent="submitForm" class="space-y-4 py-4">
                     <div class="space-y-2">
-                        <Label for="name">Nama Tim <span class="text-red-500">*</span></Label>
-                        <Input id="name" v-model="form.name" placeholder="Contoh: Tim IT Support" :class="{ 'border-red-500': form.errors.name }" />
-                        <p v-if="form.errors.name" class="text-sm text-red-500">{{ form.errors.name }}</p>
+                        <Label for="name">Nama Tim <span class="text-tm-danger">*</span></Label>
+                        <Input id="name" v-model="form.name" placeholder="Contoh: Tim IT Support" :class="{ 'border-tm-danger': form.errors.name }" />
+                        <p v-if="form.errors.name" class="text-sm text-tm-danger">{{ form.errors.name }}</p>
                     </div>
 
                     <div class="space-y-2">
-                        <Label for="type">Tipe / Divisi <span class="text-red-500">*</span></Label>
-                        <select id="type" v-model="form.type" class="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:border-transparent">
+                        <Label for="type">Tipe / Divisi <span class="text-tm-danger">*</span></Label>
+                        <select id="type" v-model="form.type" class="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-tm-navy focus:border-transparent dark:bg-card dark:border-border">
                             <option value="" disabled>-- Pilih Tipe Divisi --</option>
                             <option value="PRODUCT">PRODUCT</option>
                             <option value="ENGINEER">ENGINEER</option>
                         </select>
-                        <p v-if="form.errors.type" class="text-sm text-red-500">{{ form.errors.type }}</p>
+                        <p v-if="form.errors.type" class="text-sm text-tm-danger">{{ form.errors.type }}</p>
                     </div>
-
 
                     <div class="space-y-2">
                         <Label for="phone">Telepon Tim</Label>
-                        <Input id="phone" v-model="form.phone" placeholder="Kontak darurat tim" :class="{ 'border-red-500': form.errors.phone }" />
-                        <p v-if="form.errors.phone" class="text-sm text-red-500">{{ form.errors.phone }}</p>
+                        <Input id="phone" v-model="form.phone" placeholder="Kontak darurat tim" :class="{ 'border-tm-danger': form.errors.phone }" />
+                        <p v-if="form.errors.phone" class="text-sm text-tm-danger">{{ form.errors.phone }}</p>
                     </div>
 
-                    <!-- Toggle Sederhana menggunakan Label dan Checkbox Native -->
+                    <!-- Toggle Status -->
                     <div class="flex items-center space-x-2 pt-2">
-                        <input type="checkbox" id="is_active" v-model="form.is_active" class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600" />
+                        <input type="checkbox" id="is_active" v-model="form.is_active" class="h-4 w-4 rounded border-gray-300 text-tm-green focus:ring-tm-green" />
                         <Label for="is_active" class="cursor-pointer">Set sebagai Tim Aktif</Label>
                     </div>
 
                     <DialogFooter class="pt-4">
                         <Button type="button" variant="outline" @click="isModalOpen = false">Batal</Button>
-                        <Button type="submit" :disabled="form.processing" class="bg-indigo-600 hover:bg-indigo-700 text-white">
+                        <button type="submit" :disabled="form.processing" class="inline-flex items-center gap-2 rounded-[10px] border-2 border-black bg-tm-green px-4 py-2 text-sm font-bold text-white shadow-[2px_2px_0px_0px_rgba(0,0,0,0.8)] transition-all hover:-translate-y-0.5 hover:shadow-[3px_3px_0px_0px_rgba(0,0,0,0.8)] active:translate-y-0 active:shadow-[1px_1px_0px_0px_rgba(0,0,0,0.8)] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 dark:border-border dark:shadow-none">
                             {{ form.processing ? 'Menyimpan...' : (isEditing ? 'Simpan Perubahan' : 'Simpan Tim') }}
-                        </Button>
+                        </button>
                     </DialogFooter>
                 </form>
             </DialogContent>

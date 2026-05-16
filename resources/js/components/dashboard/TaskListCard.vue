@@ -182,10 +182,10 @@ const getPriorityClasses = (priority: TaskPriority): string => {
 
 <template>
   <article
-    class="relative flex h-full flex-col rounded-xl border-[1.5px] border-border bg-card
-           shadow-[2px_2px_0_0_rgba(0,0,0,0.08)] dark:shadow-[2px_2px_0_0_rgba(255,255,255,0.05)]
+    class="relative flex h-full flex-col rounded-xl border-[1.5px] border-border bg-card dark:border-slate-700/80 dark:bg-[#111c2e]
+           shadow-[2px_2px_0_0_rgba(0,0,0,0.08)] dark:shadow-[0_14px_32px_rgba(0,0,0,0.42),0_0_0_1px_rgba(148,163,184,0.08)]
            transition-all duration-200 ease-out
-           hover:shadow-[4px_4px_0_0_rgba(0,0,0,0.1)] dark:hover:shadow-[4px_4px_0_0_rgba(255,255,255,0.08)]"
+           hover:shadow-[4px_4px_0_0_rgba(0,0,0,0.1)] dark:hover:shadow-[0_18px_40px_rgba(0,0,0,0.5),0_0_0_1px_rgba(52,211,153,0.2)]"
   >
     <div class="flex flex-col h-full p-5">
       <!-- Header -->
@@ -270,10 +270,10 @@ const getPriorityClasses = (priority: TaskPriority): string => {
             <!-- Task card (clickable link to task detail) -->
             <Link
               :href="showTask(task.id).url"
-              class="flex-1 rounded-lg border-l-[3px] bg-muted/30 dark:bg-muted/10 p-3
-                     border border-border/50 dark:border-border/30
+              class="flex-1 rounded-lg border-l-[3px] bg-muted/30 p-3 dark:bg-slate-950/20
+                     border border-border/50 dark:border-slate-700/70
                      transition-all duration-200 ease-out
-                     hover:bg-muted/50 dark:hover:bg-muted/20
+                     hover:bg-muted/50 dark:hover:bg-slate-800/50
                      hover:translate-x-0.5 hover:shadow-sm
                      focus:outline-none focus:ring-2 focus:ring-primary/30 focus:ring-offset-1
                      cursor-pointer block"

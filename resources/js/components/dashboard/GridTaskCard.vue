@@ -197,9 +197,11 @@ const statItems = computed<StatItem[]>(() => [
 }
 
 .dark .grid-task-container {
-    background: rgba(3, 164, 114, 0.25);
-    border-color: rgba(3, 164, 114, 0.6);
-    box-shadow: 6px 6px 0px 0px rgba(3, 164, 114, 0.2);
+    background: rgba(16, 185, 129, 0.16);
+    border-color: rgba(52, 211, 153, 0.42);
+    box-shadow:
+        0 0 0 1px rgba(52, 211, 153, 0.16) inset,
+        0 16px 34px rgba(0, 0, 0, 0.42);
 }
 
 .grid-task-item {
@@ -236,9 +238,11 @@ const statItems = computed<StatItem[]>(() => [
 }
 
 .dark .grid-task-item {
-    background: var(--card, #1c1c1e);
-    border-color: var(--border, rgba(255, 255, 255, 0.1));
-    box-shadow: 2px 4px 4px 0px rgba(0, 0, 0, 0.4);
+    background: #111c2e;
+    border-color: rgba(148, 163, 184, 0.38);
+    box-shadow:
+        0 0 0 1px rgba(148, 163, 184, 0.06) inset,
+        0 10px 22px rgba(0, 0, 0, 0.32);
 }
 
 .grid-task-label {
@@ -251,7 +255,8 @@ const statItems = computed<StatItem[]>(() => [
 }
 
 .dark .grid-task-label {
-    color: var(--foreground);
+    color: #f1f5f9;
+    -webkit-text-stroke: 0;
 }
 
 .grid-task-icon {
@@ -266,8 +271,8 @@ const statItems = computed<StatItem[]>(() => [
 }
 
 .dark .grid-task-icon {
-    color: var(--foreground);
-    opacity: 0.8;
+    color: #cbd5e1;
+    opacity: 0.86;
 }
 
 .grid-task-value {
@@ -278,7 +283,7 @@ const statItems = computed<StatItem[]>(() => [
 }
 
 .dark .grid-task-value {
-    color: var(--foreground);
+    color: #f8fafc;
 }
 
 .grid-task-trend {
@@ -314,6 +319,6 @@ const statItems = computed<StatItem[]>(() => [
 }
 
 .dark .grid-task-line {
-    background: rgba(255, 255, 255, 0.2);
+    background: rgba(203, 213, 225, 0.22);
 }
 </style>

@@ -59,7 +59,7 @@ const greeting = computed(() => {
 
 <template>
   <article
-    class="relative flex h-full flex-col overflow-hidden rounded-[18px] border-2 border-black bg-[#0f172a] p-4 shadow-[4px_6px_5px_1px_rgba(0,0,0,0.6)] transition-all duration-300 ease-out hover:-translate-y-1 hover:shadow-[6px_10px_8px_2px_rgba(0,0,0,0.7)] hover:border-emerald-500/40"
+    class="relative flex h-full flex-col overflow-hidden rounded-[18px] border-2 border-black bg-[#0f172a] p-4 shadow-[4px_6px_5px_1px_rgba(0,0,0,0.6)] transition-all duration-300 ease-out hover:-translate-y-1 hover:shadow-[6px_10px_8px_2px_rgba(0,0,0,0.7)] hover:border-emerald-500/40 dark:border-slate-700/80 dark:bg-[#0f1a2d] dark:shadow-[0_16px_36px_rgba(0,0,0,0.45),0_0_0_1px_rgba(148,163,184,0.08)] dark:hover:border-emerald-400/45 dark:hover:shadow-[0_20px_44px_rgba(0,0,0,0.55),0_0_0_1px_rgba(52,211,153,0.18)]"
   >
     <!-- Loading skeleton -->
     <div v-if="loading" class="flex h-full flex-col justify-between animate-pulse">
@@ -99,17 +99,17 @@ const greeting = computed(() => {
         </div>
 
         <!-- Subtitle with inline badges -->
-        <p class="mt-5 text-[18px] text-[#a4a3a3] font-['Solway',serif] leading-snug">
+        <p class="mt-5 text-[18px] text-[#a4a3a3] font-['Solway',serif] leading-snug dark:text-slate-300">
           kamu mempunyai
           <span
-            class="inline-flex items-center rounded-[3px] px-1 py-[1px] text-[18px] font-normal bg-[rgba(199,153,36,0.28)] text-[#eab223] mx-0.5"
+            class="inline-flex items-center rounded-[3px] px-1 py-[1px] text-[18px] font-normal bg-[rgba(199,153,36,0.28)] text-[#eab223] mx-0.5 dark:bg-amber-400/15 dark:text-amber-300"
           >
             {{ pendingCount }} Pending
           </span>
           dan
           <br/>
           <span
-            class="inline-flex items-center rounded-[3px] px-1 py-[1px] text-[18px] font-normal bg-[rgba(224,29,29,0.38)] text-[#e01d1d] ml-0 mt-1"
+            class="inline-flex items-center rounded-[3px] px-1 py-[1px] text-[18px] font-normal bg-[rgba(224,29,29,0.38)] text-[#e01d1d] ml-0 mt-1 dark:bg-red-500/20 dark:text-red-300"
           >
             {{ overdueCount }} Overdue
           </span>
@@ -120,7 +120,7 @@ const greeting = computed(() => {
       <div class="relative z-10 mt-auto flex items-end justify-between gap-3 pt-3">
         <!-- Left: TOTAL TASKS -->
         <div class="shrink-0">
-          <p class="text-[20px] uppercase tracking-[0.15em] text-[#a4a3a3] font-['Solway',serif]">
+          <p class="text-[20px] uppercase tracking-[0.15em] text-[#a4a3a3] font-['Solway',serif] dark:text-slate-300">
             TOTAL TASKS
           </p>
           <p class="mt-0.5 text-[50px] leading-none font-normal text-white font-['Solway',serif]">

@@ -3,6 +3,11 @@ import { ref, computed, watch } from 'vue';
 import ClientOnly from '@/components/ClientOnly.vue';
 import VueApexCharts from 'vue3-apexcharts';
 import type { ApexOptions } from 'apexcharts';
+import { useAppearance } from '@/composables/useAppearance';
+
+/** Reactive dark-mode flag — chart palette ikut berubah saat user toggle theme. */
+const { resolvedAppearance } = useAppearance();
+const isDark = computed(() => resolvedAppearance.value === 'dark');
 
 /**
  * TaskTrendCard Component
@@ -67,14 +72,14 @@ const chartOptions = computed<ApexOptions>(() => ({
             dynamicAnimation: { enabled: true, speed: 300 },
         },
     },
-    colors: ['#3D5A99'],
+    colors: [isDark.value ? '#7AA2F7' : '#3D5A99'],
     stroke: {
         curve: 'straight',
         width: 2,
     },
     grid: {
         show: true,
-        borderColor: '#e5e7eb',
+        borderColor: isDark.value ? 'rgba(148,163,184,0.18)' : '#e5e7eb',
         strokeDashArray: 0,
         xaxis: { lines: { show: false } },
         yaxis: { lines: { show: true } },
@@ -89,7 +94,7 @@ const chartOptions = computed<ApexOptions>(() => ({
             style: {
                 fontSize: '11px',
                 fontFamily: 'Plus Jakarta Sans, sans-serif',
-                colors: '#9AAAB8',
+                colors: isDark.value ? '#94A3B8' : '#9AAAB8',
                 fontWeight: 500,
             },
         },
@@ -97,7 +102,11 @@ const chartOptions = computed<ApexOptions>(() => ({
         axisTicks: { show: false },
         crosshairs: {
             show: true,
-            stroke: { color: '#3D5A99', width: 1, dashArray: 3 },
+            stroke: {
+                color: isDark.value ? '#7AA2F7' : '#3D5A99',
+                width: 1,
+                dashArray: 3,
+            },
         },
         tooltip: { enabled: false },
     },
@@ -110,7 +119,7 @@ const chartOptions = computed<ApexOptions>(() => ({
             style: {
                 fontSize: '11px',
                 fontFamily: 'Plus Jakarta Sans, sans-serif',
-                colors: '#9AAAB8',
+                colors: isDark.value ? '#94A3B8' : '#9AAAB8',
                 fontWeight: 500,
             },
             formatter: (val: number) => Math.round(val).toString(),
@@ -128,24 +137,44 @@ const chartOptions = computed<ApexOptions>(() => ({
                 w.globals.categoryLabels?.[dataPointIndex] ??
                 w.globals.labels?.[dataPointIndex] ??
                 '';
-            const accent = val === 0 ? '#9AAAB8' : '#1B3A6B';
+            // Tooltip palette mengikuti theme — di dark pakai surface gelap dengan border navy pale.
+            const palette = isDark.value
+                ? {
+                      bg: '#111c2e',
+                      text: '#E8EEF8',
+                      border: '#48668f',
+                      shadow: '0 4px 12px rgba(0,0,0,0.5)',
+                      labelText: '#94A3B8',
+                      accent: val === 0 ? '#94A3B8' : '#7AA2F7',
+                      suffixText: '#94A3B8',
+                  }
+                : {
+                      bg: '#ffffff',
+                      text: '#111111',
+                      border: '#111111',
+                      shadow: '3px 3px 0px #111111',
+                      labelText: '#6b7280',
+                      accent: val === 0 ? '#9AAAB8' : '#1B3A6B',
+                      suffixText: '#6b7280',
+                  };
+
             return `
                 <div style="
-                    background:#ffffff;
-                    color:#111111;
-                    border:2px solid #111111;
+                    background:${palette.bg};
+                    color:${palette.text};
+                    border:2px solid ${palette.border};
                     border-radius:6px;
                     padding:6px 12px;
                     font-family:'Plus Jakarta Sans',sans-serif;
                     font-size:12px;
                     font-weight:600;
-                    box-shadow:3px 3px 0px #111111;
+                    box-shadow:${palette.shadow};
                     white-space:nowrap;
                     line-height:1.6;
                 ">
-                    <span style="color:#6b7280;font-weight:500;font-size:11px;">${label}</span><br/>
-                    <span style="font-size:17px;font-weight:800;color:${accent};">${val}</span>
-                    <span style="color:#6b7280;font-weight:400;font-size:11px;"> task</span>
+                    <span style="color:${palette.labelText};font-weight:500;font-size:11px;">${label}</span><br/>
+                    <span style="font-size:17px;font-weight:800;color:${palette.accent};">${val}</span>
+                    <span style="color:${palette.suffixText};font-weight:400;font-size:11px;"> task</span>
                 </div>`;
         },
     },
@@ -154,35 +183,35 @@ const chartOptions = computed<ApexOptions>(() => ({
 const chartSeries = computed(() => [{ name: 'Tasks', data: activeData.value }]);
 
 const chartKey = ref(0);
-watch(activeMode, () => { chartKey.value++; });
+watch([activeMode, isDark], () => {
+    chartKey.value++;
+});
 </script>
 
 <template>
     <!-- LOADING SKELETON -->
     <article
         v-if="loading"
-        class="relative flex h-full flex-col overflow-hidden rounded-[18px] border-[2.5px] border-black bg-white p-5 dark:bg-card animate-pulse"
-        style="box-shadow: 2px 4px 4px 4px rgba(0,0,0,0.08)"
+        class="task-trend-card relative flex h-full flex-col overflow-hidden rounded-[18px] border-[2.5px] border-black bg-white p-5 animate-pulse dark:border-slate-700/80 dark:bg-[#111c2e]"
     >
         <div class="flex items-center justify-between mb-4">
-            <div class="h-7 w-48 rounded bg-muted/40"></div>
+            <div class="h-7 w-48 rounded bg-muted/40 dark:bg-slate-700/40"></div>
             <div class="flex gap-1">
-                <div class="h-7 w-14 rounded bg-muted/30"></div>
-                <div class="h-7 w-14 rounded bg-muted/30"></div>
+                <div class="h-7 w-14 rounded bg-muted/30 dark:bg-slate-700/30"></div>
+                <div class="h-7 w-14 rounded bg-muted/30 dark:bg-slate-700/30"></div>
             </div>
         </div>
         <div class="flex items-center gap-3 mb-4">
-            <div class="h-10 w-16 rounded bg-muted/40"></div>
-            <div class="h-6 w-14 rounded-md bg-muted/30"></div>
+            <div class="h-10 w-16 rounded bg-muted/40 dark:bg-slate-700/40"></div>
+            <div class="h-6 w-14 rounded-md bg-muted/30 dark:bg-slate-700/30"></div>
         </div>
-        <div class="flex-1 rounded bg-muted/20"></div>
+        <div class="flex-1 rounded bg-muted/20 dark:bg-slate-700/20"></div>
     </article>
 
     <!-- CONTENT -->
     <article
         v-else
-        class="relative flex h-full flex-col overflow-hidden rounded-[18px] border-[2.5px] border-black bg-white px-5 pt-4 pb-2 dark:bg-card transition-all duration-300 ease-out hover:-translate-y-1 hover:shadow-[4px_8px_16px_2px_rgba(0,0,0,0.10)] cursor-default"
-        style="box-shadow: 2px 4px 4px 4px rgba(0,0,0,0.08)"
+        class="task-trend-card relative flex h-full flex-col overflow-hidden rounded-[18px] border-[2.5px] border-black bg-white px-5 pt-4 pb-2 transition-all duration-300 ease-out hover:-translate-y-1 cursor-default dark:border-slate-700/80 dark:bg-[#111c2e]"
         aria-label="Tren Task 7 Days"
     >
         <!-- Header -->
@@ -195,7 +224,7 @@ watch(activeMode, () => { chartKey.value++; });
             <div class="flex items-center gap-0.5">
                 <button
                     :class="[
-                        'rounded-[4px] border border-black px-3 py-1 text-[12px] font-medium transition-all duration-150',
+                        'rounded-[4px] border border-black px-3 py-1 text-[12px] font-medium transition-all duration-150 dark:border-slate-600',
                         activeMode === 'week'
                             ? 'bg-white text-black dark:bg-slate-200 dark:text-black'
                             : 'bg-[#d9d9d9] text-black hover:bg-[#c4c4c4] dark:bg-slate-600 dark:text-slate-200 dark:hover:bg-slate-500',
@@ -206,7 +235,7 @@ watch(activeMode, () => { chartKey.value++; });
                 </button>
                 <button
                     :class="[
-                        'rounded-[4px] border border-black px-3 py-1 text-[12px] font-medium transition-all duration-150',
+                        'rounded-[4px] border border-black px-3 py-1 text-[12px] font-medium transition-all duration-150 dark:border-slate-600',
                         activeMode === 'month'
                             ? 'bg-white text-black dark:bg-slate-200 dark:text-black'
                             : 'bg-[#d9d9d9] text-black hover:bg-[#c4c4c4] dark:bg-slate-600 dark:text-slate-200 dark:hover:bg-slate-500',
@@ -247,9 +276,35 @@ watch(activeMode, () => { chartKey.value++; });
                     :series="chartSeries"
                 />
                 <template #fallback>
-                    <div class="h-full w-full animate-pulse rounded-lg bg-slate-100" />
+                    <div class="h-full w-full animate-pulse rounded-lg bg-slate-100 dark:bg-slate-800/40" />
                 </template>
             </ClientOnly>
         </div>
     </article>
 </template>
+
+<style scoped>
+/* Light: shadow hitam tegas khas neo-brutalism. */
+.task-trend-card {
+    box-shadow: 2px 4px 4px 4px rgba(0, 0, 0, 0.08);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.task-trend-card:hover {
+    box-shadow: 4px 8px 16px 2px rgba(0, 0, 0, 0.1);
+}
+
+/* Dark: shadow hitam pekat + halo putih tipis sebagai pengganti border yang
+   jadi tidak kelihatan. Memberi dimensi tanpa terlihat berlebihan. */
+:global(.dark) .task-trend-card {
+    box-shadow:
+        0 0 0 1px rgba(148, 163, 184, 0.08),
+        0 14px 32px rgba(0, 0, 0, 0.42);
+}
+
+:global(.dark) .task-trend-card:hover {
+    box-shadow:
+        0 0 0 1px rgba(122, 162, 247, 0.28),
+        0 18px 40px rgba(0, 0, 0, 0.5);
+}
+</style>

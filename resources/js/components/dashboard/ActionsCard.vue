@@ -70,12 +70,12 @@ const actionItems = computed(() => props.actions || defaultActions);
 
 <template>
     <article
-        class="actions-card relative flex h-full flex-col rounded-[21px] border-3 border-black bg-white p-5 dark:bg-card dark:border-border"
+        class="actions-card relative flex h-full flex-col rounded-[21px] border-3 border-black bg-white p-5 dark:border-slate-700/80 dark:bg-[#111c2e]"
     >
         <!-- Loading skeleton -->
         <div v-if="loading" class="animate-pulse space-y-3 flex-1">
-            <div class="h-6 w-20 rounded bg-muted/50 mb-3"></div>
-            <div v-for="i in 4" :key="i" class="h-[56px] rounded-lg border-2 border-emerald-200 bg-emerald-50/30"></div>
+            <div class="h-6 w-20 rounded bg-muted/50 dark:bg-slate-700/40 mb-3"></div>
+            <div v-for="i in 4" :key="i" class="h-[56px] rounded-lg border-2 border-emerald-200 bg-emerald-50/30 dark:border-emerald-500/30 dark:bg-emerald-500/5"></div>
         </div>
 
         <!-- Content -->
@@ -134,6 +134,20 @@ const actionItems = computed(() => props.actions || defaultActions);
 .actions-card:hover {
     box-shadow: 4px 8px 16px 4px rgba(0, 0, 0, 0.35);
     transform: translateY(-2px);
+}
+
+/* Dark: ganti shadow hitam pekat (yang nggak kelihatan di bg gelap) dengan
+   inner halo + drop shadow lembut supaya card tetap punya dimensi. */
+:global(.dark) .actions-card {
+    box-shadow:
+        0 0 0 1px rgba(148, 163, 184, 0.08),
+        0 14px 32px rgba(0, 0, 0, 0.42);
+}
+
+:global(.dark) .actions-card:hover {
+    box-shadow:
+        0 0 0 1px rgba(52, 211, 153, 0.28),
+        0 18px 40px rgba(0, 0, 0, 0.5);
 }
 
 .action-item {
@@ -201,35 +215,44 @@ const actionItems = computed(() => props.actions || defaultActions);
     margin-top: 2px;
 }
 
-/* Dark mode */
-:deep(.dark) .action-item,
-.dark .action-item {
-    background: var(--card);
-    border-color: rgba(16, 185, 129, 0.5);
-}
-
-.dark .action-item:hover {
-    background: rgba(16, 185, 129, 0.1);
-    border-color: #34d399;
-}
-
-.dark .action-icon {
+/* ──────────── Dark mode ────────────
+   Item dibuat sedikit lebih terang dari card agar terlihat berlapis,
+   border emerald dipertahankan tapi lebih translucent supaya nggak
+   nyala berlebihan, dan glow halus dipakai sebagai pengganti shadow. */
+:global(.dark) .action-item {
+    background: rgba(15, 23, 42, 0.36);
+    border-color: rgba(52, 211, 153, 0.38);
+    box-shadow:
+        0 0 0 1px rgba(52, 211, 153, 0.08) inset,
+        0 8px 18px rgba(0, 0, 0, 0.22);
     color: var(--foreground);
 }
 
-.dark .action-item:hover .action-icon {
+:global(.dark) .action-item:hover {
+    background: rgba(16, 185, 129, 0.14);
+    border-color: #34d399;
+    box-shadow:
+        0 0 0 1px rgba(52, 211, 153, 0.35) inset,
+        0 12px 24px rgba(16, 185, 129, 0.25);
+}
+
+:global(.dark) .action-icon {
+    color: #E2E8F0;
+}
+
+:global(.dark) .action-item:hover .action-icon {
     color: #34d399;
 }
 
-.dark .action-label {
-    color: var(--foreground);
+:global(.dark) .action-label {
+    color: #E8EEF8;
 }
 
-.dark .action-item:hover .action-label {
+:global(.dark) .action-item:hover .action-label {
     color: #6ee7b7;
 }
 
-.dark .action-desc {
-    color: var(--muted-foreground);
+:global(.dark) .action-desc {
+    color: #94A3B8;
 }
 </style>

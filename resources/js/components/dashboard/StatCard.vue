@@ -76,29 +76,29 @@ const props = withDefaults(defineProps<Props>(), {
  */
 const themeClasses = {
   navy: {
-    bg: 'bg-tm-navy-pale dark:bg-tm-navy/20',
-    border: 'border-tm-navy',
+    bg: 'bg-tm-navy-pale dark:bg-sky-400/10',
+    border: 'border-tm-navy dark:border-sky-300/35',
     iconBg: 'bg-tm-navy/10',
     iconColor: 'text-tm-navy',
     valueColor: 'text-tm-navy',
   },
   green: {
-    bg: 'bg-tm-green-pale dark:bg-tm-green/20',
-    border: 'border-tm-green',
+    bg: 'bg-tm-green-pale dark:bg-emerald-400/10',
+    border: 'border-tm-green dark:border-emerald-300/35',
     iconBg: 'bg-tm-green/10',
     iconColor: 'text-tm-green',
     valueColor: 'text-tm-green-dark',
   },
   red: {
-    bg: 'bg-tm-danger-pale dark:bg-tm-danger/20',
-    border: 'border-tm-danger',
+    bg: 'bg-tm-danger-pale dark:bg-red-400/10',
+    border: 'border-tm-danger dark:border-red-300/35',
     iconBg: 'bg-tm-danger/10',
     iconColor: 'text-tm-danger',
     valueColor: 'text-tm-danger',
   },
   amber: {
-    bg: 'bg-tm-warning-pale dark:bg-tm-warning/20',
-    border: 'border-tm-warning',
+    bg: 'bg-tm-warning-pale dark:bg-amber-400/10',
+    border: 'border-tm-warning dark:border-amber-300/35',
     iconBg: 'bg-tm-warning/10',
     iconColor: 'text-tm-warning',
     valueColor: 'text-amber-700 dark:text-amber-400',

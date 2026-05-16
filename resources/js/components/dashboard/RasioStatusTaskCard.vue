@@ -147,7 +147,7 @@ function onSegmentLeave() {
 <template>
     <article
         ref="cardRef"
-        class="raslo-card relative flex h-full w-full min-h-0 flex-col items-center overflow-hidden rounded-[22px] border-[2.5px] border-black bg-[#FCFCFC] px-3 pt-2.5 pb-2.5 dark:bg-card"
+        class="raslo-card relative flex h-full w-full min-h-0 flex-col items-center overflow-hidden rounded-[22px] border-[2.5px] border-black bg-[#FCFCFC] px-3 pt-2.5 pb-2.5 dark:border-slate-700/80 dark:bg-[#111c2e]"
         :aria-label="`${title}: ${total} total tasks`"
     >
         <!-- Title (kompak) -->
@@ -261,7 +261,7 @@ function onSegmentLeave() {
         <Transition name="tooltip-fade">
             <div
                 v-if="tooltip.visible"
-                class="pointer-events-none absolute z-20 -translate-x-1/2 -translate-y-full rounded-lg border-2 border-black bg-white px-2 py-1 text-[11px] shadow-[2px_2px_0_0_rgba(0,0,0,0.8)] dark:bg-card dark:text-white"
+                class="pointer-events-none absolute z-20 -translate-x-1/2 -translate-y-full rounded-lg border-2 border-black bg-white px-2 py-1 text-[11px] shadow-[2px_2px_0_0_rgba(0,0,0,0.8)] dark:border-slate-600 dark:bg-[#0f172a] dark:text-white"
                 :style="{ left: `${tooltip.x}px`, top: `${tooltip.y - 8}px` }"
                 role="tooltip"
             >
@@ -295,12 +295,16 @@ function onSegmentLeave() {
 }
 
 :global(.dark) .raslo-card {
-    box-shadow: 4px 6px 4px 1px #181818ff;
+    box-shadow:
+        0 0 0 1px rgba(148, 163, 184, 0.08),
+        0 14px 32px rgba(0, 0, 0, 0.44);
 }
 
 :global(.dark) .raslo-card:hover {
     transform: translateY(-3px) scale(1.01);
-    box-shadow: 4px 8px 14px 2px rgba(255, 255, 255, 0.12);
+    box-shadow:
+        0 0 0 1px rgba(122, 162, 247, 0.24),
+        0 18px 40px rgba(0, 0, 0, 0.52);
 }
 
 .tooltip-fade-enter-active,

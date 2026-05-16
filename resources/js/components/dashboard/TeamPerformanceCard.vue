@@ -151,7 +151,7 @@ const getRankMeta = (index: number) => {
 
 <template>
     <article
-        class="team-perf-card relative flex h-full flex-col overflow-hidden rounded-[18px] border-[2.5px] border-black bg-white px-5 pt-4 pb-3.5 dark:bg-card"
+        class="team-perf-card relative flex h-full flex-col overflow-hidden rounded-[18px] border-[2.5px] border-black bg-white px-5 pt-4 pb-3.5 dark:border-slate-700/80 dark:bg-[#111c2e]"
         aria-label="Ringkasan Performa Tim Product"
     >
         <!-- Header -->
@@ -227,7 +227,7 @@ const getRankMeta = (index: number) => {
             <li
                 v-for="(team, index) in displayedTeams"
                 :key="team.id"
-                class="team-row group relative flex items-center gap-3 rounded-xl border-[1.5px] border-border/60 bg-white px-3 py-2.5 transition-all duration-200 ease-out hover:-translate-y-0.5 hover:border-tm-navy hover:bg-tm-navy-pale/40 hover:shadow-[3px_3px_0_0_rgba(27,58,107,0.25)] dark:bg-card/60 dark:border-border dark:hover:bg-tm-navy/10 dark:hover:border-tm-navy-pale/40"
+                class="team-row group relative flex items-center gap-3 rounded-xl border-[1.5px] border-border/60 bg-white px-3 py-2.5 transition-all duration-200 ease-out hover:-translate-y-0.5 hover:border-tm-navy hover:bg-tm-navy-pale/40 hover:shadow-[3px_3px_0_0_rgba(27,58,107,0.25)] dark:border-slate-700/80 dark:bg-slate-950/20 dark:hover:bg-slate-800/55 dark:hover:border-sky-300/35"
             >
                 <!-- Rank badge -->
                 <div
@@ -361,12 +361,19 @@ const getRankMeta = (index: number) => {
     box-shadow: 3px 8px 12px 2px rgba(11, 42, 107, 0.4);
 }
 
+/* Dark: drop shadow hitam pekat + halo putih tipis sebagai pengganti border
+   yang nggak kelihatan kontras. Halo hover bergeser ke navy-pale-ish biar
+   terasa "bercahaya" tanpa berlebihan. */
 :global(.dark) .team-perf-card {
-    box-shadow: 3px 5px 5px 0 rgba(0, 0, 0, 0.55);
+    box-shadow:
+        0 0 0 1px rgba(148, 163, 184, 0.08),
+        0 14px 32px rgba(0, 0, 0, 0.44);
 }
 
 :global(.dark) .team-perf-card:hover {
-    box-shadow: 4px 8px 14px 2px rgba(255, 255, 255, 0.1);
+    box-shadow:
+        0 0 0 1px rgba(122, 162, 247, 0.28),
+        0 18px 40px rgba(0, 0, 0, 0.52);
 }
 
 /* Row accent line di kiri pada hover — memperkuat kesan "active row" */

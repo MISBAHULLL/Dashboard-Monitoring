@@ -117,23 +117,23 @@ const confirmAction = ref({
 <template>
     <Head title="Tambah Task Baru" />
 
-    <div class="flex h-full flex-1 flex-col gap-6 overflow-y-auto rounded-xl p-4 md:p-8 bg-tm-page">
+    <div class="task-create-page flex h-full flex-1 flex-col gap-6 overflow-y-auto rounded-xl bg-tm-page p-4 md:p-8 dark:bg-[#081422]">
         
         <!-- Header -->
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div class="flex items-center gap-4">
                 <Link href="/tasks">
-                    <Button variant="outline" size="icon" class="h-10 w-10 shrink-0 rounded-full border-[1.5px] border-black shadow-[2px_2px_0_0_rgba(0,0,0,0.1)] hover:-translate-y-0.5 hover:shadow-[3px_3px_0_0_rgba(0,0,0,0.15)] transition-all bg-white">
-                        <ArrowLeft class="h-5 w-5 text-tm-navy" />
+                    <Button variant="outline" size="icon" class="h-10 w-10 shrink-0 rounded-full border-[1.5px] border-black bg-white shadow-[2px_2px_0_0_rgba(0,0,0,0.1)] transition-all hover:-translate-y-0.5 hover:shadow-[3px_3px_0_0_rgba(0,0,0,0.15)] dark:border-slate-600 dark:bg-[#111c2e] dark:shadow-[0_10px_24px_rgba(0,0,0,0.35)] dark:hover:bg-slate-800/70">
+                        <ArrowLeft class="h-5 w-5 text-tm-navy dark:text-slate-100" />
                     </Button>
                 </Link>
                 <div>
-                    <h1 class="text-2xl font-extrabold tracking-tight text-tm-navy">Buat Tiket Task Baru</h1>
-                    <p class="text-sm text-tm-text-secondary mt-1">Isi rincian informasi di bawah untuk mendaftarkan task ke sistem.</p>
+                    <h1 class="text-2xl font-extrabold tracking-tight text-tm-navy dark:text-slate-100">Buat Tiket Task Baru</h1>
+                    <p class="mt-1 text-sm text-tm-text-secondary dark:text-slate-400">Isi rincian informasi di bawah untuk mendaftarkan task ke sistem.</p>
                 </div>
             </div>
             <div>
-                <Button type="button" @click="saveAsTemplate" class="flex items-center gap-2 h-10 px-5 bg-white hover:bg-emerald-50 hover:text-emerald-700 active:bg-emerald-100 text-tm-navy border-[1.5px] border-black shadow-[2px_2px_0_0_rgba(0,0,0,0.1)] rounded-xl hover:-translate-y-0.5 hover:shadow-[3px_3px_0_0_rgba(0,0,0,0.15)] active:translate-y-0 active:shadow-[1px_1px_0_0_rgba(0,0,0,0.1)] transition-all font-medium tracking-wide text-sm">
+                <Button type="button" @click="saveAsTemplate" class="flex h-10 items-center gap-2 rounded-xl border-[1.5px] border-black bg-white px-5 text-sm font-medium tracking-wide text-tm-navy shadow-[2px_2px_0_0_rgba(0,0,0,0.1)] transition-all hover:-translate-y-0.5 hover:bg-emerald-50 hover:text-emerald-700 hover:shadow-[3px_3px_0_0_rgba(0,0,0,0.15)] active:translate-y-0 active:bg-emerald-100 active:shadow-[1px_1px_0_0_rgba(0,0,0,0.1)] dark:border-slate-600 dark:bg-[#111c2e] dark:text-slate-100 dark:shadow-[0_10px_24px_rgba(0,0,0,0.35)] dark:hover:bg-emerald-400/10 dark:hover:text-emerald-200">
                     <BookmarkPlus class="h-4 w-4" />
                     Simpan Sebagai Template
                 </Button>
@@ -141,15 +141,15 @@ const confirmAction = ref({
         </div>
 
         <!-- Pilihan Template -->
-        <div v-if="task_templates.length > 0" class="bg-white border-[1.5px] border-black/70 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center gap-4 shadow-[1px_2px_0_0_rgba(0,0,0,0.06)]">
-            <div class="text-sm font-bold text-tm-navy whitespace-nowrap">Pilih Template Cepat:</div>
+        <div v-if="task_templates.length > 0" class="quick-template-card flex flex-col gap-4 rounded-xl border-[1.5px] border-black/70 bg-white p-4 shadow-[1px_2px_0_0_rgba(0,0,0,0.06)] dark:border-slate-700/80 dark:bg-[#111c2e] dark:shadow-[0_12px_28px_rgba(0,0,0,0.38),0_0_0_1px_rgba(148,163,184,0.08)] sm:flex-row sm:items-center">
+            <div class="whitespace-nowrap text-sm font-bold text-tm-navy dark:text-slate-100">Pilih Template Cepat:</div>
             <div class="flex gap-2 flex-wrap">
-                <div v-for="template in task_templates" :key="template.id" class="flex items-center bg-tm-navy-pale border-[1.5px] border-black/50 rounded-full pl-3 pr-1 shadow-sm hover:shadow-[2px_2px_0_0_rgba(0,0,0,0.08)] hover:-translate-y-px transition-all">
-                    <button type="button" @click="applyTemplate(template.id)" class="text-xs font-semibold text-tm-navy hover:text-tm-navy-medium outline-none">
+                <div v-for="template in task_templates" :key="template.id" class="template-chip flex items-center rounded-full border-[1.5px] border-black/50 bg-tm-navy-pale pl-3 pr-1 shadow-sm transition-all hover:-translate-y-px hover:shadow-[2px_2px_0_0_rgba(0,0,0,0.08)]">
+                    <button type="button" @click="applyTemplate(template.id)" class="text-xs font-semibold text-tm-navy outline-none hover:text-tm-navy-medium">
                         {{ template.name }}
                     </button>
-                    <div class="w-px h-3 bg-slate-300 mx-2"></div>
-                    <button type="button" @click="deleteTemplate(template.id)" class="text-slate-400 hover:text-red-500 rounded-full p-1 hover:bg-red-50 transition-colors" title="Hapus template">
+                    <div class="mx-2 h-3 w-px bg-slate-300"></div>
+                    <button type="button" @click="deleteTemplate(template.id)" class="rounded-full p-1 text-slate-400 transition-colors hover:bg-red-50 hover:text-red-500" title="Hapus template">
                         <X class="h-3.5 w-3.5" />
                     </button>
                 </div>
@@ -158,7 +158,7 @@ const confirmAction = ref({
 
         <!-- Form Card -->
         <form @submit.prevent="submitForm">
-            <div class="bg-white border-[2.5px] border-black rounded-[18px] shadow-[2px_4px_4px_0_rgba(11,42,107,0.15)] p-6 md:p-8 transition-all duration-300 hover:-translate-y-1 hover:shadow-[3px_6px_12px_0_rgba(11,42,107,0.2)]">
+            <div class="task-form-card rounded-[18px] border-[2.5px] border-black bg-white p-6 shadow-[2px_4px_4px_0_rgba(11,42,107,0.15)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[3px_6px_12px_0_rgba(11,42,107,0.2)] dark:border-slate-700/80 dark:bg-[#111c2e] dark:shadow-[0_14px_32px_rgba(0,0,0,0.44),0_0_0_1px_rgba(148,163,184,0.08)] dark:hover:shadow-[0_18px_40px_rgba(0,0,0,0.52),0_0_0_1px_rgba(122,162,247,0.2)] md:p-8">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
                     
                     <!-- KOLOM KIRI (Informasi Utama) -->
@@ -193,7 +193,7 @@ const confirmAction = ref({
                     </div>
 
                     <!-- KOLOM KANAN (Pengaturan Divisi & Atribut) -->
-                    <div class="space-y-6 rounded-xl bg-tm-navy-pale/30 p-5 border-[1.5px] border-black/30">
+                    <div class="settings-panel space-y-6 rounded-xl border-[1.5px] border-black/30 bg-tm-navy-pale/30 p-5 dark:border-slate-700 dark:bg-slate-950/20">
                         <div class="grid grid-cols-2 gap-4">
                             <div class="space-y-2">
                                 <Label for="client_id" class="text-[11px] font-bold text-tm-text-secondary uppercase tracking-wider ml-1">Faskes (Client) <span class="text-red-500">*</span></Label>
@@ -282,22 +282,22 @@ const confirmAction = ref({
             <!-- Bagian Footer Form -->
             <div class="mt-6 flex flex-col gap-4">
                 <!-- Duplicate Warning -->
-                <div v-if="form.errors.duplicate" class="flex items-start gap-3 rounded-xl border-[1.5px] border-amber-400 bg-amber-50 p-4 shadow-[1px_2px_0_0_rgba(0,0,0,0.06)]">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink-0 text-amber-600 mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
+                <div v-if="form.errors.duplicate" class="flex items-start gap-3 rounded-xl border-[1.5px] border-amber-400 bg-amber-50 p-4 shadow-[1px_2px_0_0_rgba(0,0,0,0.06)] dark:border-amber-300/35 dark:bg-amber-400/10">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="mt-0.5 h-5 w-5 shrink-0 text-amber-600 dark:text-amber-200" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
                     <div class="flex-1">
-                        <p class="text-sm font-medium text-amber-800">{{ form.errors.duplicate }}</p>
+                        <p class="text-sm font-medium text-amber-800 dark:text-amber-100">{{ form.errors.duplicate }}</p>
                         <label class="mt-3 flex items-center gap-2 cursor-pointer">
-                            <input type="checkbox" v-model="form.force_duplicate" class="rounded border-amber-300 text-amber-600 focus:ring-amber-500" />
-                            <span class="text-sm font-medium text-amber-700">Abaikan pengecekan duplikat (paksa simpan)</span>
+                            <input type="checkbox" v-model="form.force_duplicate" class="rounded border-amber-300 text-amber-600 focus:ring-amber-500 dark:border-amber-300/40 dark:bg-slate-950/40" />
+                            <span class="text-sm font-medium text-amber-700 dark:text-amber-200">Abaikan pengecekan duplikat (paksa simpan)</span>
                         </label>
                     </div>
                 </div>
 
                 <div class="flex justify-center gap-4 pt-2">
                     <Link href="/tasks">
-                        <Button type="button" variant="outline" class="h-11 px-8 border-[1.5px] border-black/70 rounded-xl shadow-[1px_2px_0_0_rgba(0,0,0,0.06)] hover:shadow-[2px_3px_0_0_rgba(0,0,0,0.1)] hover:-translate-y-0.5 transition-all font-medium text-slate-600">Batal</Button>
+                        <Button type="button" variant="outline" class="h-11 rounded-xl border-[1.5px] border-black/70 px-8 font-medium text-slate-600 shadow-[1px_2px_0_0_rgba(0,0,0,0.06)] transition-all hover:-translate-y-0.5 hover:shadow-[2px_3px_0_0_rgba(0,0,0,0.1)] dark:border-slate-600 dark:bg-slate-950/25 dark:text-slate-200 dark:hover:bg-slate-800">Batal</Button>
                     </Link>
-                    <Button type="submit" :disabled="form.processing" class="h-11 px-8 bg-tm-navy hover:bg-tm-navy-medium text-white border-[1.5px] border-black shadow-[2px_2px_0_0_rgba(0,0,0,0.2)] rounded-xl hover:-translate-y-0.5 hover:shadow-[3px_3px_0_0_rgba(0,0,0,0.25)] transition-all flex items-center gap-2 font-medium tracking-wide">
+                    <Button type="submit" :disabled="form.processing" class="flex h-11 items-center gap-2 rounded-xl border-[1.5px] border-black bg-tm-navy px-8 font-medium tracking-wide text-white shadow-[2px_2px_0_0_rgba(0,0,0,0.2)] transition-all hover:-translate-y-0.5 hover:bg-tm-navy-medium hover:shadow-[3px_3px_0_0_rgba(0,0,0,0.25)] dark:border-sky-300/35 dark:shadow-[0_12px_28px_rgba(59,130,246,0.18)]">
                         <Save class="h-4 w-4" />
                         {{ form.processing ? 'Menyimpan Data...' : 'Simpan Tiket Task' }}
                     </Button>
@@ -308,26 +308,26 @@ const confirmAction = ref({
 
     <!-- Modal Simpan Template -->
     <Dialog :open="showTemplateModal" @update:open="(val) => showTemplateModal = val">
-        <DialogContent class="sm:max-w-[425px]">
+        <DialogContent class="template-save-dialog sm:max-w-[425px]">
             <DialogHeader>
-                <DialogTitle class="text-lg font-semibold text-tm-navy">Simpan Sebagai Template</DialogTitle>
-                <DialogDescription class="text-sm text-tm-text-secondary mt-1">
+                <DialogTitle class="text-lg font-semibold text-tm-navy dark:text-slate-100">Simpan Sebagai Template</DialogTitle>
+                <DialogDescription class="mt-1 text-sm text-tm-text-secondary dark:text-slate-400">
                     Beri nama untuk template ini agar mudah dikenali saat digunakan nanti.
                 </DialogDescription>
             </DialogHeader>
             <div class="py-4">
-                <Label for="template-name" class="text-[11px] font-bold text-tm-text-secondary uppercase tracking-wider ml-1">Nama Template</Label>
+                <Label for="template-name" class="ml-1 text-[11px] font-bold uppercase tracking-wider text-tm-text-secondary dark:text-slate-400">Nama Template</Label>
                 <Input
                     id="template-name"
                     v-model="templateName"
                     placeholder="Contoh: Faskes A - Fitur Berbayar"
-                    class="mt-2 h-10 border-[1.5px] border-black/70 rounded-lg bg-white text-sm text-slate-700 shadow-[1px_2px_0_0_rgba(0,0,0,0.06)] focus:border-tm-navy focus:ring-1 focus:ring-tm-navy"
+                    class="mt-2 h-10 rounded-lg border-[1.5px] border-black/70 bg-white text-sm text-slate-700 shadow-[1px_2px_0_0_rgba(0,0,0,0.06)] focus:border-tm-navy focus:ring-1 focus:ring-tm-navy dark:border-slate-600 dark:bg-slate-950/35 dark:text-slate-100 dark:placeholder:text-slate-500"
                     @keyup.enter="submitTemplate"
                 />
             </div>
             <DialogFooter class="flex gap-3 sm:justify-end">
-                <Button variant="outline" @click="showTemplateModal = false" class="border-[1.5px] border-black/70 rounded-lg">Batal</Button>
-                <Button @click="submitTemplate" :disabled="!templateName.trim()" class="bg-tm-navy hover:bg-tm-navy-medium text-white border-[1.5px] border-black shadow-[2px_2px_0_0_rgba(0,0,0,0.15)] rounded-lg">
+                <Button variant="outline" @click="showTemplateModal = false" class="rounded-lg border-[1.5px] border-black/70 dark:border-slate-600 dark:bg-slate-950/25 dark:text-slate-100">Batal</Button>
+                <Button @click="submitTemplate" :disabled="!templateName.trim()" class="rounded-lg border-[1.5px] border-black bg-tm-navy text-white shadow-[2px_2px_0_0_rgba(0,0,0,0.15)] hover:bg-tm-navy-medium dark:border-sky-300/35">
                     Simpan Template
                 </Button>
             </DialogFooter>
@@ -347,3 +347,67 @@ const confirmAction = ref({
         @cancel="confirmAction.open = false"
     />
 </template>
+
+<style scoped>
+:global(.dark) .task-create-page :is(label, .text-tm-text-secondary) {
+    color: rgb(148 163 184);
+}
+
+:global(.dark) .task-create-page :is(input, select, textarea) {
+    border-color: rgb(71 85 105);
+    background-color: rgb(2 6 23 / 0.28);
+    color: rgb(241 245 249);
+    box-shadow:
+        0 0 0 1px rgb(148 163 184 / 0.04) inset,
+        0 8px 18px rgb(0 0 0 / 0.18);
+}
+
+:global(.dark) .task-create-page :is(input, select, textarea):hover {
+    background-color: rgb(30 41 59 / 0.62);
+}
+
+:global(.dark) .task-create-page :is(input, textarea)::placeholder {
+    color: rgb(100 116 139);
+}
+
+:global(.dark) .task-create-page input[type='date'] {
+    color-scheme: dark;
+}
+
+:global(.dark) .task-create-page select option {
+    background-color: #111c2e;
+    color: rgb(241 245 249);
+}
+
+:global(.dark) .template-chip {
+    border-color: rgb(125 211 252 / 0.32);
+    background-color: rgb(56 189 248 / 0.1);
+    box-shadow: 0 8px 18px rgb(0 0 0 / 0.2);
+}
+
+:global(.dark) .template-chip button:first-child {
+    color: rgb(186 230 253);
+}
+
+:global(.dark) .template-chip > div {
+    background-color: rgb(71 85 105);
+}
+
+:global(.dark) .template-chip button:last-child {
+    color: rgb(148 163 184);
+}
+
+:global(.dark) .template-chip button:last-child:hover {
+    background-color: rgb(248 113 113 / 0.12);
+    color: rgb(252 165 165);
+}
+
+:global(.dark) .template-save-dialog {
+    border-color: rgb(51 65 85);
+    background-color: #111c2e;
+    color: rgb(241 245 249);
+    box-shadow:
+        0 18px 44px rgb(0 0 0 / 0.55),
+        0 0 0 1px rgb(148 163 184 / 0.08);
+}
+</style>

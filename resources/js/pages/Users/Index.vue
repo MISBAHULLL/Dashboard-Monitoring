@@ -8,7 +8,6 @@ import { dashboard } from '@/routes';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
 import {
   Dialog,
   DialogContent,
@@ -96,62 +95,86 @@ const deleteUser = (id: number, name: string) => {
 <template>
     <Head title="Master User" />
 
-    <div class="flex h-full flex-1 flex-col gap-6 overflow-x-auto rounded-xl p-4 md:p-8">
+    <div class="flex h-full flex-1 flex-col gap-6 overflow-x-auto p-4 md:p-8">
         
+        <!-- Header -->
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-                <h1 class="text-3xl font-bold tracking-tight text-primary flex items-center gap-2">
-                    <UserCog class="h-8 w-8 text-rose-600" />
+                <h1 class="text-2xl font-extrabold tracking-tight text-tm-navy flex items-center gap-3 dark:text-foreground">
+                    <div class="flex h-10 w-10 items-center justify-center rounded-[12px] border-2 border-black bg-tm-navy-pale shadow-[2px_2px_0px_0px_rgba(0,0,0,0.8)] dark:bg-tm-navy dark:border-border">
+                        <UserCog class="h-5 w-5 text-tm-navy dark:text-white" />
+                    </div>
                     Master User
                 </h1>
-                <p class="text-muted-foreground mt-1">Kelola akun dan hak akses seluruh staf di sistem ini.</p>
+                <p class="text-sm text-tm-text-secondary mt-1.5 ml-[52px] dark:text-muted-foreground">Kelola akun dan hak akses seluruh staf di sistem ini.</p>
             </div>
-            <Button @click="openAddModal" class="flex items-center gap-2 bg-rose-600 hover:bg-rose-700 text-white">
+            <button
+                @click="openAddModal"
+                class="inline-flex items-center gap-2 rounded-[10px] border-2 border-black bg-tm-green px-4 py-2.5 text-sm font-bold text-white shadow-[2px_2px_0px_0px_rgba(0,0,0,0.8)] transition-all hover:-translate-y-0.5 hover:shadow-[3px_4px_0px_0px_rgba(0,0,0,0.8)] active:translate-y-0 active:shadow-[1px_1px_0px_0px_rgba(0,0,0,0.8)] dark:border-border dark:shadow-none"
+            >
                 <Plus class="h-4 w-4" /> Tambah User
-            </Button>
+            </button>
         </div>
 
-        <div class="relative flex-1 rounded-xl border border-sidebar-border bg-card shadow-sm">
-            <div class="overflow-x-auto p-4">
-                <table class="w-full text-left text-sm">
-                    <thead class="bg-muted/50 text-muted-foreground border-b border-border">
-                        <tr>
-                            <th class="py-3 px-4 font-medium">No</th>
-                            <th class="py-3 px-4 font-medium">Nama & Email</th>
-                            <th class="py-3 px-4 font-medium">Role</th>
-                            <th class="py-3 px-4 font-medium">Divisi Tim</th>
-                            <th class="py-3 px-4 font-medium">Status</th>
-                            <th class="py-3 px-4 font-medium text-right">Aksi</th>
+        <!-- Tabel Data -->
+        <div class="rounded-[14px] border-2 border-black bg-white shadow-[2px_3px_0px_0px_rgba(0,0,0,0.8)] overflow-hidden dark:bg-card dark:border-border dark:shadow-none">
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                    <thead>
+                        <tr class="border-b-2 border-black bg-tm-navy-pale dark:bg-secondary dark:border-border">
+                            <th class="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-tm-navy dark:text-foreground">No</th>
+                            <th class="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-tm-navy dark:text-foreground">Nama & Email</th>
+                            <th class="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-tm-navy dark:text-foreground">Role</th>
+                            <th class="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-tm-navy dark:text-foreground">Divisi Tim</th>
+                            <th class="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-tm-navy dark:text-foreground">Status</th>
+                            <th class="px-4 py-3.5 text-right text-xs font-bold uppercase tracking-wider text-tm-navy dark:text-foreground">Aksi</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <tr v-for="(user, index) in users" :key="user.id" class="border-b border-border last:border-0 hover:bg-muted/30">
-                            <td class="py-3 px-4">{{ index + 1 }}</td>
-                            <td class="py-3 px-4">
-                                <div class="font-bold text-primary">{{ user.name }}</div>
-                                <div class="text-xs text-muted-foreground">{{ user.email }}</div>
+                        <tr v-for="(user, index) in users" :key="user.id" class="border-b border-tm-border transition-colors hover:bg-tm-navy-pale/40 dark:border-border dark:hover:bg-secondary/50">
+                            <td class="px-4 py-3.5 text-tm-text-secondary dark:text-muted-foreground">{{ index + 1 }}</td>
+                            <td class="px-4 py-3.5">
+                                <div class="font-bold text-tm-navy dark:text-foreground">{{ user.name }}</div>
+                                <div class="text-xs text-tm-text-muted dark:text-muted-foreground">{{ user.email }}</div>
                             </td>
-                            <td class="py-3 px-4">
-                                <Badge :variant="user.role === 'admin' ? 'destructive' : 'secondary'" class="uppercase text-[10px]">
+                            <td class="px-4 py-3.5">
+                                <span v-if="user.role === 'admin'" class="inline-flex items-center rounded-[6px] border-2 border-tm-danger bg-tm-danger-pale px-2.5 py-0.5 text-[10px] font-bold uppercase text-tm-danger dark:bg-tm-danger/20 dark:border-tm-danger/50">
                                     {{ user.role }}
-                                </Badge>
+                                </span>
+                                <span v-else class="inline-flex items-center rounded-[6px] border-2 border-tm-navy bg-tm-navy-pale px-2.5 py-0.5 text-[10px] font-bold uppercase text-tm-navy dark:bg-tm-navy/20 dark:border-tm-navy-medium dark:text-tm-navy-medium">
+                                    {{ user.role }}
+                                </span>
                             </td>
-                            <td class="py-3 px-4 font-medium">
+                            <td class="px-4 py-3.5 text-tm-text dark:text-foreground">
                                 {{ user.team ? user.team.name : 'Belum Masuk Tim' }}
                             </td>
-                            <td class="py-3 px-4">
-                                <Badge :variant="user.is_active ? 'default' : 'secondary'" 
-                                       :class="user.is_active ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-800'">
-                                    {{ user.is_active ? 'Aktif' : 'Non-Aktif' }}
-                                </Badge>
+                            <td class="px-4 py-3.5">
+                                <span v-if="user.is_active" class="inline-flex items-center gap-1.5 rounded-[6px] border border-tm-green bg-tm-green-pale px-2 py-0.5 text-xs font-bold text-tm-green-dark dark:bg-tm-green/20 dark:border-tm-green/50 dark:text-tm-green">
+                                    <span class="h-1.5 w-1.5 rounded-full bg-tm-green"></span>
+                                    Aktif
+                                </span>
+                                <span v-else class="inline-flex items-center gap-1.5 rounded-[6px] border border-tm-danger bg-tm-danger-pale px-2 py-0.5 text-xs font-bold text-tm-danger dark:bg-tm-danger/20 dark:border-tm-danger/50">
+                                    <span class="h-1.5 w-1.5 rounded-full bg-tm-danger"></span>
+                                    Non-Aktif
+                                </span>
                             </td>
-                            <td class="py-3 px-4 text-right space-x-2 flex justify-end">
-                                <Button variant="outline" size="sm" @click="openEditModal(user)" class="h-8 px-2 text-blue-600 border-blue-200 hover:bg-blue-50">
-                                    <Edit class="h-4 w-4" />
-                                </Button>
-                                <Button variant="outline" size="sm" @click="deleteUser(user.id, user.name)" class="h-8 px-2 text-red-600 border-red-200 hover:bg-red-50">
-                                    <Trash2 class="h-4 w-4" />
-                                </Button>
+                            <td class="px-4 py-3.5 text-right">
+                                <div class="flex items-center justify-end gap-1">
+                                    <button @click="openEditModal(user)" title="Edit" class="inline-flex h-8 w-8 items-center justify-center rounded-[8px] border border-tm-border text-tm-navy-medium transition-all hover:border-tm-navy hover:bg-tm-navy-pale dark:border-border dark:text-foreground dark:hover:bg-secondary">
+                                        <Edit class="h-4 w-4" />
+                                    </button>
+                                    <button @click="deleteUser(user.id, user.name)" title="Hapus" class="inline-flex h-8 w-8 items-center justify-center rounded-[8px] border border-tm-border text-tm-danger transition-all hover:border-tm-danger hover:bg-tm-danger-pale dark:border-border dark:hover:bg-tm-danger/10">
+                                        <Trash2 class="h-4 w-4" />
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr v-if="users.length === 0">
+                            <td colspan="6" class="py-12 text-center">
+                                <div class="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-[12px] border-2 border-black bg-tm-navy-pale shadow-[2px_2px_0px_0px_rgba(0,0,0,0.8)] dark:bg-secondary dark:border-border">
+                                    <UserCog class="h-5 w-5 text-tm-navy dark:text-muted-foreground" />
+                                </div>
+                                <p class="text-sm font-semibold text-tm-text-secondary dark:text-muted-foreground">Belum ada data User.</p>
                             </td>
                         </tr>
                     </tbody>
@@ -159,66 +182,65 @@ const deleteUser = (id: number, name: string) => {
             </div>
         </div>
 
+        <!-- Modal Tambah/Edit User -->
         <Dialog :open="isModalOpen" @update:open="isModalOpen = $event">
             <DialogContent class="sm:max-w-[425px]">
                 <DialogHeader>
-                    <DialogTitle>{{ isEditing ? 'Edit Akun User' : 'Tambah User Baru' }}</DialogTitle>
+                    <DialogTitle class="text-tm-navy dark:text-foreground">{{ isEditing ? 'Edit Akun User' : 'Tambah User Baru' }}</DialogTitle>
                     <DialogDescription>Pengaturan akses dan penempatan divisi staf.</DialogDescription>
                 </DialogHeader>
                 
                 <form @submit.prevent="submitForm" class="space-y-4 py-4">
                     <div class="space-y-2">
-                        <Label for="name">Nama Lengkap <span class="text-red-500">*</span></Label>
-                        <Input id="name" v-model="form.name" placeholder="John Doe" :class="{ 'border-red-500': form.errors.name }" />
-                        <p v-if="form.errors.name" class="text-sm text-red-500">{{ form.errors.name }}</p>
+                        <Label for="name">Nama Lengkap <span class="text-tm-danger">*</span></Label>
+                        <Input id="name" v-model="form.name" placeholder="John Doe" :class="{ 'border-tm-danger': form.errors.name }" />
+                        <p v-if="form.errors.name" class="text-sm text-tm-danger">{{ form.errors.name }}</p>
                     </div>
 
                     <div class="space-y-2">
-                        <Label for="email">Alamat Email <span class="text-red-500">*</span></Label>
-                        <Input id="email" type="email" v-model="form.email" placeholder="john@example.com" :class="{ 'border-red-500': form.errors.email }" />
-                        <p v-if="form.errors.email" class="text-sm text-red-500">{{ form.errors.email }}</p>
+                        <Label for="email">Alamat Email <span class="text-tm-danger">*</span></Label>
+                        <Input id="email" type="email" v-model="form.email" placeholder="john@example.com" :class="{ 'border-tm-danger': form.errors.email }" />
+                        <p v-if="form.errors.email" class="text-sm text-tm-danger">{{ form.errors.email }}</p>
                     </div>
 
                     <div class="space-y-2">
-                        <Label for="password">Password <span v-if="!isEditing" class="text-red-500">*</span></Label>
-                        <Input id="password" type="password" v-model="form.password" :placeholder="isEditing ? 'Kosongkan jika tidak ingin ganti' : 'Minimal 8 karakter'" :class="{ 'border-red-500': form.errors.password }" />
-                        <p v-if="form.errors.password" class="text-sm text-red-500">{{ form.errors.password }}</p>
+                        <Label for="password">Password <span v-if="!isEditing" class="text-tm-danger">*</span></Label>
+                        <Input id="password" type="password" v-model="form.password" :placeholder="isEditing ? 'Kosongkan jika tidak ingin ganti' : 'Minimal 8 karakter'" :class="{ 'border-tm-danger': form.errors.password }" />
+                        <p v-if="form.errors.password" class="text-sm text-tm-danger">{{ form.errors.password }}</p>
                     </div>
 
                     <div class="grid grid-cols-2 gap-4">
                         <div class="space-y-2">
                             <Label for="role">Hak Akses (Role)</Label>
-                            <!-- Menggunakan elemen Select native HTML dengan gaya Tailwind -->
-                            <select id="role" v-model="form.role" class="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2">
+                            <select id="role" v-model="form.role" class="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-tm-navy focus:border-transparent dark:bg-card dark:border-border">
                                 <option value="member">Member</option>
                                 <option value="admin">Administrator</option>
                             </select>
-                            <p v-if="form.errors.role" class="text-sm text-red-500">{{ form.errors.role }}</p>
+                            <p v-if="form.errors.role" class="text-sm text-tm-danger">{{ form.errors.role }}</p>
                         </div>
 
                         <div class="space-y-2">
                             <Label for="team_id">Divisi Tim</Label>
-                            <select id="team_id" v-model="form.team_id" class="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2">
+                            <select id="team_id" v-model="form.team_id" class="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-tm-navy focus:border-transparent dark:bg-card dark:border-border">
                                 <option value="">(Tidak Ada Tim)</option>
-                                <!-- Looping pilihan dari database -->
                                 <option v-for="team in teams" :key="team.id" :value="team.id">
                                     {{ team.name }}
                                 </option>
                             </select>
-                            <p v-if="form.errors.team_id" class="text-sm text-red-500">{{ form.errors.team_id }}</p>
+                            <p v-if="form.errors.team_id" class="text-sm text-tm-danger">{{ form.errors.team_id }}</p>
                         </div>
                     </div>
 
                     <div class="flex items-center space-x-2 pt-2">
-                        <input type="checkbox" id="is_active" v-model="form.is_active" class="h-4 w-4 rounded border-gray-300 text-rose-600 focus:ring-rose-600" />
+                        <input type="checkbox" id="is_active" v-model="form.is_active" class="h-4 w-4 rounded border-gray-300 text-tm-green focus:ring-tm-green" />
                         <Label for="is_active" class="cursor-pointer">Izinkan Login (Aktif)</Label>
                     </div>
 
                     <DialogFooter class="pt-4">
                         <Button type="button" variant="outline" @click="isModalOpen = false">Batal</Button>
-                        <Button type="submit" :disabled="form.processing" class="bg-rose-600 hover:bg-rose-700 text-white">
+                        <button type="submit" :disabled="form.processing" class="inline-flex items-center gap-2 rounded-[10px] border-2 border-black bg-tm-green px-4 py-2 text-sm font-bold text-white shadow-[2px_2px_0px_0px_rgba(0,0,0,0.8)] transition-all hover:-translate-y-0.5 hover:shadow-[3px_3px_0px_0px_rgba(0,0,0,0.8)] active:translate-y-0 active:shadow-[1px_1px_0px_0px_rgba(0,0,0,0.8)] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 dark:border-border dark:shadow-none">
                             {{ form.processing ? 'Memproses...' : (isEditing ? 'Update User' : 'Simpan User') }}
-                        </Button>
+                        </button>
                     </DialogFooter>
                 </form>
             </DialogContent>

@@ -236,6 +236,14 @@
     body {
         @apply bg-background text-foreground;
     }
+
+    html:has([data-slot='sidebar-wrapper']),
+    body:has([data-slot='sidebar-wrapper']),
+    #app:has([data-slot='sidebar-wrapper']) {
+        height: 100%;
+        overflow: hidden;
+        overscroll-behavior: none;
+    }
 }
 
 /* ─────────────────────────────────────────────────────────────
@@ -390,19 +398,58 @@
     }
 
     .sidebar-lucide-navy {
+        --sidebar-lucide-top-gap: 1.3rem;
+        --sidebar-lucide-bottom-gap: 0.5rem;
         --sidebar-width-icon: 4rem;        /* fallback icon width tanpa mengubah lebar expanded */
         --sidebar-lucide-bg: #093b70;      /* navy brand */
         --sidebar-lucide-bg-hover: rgb(255 255 255 / 0.08);
         --sidebar-lucide-bg-active: rgb(255 255 255 / 0.14);
+
+        /* Belt-and-suspenders: paksa sidebar tetap menempel viewport meski ada
+           ancestor yang punya transform/filter. Tailwind sudah memberi `fixed
+           inset-y-0`, kita re-assert di sini supaya tidak ada utility lain
+           yang bisa mengubahnya jadi static/relative. */
+        position: fixed !important;
+        top: var(--sidebar-lucide-top-gap) !important;
+        bottom: var(--sidebar-lucide-bottom-gap) !important;
+        height: auto !important;
+        max-height: calc(100svh - var(--sidebar-lucide-top-gap) - var(--sidebar-lucide-bottom-gap)) !important;
+        overflow: hidden;
+        overscroll-behavior: none;
+    }
+
+    .sidebar-lucide-navy [data-sidebar="content"] {
+        overflow: hidden;
+        overscroll-behavior: none;
     }
 
     .sidebar-lucide-navy [data-slot="sidebar-inner"],
     .sidebar-lucide-navy [data-sidebar="sidebar"] {
         background-color: var(--sidebar-lucide-bg);
         border-radius: 1.75rem;            /* 28px — rounded modern */
+        height: 100%;
+        min-height: 0;
         padding-top: 0.5rem;
         padding-bottom: 1.25rem;           /* 20px — safe-area bawah */
         overflow: hidden;
+        overscroll-behavior: none;
+    }
+
+    /* ── Dark mode ──
+       Bg sidebar (#093b70) nyaris menyatu dengan page bg dark navy. Saat
+       scroll, batas sidebar jadi tidak terlihat sehingga *terkesan* sidebar
+       ikut bergerak ke atas padahal sebenarnya fixed. Solusinya: bg sidebar
+       di-shift sedikit lebih cerah/dingin + tambahkan halo halus di pinggir
+       supaya boundary tetap kelihatan di atas konten dashboard yang scroll. */
+    .dark .sidebar-lucide-navy {
+        --sidebar-lucide-bg: #0E2A52;      /* navy brand sedikit lebih terang */
+    }
+
+    .dark .sidebar-lucide-navy [data-slot="sidebar-inner"],
+    .dark .sidebar-lucide-navy [data-sidebar="sidebar"] {
+        box-shadow:
+            0 0 0 1px rgba(122, 162, 247, 0.10) inset,
+            6px 0 24px rgba(0, 0, 0, 0.35);
     }
 
     /* Satu baris navigasi — diterapkan pada SidebarMenuButton agar

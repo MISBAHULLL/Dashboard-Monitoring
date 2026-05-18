@@ -2,6 +2,7 @@
 import { Head, router, useForm } from '@inertiajs/vue3';
 import { FileText, Plus, Download, Trash2, Eye, Upload, X, File, FolderOpen, RotateCcw } from 'lucide-vue-next';
 import { Button } from '@/components/ui/button';
+import ConfirmDialog from '@/components/ConfirmDialog.vue';
 import { dashboard } from '@/routes';
 import { computed, ref, watch } from 'vue';
 
@@ -47,6 +48,14 @@ const props = defineProps<{
 const showModal = ref(false);
 const editingDocument = ref<Document | null>(null);
 const selectedDocuments = ref<number[]>([]);
+const confirmAction = ref({
+    open: false,
+    title: '',
+    description: '',
+    confirmLabel: 'Hapus',
+    variant: 'danger' as 'danger' | 'warning' | 'success' | 'default',
+    onConfirm: () => {},
+});
 
 const selectAllDocuments = computed({
     get: () => props.documents.data.length > 0 && selectedDocuments.value.length === props.documents.data.length,
@@ -119,32 +128,64 @@ function submit() {
 }
 
 function deleteDocument(id: number, title: string) {
-    if (confirm(`Hapus dokumen "${title}"?`)) {
-        router.delete(`/documents/${id}`);
-    }
+    confirmAction.value = {
+        open: true,
+        title: 'Hapus Dokumen',
+        description: `Dokumen "${title}" akan dipindahkan ke daftar terhapus dan masih bisa dipulihkan kembali.`,
+        confirmLabel: 'Hapus Dokumen',
+        variant: 'danger',
+        onConfirm: () => {
+            router.delete(`/documents/${id}`, {
+                preserveScroll: true,
+                onSuccess: () => {
+                    confirmAction.value.open = false;
+                },
+            });
+        },
+    };
 }
 
 function restoreDocument(id: number, title: string) {
-    if (confirm(`Pulihkan dokumen "${title}"?`)) {
-        router.patch(`/documents/${id}/restore`);
-    }
+    confirmAction.value = {
+        open: true,
+        title: 'Pulihkan Dokumen',
+        description: `Dokumen "${title}" akan dikembalikan ke daftar aktif dan bisa digunakan lagi.`,
+        confirmLabel: 'Pulihkan',
+        variant: 'success',
+        onConfirm: () => {
+            router.patch(`/documents/${id}/restore`, {}, {
+                preserveScroll: true,
+                onSuccess: () => {
+                    confirmAction.value.open = false;
+                },
+            });
+        },
+    };
 }
 
 function bulkRestoreDocuments(restoreAll = false) {
     const total = restoreAll ? props.documents.total : selectedDocuments.value.length;
     if (total === 0) return;
 
-    if (confirm(`Pulihkan ${restoreAll ? 'semua' : total} dokumen terhapus?`)) {
-        router.patch('/documents/bulk-restore', {
-            ids: restoreAll ? [] : selectedDocuments.value,
-            restore_all: restoreAll,
-        }, {
-            preserveScroll: true,
-            onSuccess: () => {
-                selectedDocuments.value = [];
-            },
-        });
-    }
+    confirmAction.value = {
+        open: true,
+        title: restoreAll ? 'Pulihkan Semua Dokumen' : 'Pulihkan Dokumen Terpilih',
+        description: `${restoreAll ? 'Semua' : total} dokumen terhapus akan dikembalikan ke daftar aktif.`,
+        confirmLabel: 'Pulihkan',
+        variant: 'success',
+        onConfirm: () => {
+            router.patch('/documents/bulk-restore', {
+                ids: restoreAll ? [] : selectedDocuments.value,
+                restore_all: restoreAll,
+            }, {
+                preserveScroll: true,
+                onSuccess: () => {
+                    selectedDocuments.value = [];
+                    confirmAction.value.open = false;
+                },
+            });
+        },
+    };
 }
 
 function formatBytes(bytes: number | null): string {
@@ -509,4 +550,16 @@ function getTypeColor(type: string): string {
             </div>
         </Transition>
     </Teleport>
+
+    <ConfirmDialog
+        :open="confirmAction.open"
+        :title="confirmAction.title"
+        :description="confirmAction.description"
+        :confirm-label="confirmAction.confirmLabel"
+        cancel-label="Batal"
+        :variant="confirmAction.variant"
+        @update:open="(val) => confirmAction.open = val"
+        @confirm="confirmAction.onConfirm"
+        @cancel="confirmAction.open = false"
+    />
 </template>

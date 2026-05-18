@@ -398,7 +398,7 @@
     }
 
     .sidebar-lucide-navy {
-        --sidebar-lucide-top-gap: 1.3rem;
+        --sidebar-lucide-top-gap: 0.9rem;
         --sidebar-lucide-bottom-gap: 0.5rem;
         --sidebar-width-icon: 4rem;        /* fallback icon width tanpa mengubah lebar expanded */
         --sidebar-lucide-bg: #093b70;      /* navy brand */

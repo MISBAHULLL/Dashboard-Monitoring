@@ -87,6 +87,8 @@ const confirmAction = ref({
     open: false,
     title: '',
     description: '',
+    confirmLabel: 'Hapus',
+    variant: 'danger' as 'danger' | 'warning' | 'success' | 'default',
     onConfirm: () => {},
 });
 
@@ -111,7 +113,9 @@ const handleBulkDelete = () => {
     confirmAction.value = {
         open: true,
         title: 'Hapus Task Massal',
-        description: `Apakah Anda yakin ingin menghapus ${selectedTasks.value.length} task yang dipilih? Tindakan ini tidak dapat dibatalkan.`,
+        description: `${selectedTasks.value.length} task yang dipilih akan dipindahkan ke daftar terhapus dan masih bisa dipulihkan kembali.`,
+        confirmLabel: 'Hapus Task',
+        variant: 'danger',
         onConfirm: () => {
             bulkActionForm.ids = selectedTasks.value;
             bulkActionForm.post(bulkDestroy.url(), {
@@ -183,7 +187,9 @@ const deleteTask = (id: number, title: string) => {
     confirmAction.value = {
         open: true,
         title: 'Hapus Task',
-        description: `Apakah Anda yakin ingin menghapus task "${title}"? Tindakan ini tidak dapat dibatalkan.`,
+        description: `Task "${title}" akan dipindahkan ke daftar terhapus dan masih bisa dipulihkan kembali.`,
+        confirmLabel: 'Hapus Task',
+        variant: 'danger',
         onConfirm: () => {
             useForm({}).delete(`/tasks/${id}`, {
                 onSuccess: () => {
@@ -195,26 +201,46 @@ const deleteTask = (id: number, title: string) => {
 };
 
 const restoreTask = (id: number, title: string) => {
-    if (confirm(`Pulihkan task "${title}" ke daftar aktif?`)) {
-        useForm({}).patch(`/tasks/${id}/restore`);
-    }
+    confirmAction.value = {
+        open: true,
+        title: 'Pulihkan Task',
+        description: `Task "${title}" akan dikembalikan ke daftar aktif dan bisa digunakan lagi.`,
+        confirmLabel: 'Pulihkan',
+        variant: 'success',
+        onConfirm: () => {
+            useForm({}).patch(`/tasks/${id}/restore`, {
+                preserveScroll: true,
+                onSuccess: () => {
+                    confirmAction.value.open = false;
+                },
+            });
+        },
+    };
 };
 
 const bulkRestoreTasks = (restoreAll = false) => {
     const total = restoreAll ? props.tasks.total : selectedTasks.value.length;
     if (total === 0) return;
 
-    if (confirm(`Pulihkan ${restoreAll ? 'semua' : total} task terhapus?`)) {
-        useForm({
-            ids: restoreAll ? [] : selectedTasks.value,
-            restore_all: restoreAll,
-        }).patch('/tasks/bulk-restore', {
-            preserveScroll: true,
-            onSuccess: () => {
-                selectedTasks.value = [];
-            },
-        });
-    }
+    confirmAction.value = {
+        open: true,
+        title: restoreAll ? 'Pulihkan Semua Task' : 'Pulihkan Task Terpilih',
+        description: `${restoreAll ? 'Semua' : total} task terhapus akan dikembalikan ke daftar aktif.`,
+        confirmLabel: 'Pulihkan',
+        variant: 'success',
+        onConfirm: () => {
+            useForm({
+                ids: restoreAll ? [] : selectedTasks.value,
+                restore_all: restoreAll,
+            }).patch('/tasks/bulk-restore', {
+                preserveScroll: true,
+                onSuccess: () => {
+                    selectedTasks.value = [];
+                    confirmAction.value.open = false;
+                },
+            });
+        },
+    };
 };
 
 // Helper untuk Avatar Initials
@@ -748,9 +774,9 @@ const submitImport = () => {
         :open="confirmAction.open"
         :title="confirmAction.title"
         :description="confirmAction.description"
-        confirm-label="Hapus"
+        :confirm-label="confirmAction.confirmLabel"
         cancel-label="Batal"
-        variant="danger"
+        :variant="confirmAction.variant"
         @update:open="(val) => confirmAction.open = val"
         @confirm="confirmAction.onConfirm"
         @cancel="confirmAction.open = false"

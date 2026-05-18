@@ -1,18 +1,18 @@
 <script setup lang="ts">
-import { Head } from '@inertiajs/vue3';
+import { Head, usePage } from '@inertiajs/vue3';
 import { computed } from 'vue';
-import { usePage } from '@inertiajs/vue3';
-import { dashboard } from '@/routes';
-import { index as tasksIndex } from '@/routes/tasks';
-import HeroCard from '@/components/dashboard/HeroCard.vue';
 import ActionsCard from '@/components/dashboard/ActionsCard.vue';
 import GridTaskCard from '@/components/dashboard/GridTaskCard.vue';
-import TaskOverdueCard from '@/components/dashboard/TaskOverdueCard.vue';
-import TaskDueSoonCard from '@/components/dashboard/TaskDueSoonCard.vue';
-import TaskTrendCard from '@/components/dashboard/TaskTrendCard.vue';
+import HeroCard from '@/components/dashboard/HeroCard.vue';
 import RasioStatusTaskCard from '@/components/dashboard/RasioStatusTaskCard.vue';
-import TeamPerformanceCard from '@/components/dashboard/TeamPerformanceCard.vue';
+import TaskDueSoonCard from '@/components/dashboard/TaskDueSoonCard.vue';
 import TaskListCard from '@/components/dashboard/TaskListCard.vue';
+import TaskOverdueCard from '@/components/dashboard/TaskOverdueCard.vue';
+import TaskTrendCard from '@/components/dashboard/TaskTrendCard.vue';
+import TeamPerformanceCard from '@/components/dashboard/TeamPerformanceCard.vue';
+import { dashboard } from '@/routes';
+import { index as tasksIndex } from '@/routes/tasks';
+import type { AdminDashboardProps } from '@/types/dashboard';
 
 /** Build /tasks?date_from=today&date_to=7days — filter yang dikenali TaskController */
 const dueSoonViewAllUrl = computed(() => {
@@ -21,69 +21,11 @@ const dueSoonViewAllUrl = computed(() => {
     in7Days.setDate(today.getDate() + 7);
     const fmt = (d: Date) =>
         `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+
     return tasksIndex({ query: { date_from: fmt(today), date_to: fmt(in7Days) } }).url;
 });
 
-const props = defineProps<{
-    stats: {
-        total_tasks: number;
-        open_tasks: number;
-        in_progress_tasks: number;
-        completed_tasks: number;
-        total_clients: number;
-        total_teams: number;
-    };
-    trends: {
-        tasks: number;
-        teams: number;
-        pending: number;
-        clients: number;
-    };
-    chart_donut: number[];
-    chart_area: {
-        categories: string[];
-        data: number[];
-    };
-    chart_month: {
-        categories: string[];
-        data: number[];
-    };
-    overdue_count: number;
-    due_soon_count: number;
-    overdue_tasks: Array<{
-        id: number;
-        title: string;
-        client?: { name: string };
-        release_date?: string;
-    }>;
-    due_soon_tasks: Array<{
-        id: number;
-        title: string;
-        client?: { name: string };
-        release_date?: string;
-    }>;
-    team_performance: Array<{
-        id: number;
-        name: string;
-        total_tasks: number;
-        completed_tasks: number;
-        open_tasks: number;
-        in_progress_tasks: number;
-        revision_tasks: number;
-        overdue_tasks: number;
-        completion_rate: number;
-    }>;
-    recent_tasks: Array<{
-        id: number;
-        title: string;
-        modul?: string;
-        status: 'open' | 'in_progress' | 'revision' | 'completed';
-        client?: { name: string };
-        created_at: string;
-    }>;
-}>();
-
-const heroChartData = computed(() => props.chart_area.data.slice(-6));
+defineProps<AdminDashboardProps>();
 
 // Ambil nama user yang sedang login dari Inertia shared props
 const page = usePage();

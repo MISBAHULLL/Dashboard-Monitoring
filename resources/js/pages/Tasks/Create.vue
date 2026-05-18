@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Head, Link, useForm, router } from '@inertiajs/vue3';
 import { ArrowLeft, Save, BookmarkPlus, X } from 'lucide-vue-next';
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 import { toast } from 'vue-sonner';
 
 import { Button } from '@/components/ui/button';
@@ -10,7 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import ConfirmDialog from '@/components/ConfirmDialog.vue';
-import { store as taskTemplatesStore } from '@/routes/task-templates';
+import { destroy as taskTemplatesDestroy, store as taskTemplatesStore } from '@/routes/task-templates';
 
 const props = defineProps<{
     clients: Array<{ id: number; name: string }>;
@@ -37,6 +37,8 @@ const form = useForm({
     release_date: '',
     force_duplicate: false,
 });
+
+const duplicateError = computed(() => (form.errors as Record<string, string | undefined>).duplicate);
 
 const submitForm = () => {
     form.post('/tasks');
@@ -89,7 +91,7 @@ const deleteTemplate = (id: number) => {
         title: 'Hapus Template',
         description: 'Apakah Anda yakin ingin menghapus template ini? Tindakan ini tidak dapat dibatalkan.',
         onConfirm: () => {
-            router.delete(`/task-templates/${id}`, {
+            router.delete(taskTemplatesDestroy.url(id), {
                 preserveScroll: true,
                 preserveState: true,
                 onSuccess: () => {
@@ -282,10 +284,10 @@ const confirmAction = ref({
             <!-- Bagian Footer Form -->
             <div class="mt-6 flex flex-col gap-4">
                 <!-- Duplicate Warning -->
-                <div v-if="form.errors.duplicate" class="flex items-start gap-3 rounded-xl border-[1.5px] border-amber-400 bg-amber-50 p-4 shadow-[1px_2px_0_0_rgba(0,0,0,0.06)] dark:border-amber-300/35 dark:bg-amber-400/10">
+                <div v-if="duplicateError" class="flex items-start gap-3 rounded-xl border-[1.5px] border-amber-400 bg-amber-50 p-4 shadow-[1px_2px_0_0_rgba(0,0,0,0.06)] dark:border-amber-300/35 dark:bg-amber-400/10">
                     <svg xmlns="http://www.w3.org/2000/svg" class="mt-0.5 h-5 w-5 shrink-0 text-amber-600 dark:text-amber-200" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
                     <div class="flex-1">
-                        <p class="text-sm font-medium text-amber-800 dark:text-amber-100">{{ form.errors.duplicate }}</p>
+                        <p class="text-sm font-medium text-amber-800 dark:text-amber-100">{{ duplicateError }}</p>
                         <label class="mt-3 flex items-center gap-2 cursor-pointer">
                             <input type="checkbox" v-model="form.force_duplicate" class="rounded border-amber-300 text-amber-600 focus:ring-amber-500 dark:border-amber-300/40 dark:bg-slate-950/40" />
                             <span class="text-sm font-medium text-amber-700 dark:text-amber-200">Abaikan pengecekan duplikat (paksa simpan)</span>

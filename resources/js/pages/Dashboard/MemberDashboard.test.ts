@@ -9,23 +9,23 @@
  * - Requirement 11.5: THE navigation breadcrumbs SHALL remain functional and unchanged
  */
 
-import { describe, it, expect, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
+import { describe, it, expect, vi } from 'vitest'
 import { h, defineComponent } from 'vue'
-import MemberDashboard from './MemberDashboard.vue'
 import type { MemberDashboardProps, Task } from '@/types/dashboard'
+import MemberDashboard from './MemberDashboard.vue'
 
 // Mock Inertia components
 vi.mock('@inertiajs/vue3', () => ({
   Head: defineComponent({
-    name: 'Head',
+    name: 'InertiaHead',
     props: ['title'],
     setup(_, { slots }) {
       return () => h('title', slots.default?.())
     },
   }),
   Link: defineComponent({
-    name: 'Link',
+    name: 'InertiaLink',
     props: ['href'],
     setup(_, { slots }) {
       return () => h('a', slots.default?.())
@@ -408,7 +408,7 @@ describe('MemberDashboard Integration Tests', () => {
         props,
         global: {
           stubs: {
-            Head: false,
+            InertiaHead: false,
             BentoGrid: true,
             BentoGridItem: true,
             StatCard: true,
@@ -418,7 +418,7 @@ describe('MemberDashboard Integration Tests', () => {
       })
 
       // Head component should be present with title prop
-      const headComponent = wrapper.findComponent({ name: 'Head' })
+      const headComponent = wrapper.findComponent({ name: 'InertiaHead' })
       expect(headComponent.exists()).toBe(true)
       expect(headComponent.props('title')).toBe('Member Dashboard')
     })

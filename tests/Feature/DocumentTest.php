@@ -34,12 +34,14 @@ test('admin can create a document', function () {
             'client_id' => $client->id,
             'title' => 'Dokumen UAT Test',
             'type' => 'UAT',
+            'doc_url' => 'https://example.com/document.pdf',
         ])
         ->assertRedirect();
 
     $this->assertDatabaseHas('documents', [
         'title' => 'Dokumen UAT Test',
         'client_id' => $client->id,
+        'doc_url' => 'https://example.com/document.pdf',
         'created_by' => $admin->id,
     ]);
 });

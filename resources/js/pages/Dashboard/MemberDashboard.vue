@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { Head } from '@inertiajs/vue3';
-import { dashboard } from '@/routes';
 import { AlertCircle, Clock, ListTodo } from 'lucide-vue-next';
 
 // Import Bento Grid components
@@ -8,17 +7,11 @@ import BentoGrid from '@/components/dashboard/BentoGrid.vue';
 import BentoGridItem from '@/components/dashboard/BentoGridItem.vue';
 import StatCard from '@/components/dashboard/StatCard.vue';
 import TaskListCard from '@/components/dashboard/TaskListCard.vue';
+import { dashboard } from '@/routes';
+import type { MemberDashboardProps } from '@/types/dashboard';
 
 // 1. Menerima data dari Controller (Sama dengan admin, tapi isinya berbeda sedikit)
-defineProps<{
-    stats: {
-        total_tasks: number;
-        open_tasks: number;
-        in_progress_tasks: number;
-        completed_tasks: number;
-    };
-    my_tasks: any[];
-}>();
+defineProps<MemberDashboardProps>();
 
 // 2. Mengatur Breadcrumbs (Navigasi Header)
 defineOptions({

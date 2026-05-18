@@ -7,13 +7,24 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { dashboard } from '@/routes';
-import { index } from '@/routes/backup';
+import {
+    create as createBackupRoute,
+    destroy as destroyBackupRoute,
+    download as downloadBackupRoute,
+    index,
+    restore as restoreBackupRoute,
+} from '@/routes/backup';
 
 interface Backup {
     name: string;
     path: string;
     size: number;
     created_at: number;
+}
+
+interface FlashMessages {
+    success?: string;
+    error?: string;
 }
 
 const props = defineProps<{
@@ -30,8 +41,8 @@ defineOptions({
     },
 });
 
-const page = usePage();
-const flash = page.props.flash || {};
+const page = usePage<{ flash: FlashMessages }>();
+const flash = computed(() => page.props.flash ?? {});
 
 const isCreatingBackup = ref(false);
 const restoreForm = useForm({
@@ -67,7 +78,7 @@ function createBackup() {
     if (confirm('Apakah Anda yakin ingin membuat backup database?')) {
         isCreatingBackup.value = true;
         router.post(
-            route('backup.create'),
+            createBackupRoute.url(),
             {},
             {
                 onFinish: () => {
@@ -79,12 +90,12 @@ function createBackup() {
 }
 
 function downloadBackup(filename: string) {
-    window.location.href = route('backup.download') + '?filename=' + encodeURIComponent(filename);
+    window.location.href = downloadBackupRoute.url({ query: { filename } });
 }
 
 function deleteBackup(filename: string) {
     if (confirm(`Apakah Anda yakin ingin menghapus backup: ${filename}?`)) {
-        router.delete(route('backup.destroy'), {
+        router.delete(destroyBackupRoute.url(), {
             data: { filename },
             preserveState: true,
             preserveScroll: true,
@@ -113,7 +124,7 @@ function restoreBackup() {
             'PERINGATAN!\n\nRestore database akan MENGHAPUS semua data saat ini dan menggantinya dengan data dari backup.\n\nApakah Anda yakin ingin melanjutkan?'
         )
     ) {
-        restoreForm.post(route('backup.restore'), {
+        restoreForm.post(restoreBackupRoute.url(), {
             onSuccess: () => {
                 restoreForm.reset();
                 selectedFilename.value = null;

@@ -300,6 +300,7 @@ class TaskController extends Controller
 
         if ($validated['status'] !== ($oldValues['status'] ?? null)) {
             ActivityLogger::statusChanged('task', $task->id, $task->title, $oldValues['status'] ?? 'open', $validated['status']);
+            $this->notificationService->notifyStatusChanged($task, $oldValues['status'] ?? 'open', $validated['status'], $request->user());
         }
 
         ActivityLogger::updated('task', $task->id, $task->title, $oldValues, $task->fresh()->toArray(), 'Mengupdate task');
@@ -390,7 +391,10 @@ class TaskController extends Controller
         $oldStatus = $task->status;
         $task->update($validated);
 
-        ActivityLogger::statusChanged('task', $task->id, $task->title, $oldStatus, $validated['status']);
+        if ($oldStatus !== $validated['status']) {
+            ActivityLogger::statusChanged('task', $task->id, $task->title, $oldStatus, $validated['status']);
+            $this->notificationService->notifyStatusChanged($task, $oldStatus, $validated['status'], $request->user());
+        }
 
         return back();
     }
@@ -437,6 +441,7 @@ class TaskController extends Controller
 
                 $task->update($updateData);
                 ActivityLogger::statusChanged('task', $task->id, $task->title, $oldStatus, $request->status);
+                $this->notificationService->notifyStatusChanged($task, $oldStatus, $request->status, $request->user());
             }
         }
 
@@ -579,7 +584,7 @@ class TaskController extends Controller
     {
         $this->authorize('create', Task::class);
         $request->validate([
-            'file' => 'required|file|mimes:csv,txt,xlsx,xls|max:10240',
+            'file' => 'required|file|mimes:csv,xlsx,xls|max:10240',
             'force_duplicate' => 'nullable|boolean',
         ]);
         $forceDuplicate = $request->boolean('force_duplicate', false);

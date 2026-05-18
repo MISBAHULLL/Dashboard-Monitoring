@@ -18,14 +18,14 @@ class SlaConfigController extends Controller
         $configs = SlaConfig::all()->keyBy('category');
 
         // Gabungkan: setiap kategori pasti muncul, meski belum ada config-nya
-        $slaList = collect($categories)->map(fn($cat) => [
-            'id'           => $configs->get($cat)?->id,
-            'category'     => $cat,
-            'max_days'     => $configs->get($cat)?->max_days,
+        $slaList = collect($categories)->map(fn ($cat) => [
+            'id' => $configs->get($cat)?->id,
+            'category' => $cat,
+            'max_days' => $configs->get($cat)?->max_days,
             'warning_days' => $configs->get($cat)?->warning_days,
         ]);
 
-        return Inertia::render('Settings/SlaConfig', [
+        return Inertia::render('settings/SlaConfig', [
             'slaList' => $slaList,
         ]);
     }
@@ -33,10 +33,10 @@ class SlaConfigController extends Controller
     public function upsert(Request $request)
     {
         $request->validate([
-            'configs'               => 'required|array',
-            'configs.*.category'    => 'required|string|in:Fitur Berbayar,Regulasi,Saran Fitur,Prioritas',
-            'configs.*.max_days'    => 'required|integer|min:1|max:365',
-            'configs.*.warning_days'=> 'required|integer|min:1',
+            'configs' => 'required|array',
+            'configs.*.category' => 'required|string|in:Fitur Berbayar,Regulasi,Saran Fitur,Prioritas',
+            'configs.*.max_days' => 'required|integer|min:1|max:365',
+            'configs.*.warning_days' => 'required|integer|min:1',
         ]);
 
         foreach ($request->configs as $item) {
@@ -48,9 +48,9 @@ class SlaConfigController extends Controller
             }
 
             SlaConfig::updateOrCreate(
-                ['category'     => $item['category']],
-                ['max_days'     => $item['max_days'],
-                 'warning_days' => $item['warning_days']]
+                ['category' => $item['category']],
+                ['max_days' => $item['max_days'],
+                    'warning_days' => $item['warning_days']]
             );
         }
 

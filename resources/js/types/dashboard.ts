@@ -15,7 +15,7 @@
  * Client/Faskes entity
  */
 export interface Client {
-  id: number;
+  id?: number;
   name: string;
 }
 
@@ -68,7 +68,7 @@ export interface Task {
 /**
  * Task data for deadline alert cards (overdue/due soon)
  */
-export interface DeadlineTask extends Pick<Task, 'id' | 'title' | 'client' | 'release_date'> {}
+export type DeadlineTask = Pick<Task, 'id' | 'title' | 'client' | 'release_date'>;
 
 // ============================================================================
 // Statistics Types
@@ -115,6 +115,16 @@ export interface ChartAreaData {
  */
 export type ChartDonutData = number[];
 
+/**
+ * Dashboard trend deltas for admin summary cards
+ */
+export interface DashboardTrends {
+  tasks: number;
+  teams: number;
+  pending: number;
+  clients: number;
+}
+
 // ============================================================================
 // Team Performance Types
 // ============================================================================
@@ -125,7 +135,7 @@ export type ChartDonutData = number[];
 export interface TeamPerformance {
   id: number;
   name: string;
-  type: string;
+  type?: string;
   total_tasks: number;
   completed_tasks: number;
   open_tasks: number;
@@ -144,12 +154,14 @@ export interface TeamPerformance {
  */
 export interface AdminDashboardProps {
   stats: AdminDashboardStats;
+  trends: DashboardTrends;
   chart_donut: ChartDonutData;
   chart_area: ChartAreaData;
+  chart_month: ChartAreaData;
   overdue_count: number;
   due_soon_count: number;
-  overdue_tasks: Task[];
-  due_soon_tasks: Task[];
+  overdue_tasks: DeadlineTask[];
+  due_soon_tasks: DeadlineTask[];
   team_performance: TeamPerformance[];
   recent_tasks: Task[];
 }

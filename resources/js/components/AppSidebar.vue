@@ -13,13 +13,6 @@ import {
 } from 'lucide-vue-next';
 import { computed } from 'vue';
 
-import { index as activityLogsIndex } from '@/routes/activity-logs';
-import { index as clientsIndex } from '@/routes/clients';
-import { index as documentsIndex } from '@/routes/documents';
-import { index as tasksIndex } from '@/routes/tasks';
-import { index as teamsIndex } from '@/routes/teams';
-import { index as usersIndex } from '@/routes/users';
-
 import NavUser from '@/components/NavUser.vue';
 import SidebarBrandLogo from '@/components/sidebar-lucide/SidebarBrandLogo.vue';
 import SidebarNavLucide from '@/components/sidebar-lucide/SidebarNavLucide.vue';
@@ -29,9 +22,13 @@ import {
     SidebarFooter,
     SidebarHeader,
 } from '@/components/ui/sidebar';
-
-// Route generator otomatis dari Laravel Wayfinder
 import { dashboard } from '@/routes';
+import { index as activityLogsIndex } from '@/routes/activity-logs';
+import { index as clientsIndex } from '@/routes/clients';
+import { index as documentsIndex } from '@/routes/documents';
+import { index as tasksIndex } from '@/routes/tasks';
+import { index as teamsIndex } from '@/routes/teams';
+import { index as usersIndex } from '@/routes/users';
 
 import type { NavItemLucide } from '@/types/navigation';
 
@@ -58,11 +55,6 @@ const mainNavItems = computed<NavItemLucide[]>(() => {
             icon: KanbanSquare,
         },
         {
-            title: 'Audit Trail',
-            href: '/activity-logs',
-            icon: History,
-        },
-        {
             title: 'Dokumen',
             href: documentsIndex.url(),
             icon: FileText,
@@ -70,6 +62,11 @@ const mainNavItems = computed<NavItemLucide[]>(() => {
     ];
 
     if (user.value?.role === 'admin') {
+        items.push({
+            title: 'Audit Trail',
+            href: activityLogsIndex.url(),
+            icon: History,
+        });
         items.push({
             title: 'Faskes / Client',
             href: clientsIndex.url(),
@@ -97,10 +94,6 @@ const footerNavItems: NavItemLucide[] = [
         icon: Settings,
     },
 ];
-
-// `activityLogsIndex` diimpor untuk preservasi Wayfinder signature
-// meski href literal dipakai agar konsisten dengan versi sebelumnya.
-void activityLogsIndex;
 </script>
 
 <template>

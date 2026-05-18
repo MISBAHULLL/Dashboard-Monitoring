@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { Head, useForm, usePage } from '@inertiajs/vue3';
 import { Timer, Save, CheckCircle, XCircle, Info } from 'lucide-vue-next';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
 import { dashboard } from '@/routes';
 
 interface SlaItem {
@@ -42,8 +42,8 @@ const categoryClass: Record<string, string> = {
 const form = useForm({
     configs: props.slaList.map(s => ({
         category:     s.category,
-        max_days:     s.max_days ?? null,
-        warning_days: s.warning_days ?? null,
+        max_days:     s.max_days ?? undefined,
+        warning_days: s.warning_days ?? undefined,
     })),
 });
 

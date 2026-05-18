@@ -242,28 +242,28 @@ const submitImport = () => {
 <template>
     <Head title="Monitoring Task" />
 
-    <div class="flex h-full flex-1 flex-col gap-6 overflow-x-auto rounded-xl bg-tm-page p-4 md:p-8 dark:bg-[#081422]">
+    <div class="flex min-h-full flex-col gap-3 rounded-xl bg-tm-page p-3 md:p-4 dark:bg-[#081422]">
         
         <!-- Header Section -->
-        <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
+        <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-2">
             <div>
-                <h1 class="flex items-center gap-3 text-3xl font-extrabold tracking-tight text-tm-navy dark:text-slate-100">
-                    <div class="flex h-10 w-10 items-center justify-center rounded-xl border-[1.5px] border-black bg-gradient-to-br from-tm-navy to-tm-navy-medium text-white shadow-[2px_2px_0_0_rgba(0,0,0,0.15)] dark:border-slate-600 dark:shadow-[0_10px_24px_rgba(0,0,0,0.35)]">
-                        <ListTodo class="h-5 w-5" />
+                <h1 class="flex items-center gap-2.5 text-[22px] font-extrabold tracking-tight text-tm-navy dark:text-slate-100">
+                    <div class="flex h-8 w-8 items-center justify-center rounded-lg border-[1.5px] border-black bg-gradient-to-br from-tm-navy to-tm-navy-medium text-white shadow-[2px_2px_0_0_rgba(0,0,0,0.15)] dark:border-slate-600 dark:shadow-[0_10px_24px_rgba(0,0,0,0.35)]">
+                        <ListTodo class="h-4 w-4" />
                     </div>
                     Monitoring Task
                 </h1>
-                <p class="mt-2 ml-1 text-sm text-tm-text-secondary dark:text-slate-400">Kelola dan pantau tiket permintaan faskes dengan sistem filter cerdas.</p>
+                <p class="ml-1 text-xs text-tm-text-secondary dark:text-slate-400">Kelola dan pantau tiket permintaan faskes dengan sistem filter cerdas.</p>
             </div>
             <div class="flex items-center gap-3">
-                <a :href="exportUrl" target="_blank" class="flex h-10 items-center gap-2 rounded-xl border-[1.5px] border-black bg-white px-4 text-slate-700 shadow-[2px_2px_0_0_rgba(0,0,0,0.1)] transition-all hover:-translate-y-1 hover:bg-slate-50 hover:shadow-[3px_4px_0_0_rgba(0,0,0,0.15)] dark:border-slate-600 dark:bg-[#111c2e] dark:text-slate-100 dark:shadow-[0_10px_24px_rgba(0,0,0,0.35)] dark:hover:bg-slate-800/70">
+                <a :href="exportUrl" target="_blank" class="flex h-8 items-center gap-2 rounded-lg border-[1.5px] border-black bg-white px-3 text-slate-700 shadow-[2px_2px_0_0_rgba(0,0,0,0.1)] transition-all hover:-translate-y-1 hover:bg-slate-50 hover:shadow-[3px_4px_0_0_rgba(0,0,0,0.15)] dark:border-slate-600 dark:bg-[#111c2e] dark:text-slate-100 dark:shadow-[0_10px_24px_rgba(0,0,0,0.35)] dark:hover:bg-slate-800/70">
                     <Download class="h-4 w-4 text-tm-green" /> <span class="font-medium tracking-wide text-sm">Export</span>
                 </a>
-                <button v-if="permissions.can_create" @click="showImportModal = true" class="flex h-10 items-center gap-2 rounded-xl border-[1.5px] border-black bg-white px-4 text-slate-700 shadow-[2px_2px_0_0_rgba(0,0,0,0.1)] transition-all hover:-translate-y-1 hover:bg-slate-50 hover:shadow-[3px_4px_0_0_rgba(0,0,0,0.15)] dark:border-slate-600 dark:bg-[#111c2e] dark:text-slate-100 dark:shadow-[0_10px_24px_rgba(0,0,0,0.35)] dark:hover:bg-slate-800/70">
+                <button v-if="permissions.can_create" @click="showImportModal = true" class="flex h-8 items-center gap-2 rounded-lg border-[1.5px] border-black bg-white px-3 text-slate-700 shadow-[2px_2px_0_0_rgba(0,0,0,0.1)] transition-all hover:-translate-y-1 hover:bg-slate-50 hover:shadow-[3px_4px_0_0_rgba(0,0,0,0.15)] dark:border-slate-600 dark:bg-[#111c2e] dark:text-slate-100 dark:shadow-[0_10px_24px_rgba(0,0,0,0.35)] dark:hover:bg-slate-800/70">
                     <Upload class="h-4 w-4 text-tm-navy-medium" /> <span class="font-medium tracking-wide text-sm">Import</span>
                 </button>
                 <Link v-if="permissions.can_create" href="/tasks/create">
-                    <Button class="flex h-10 items-center gap-2 rounded-xl border-[1.5px] border-black bg-tm-green px-5 text-white shadow-[2px_2px_0_0_rgba(0,0,0,0.2)] transition-all hover:-translate-y-1 hover:bg-tm-green-dark hover:shadow-[3px_4px_0_0_rgba(0,0,0,0.25)] dark:border-emerald-300/40 dark:shadow-[0_12px_28px_rgba(16,185,129,0.2)]">
+                    <Button class="flex h-8 items-center gap-2 rounded-lg border-[1.5px] border-black bg-tm-green px-4 text-white shadow-[2px_2px_0_0_rgba(0,0,0,0.2)] transition-all hover:-translate-y-1 hover:bg-tm-green-dark hover:shadow-[3px_4px_0_0_rgba(0,0,0,0.25)] dark:border-emerald-300/40 dark:shadow-[0_12px_28px_rgba(16,185,129,0.2)]">
                         <Plus class="h-4 w-4" /> <span class="font-medium tracking-wide">Task Baru</span>
                     </Button>
                 </Link>
@@ -271,23 +271,23 @@ const submitImport = () => {
         </div>
 
         <!-- Filter Card -->
-        <div class="rounded-[18px] border-[2.5px] border-black bg-white p-1 shadow-[2px_4px_4px_0_rgba(11,42,107,0.15)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[3px_6px_12px_0_rgba(11,42,107,0.2)] dark:border-slate-700/80 dark:bg-[#111c2e] dark:shadow-[0_14px_32px_rgba(0,0,0,0.42),0_0_0_1px_rgba(148,163,184,0.08)] dark:hover:shadow-[0_18px_40px_rgba(0,0,0,0.5),0_0_0_1px_rgba(52,211,153,0.16)]">
-            <div class="p-4">
-                <div class="mb-4 flex items-center justify-between border-b border-slate-100 pb-3 dark:border-slate-700/70">
+        <div class="task-filter-card rounded-[14px] border-[2px] border-black bg-white p-1 shadow-[2px_4px_4px_0_rgba(11,42,107,0.15)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[3px_6px_12px_0_rgba(11,42,107,0.2)] dark:border-slate-700/80 dark:bg-[#111c2e] dark:shadow-[0_14px_32px_rgba(0,0,0,0.42),0_0_0_1px_rgba(148,163,184,0.08)] dark:hover:shadow-[0_18px_40px_rgba(0,0,0,0.5),0_0_0_1px_rgba(52,211,153,0.16)]">
+            <div class="p-2">
+                <div class="mb-1.5 flex items-center justify-between border-b border-slate-100 pb-1.5 dark:border-slate-700/70">
                     <div class="flex items-center gap-2.5">
                         <Filter class="h-4 w-4 text-tm-text-secondary dark:text-slate-400" />
                         <h3 class="text-sm font-bold tracking-wide text-tm-navy dark:text-slate-100">Filter & Pencarian</h3>
                     </div>
-                    <button @click="resetFilter" class="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold text-tm-text-secondary transition-colors hover:bg-tm-navy-pale hover:text-tm-navy-medium dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-100">
+                    <button @click="resetFilter" class="flex items-center gap-1.5 rounded-lg px-2 py-1 text-xs font-semibold text-tm-text-secondary transition-colors hover:bg-tm-navy-pale hover:text-tm-navy-medium dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-100">
                         <RotateCcw class="h-3.5 w-3.5" /> Reset Filter
                     </button>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-4">
-                    <div class="space-y-1.5">
-                        <Label class="ml-1 text-[11px] font-bold uppercase tracking-wider text-tm-text-secondary dark:text-slate-400">Product</Label>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-x-4 gap-y-1.5">
+                    <div class="space-y-1">
+                        <Label class="ml-1 text-[10px] font-bold uppercase tracking-wider text-tm-text-secondary dark:text-slate-400">Product</Label>
                         <Select v-model="filterForm.product_id">
-                            <SelectTrigger class="h-9 w-full cursor-pointer rounded-lg border-[1.5px] border-black/70 bg-white text-sm text-slate-700 shadow-[1px_2px_0_0_rgba(0,0,0,0.06)] transition-all hover:-translate-y-px hover:bg-slate-50 hover:shadow-[2px_3px_0_0_rgba(0,0,0,0.08)] dark:border-slate-600 dark:bg-slate-950/25 dark:text-slate-100 dark:hover:bg-slate-800/60">
+                            <SelectTrigger class="h-7 w-full cursor-pointer rounded-md border-[1.5px] border-black/70 bg-white text-xs text-slate-700 shadow-[1px_2px_0_0_rgba(0,0,0,0.06)] transition-all hover:-translate-y-px hover:bg-slate-50 hover:shadow-[2px_3px_0_0_rgba(0,0,0,0.08)] dark:border-slate-600 dark:bg-slate-950/25 dark:text-slate-100 dark:hover:bg-slate-800/60">
                                 <SelectValue placeholder="Semua Product" />
                             </SelectTrigger>
                             <SelectContent class="rounded-lg border-[1.5px] border-black shadow-[3px_4px_0_0_rgba(0,0,0,0.1)] dark:border-slate-600 dark:bg-[#111c2e] dark:text-slate-100">
@@ -296,10 +296,10 @@ const submitImport = () => {
                             </SelectContent>
                         </Select>
                     </div>
-                    <div class="space-y-1.5">
-                        <Label class="ml-1 text-[11px] font-bold uppercase tracking-wider text-tm-text-secondary dark:text-slate-400">Client / Faskes</Label>
+                    <div class="space-y-1">
+                        <Label class="ml-1 text-[10px] font-bold uppercase tracking-wider text-tm-text-secondary dark:text-slate-400">Client / Faskes</Label>
                         <Select v-model="filterForm.client_id">
-                            <SelectTrigger class="h-9 w-full cursor-pointer rounded-lg border-[1.5px] border-black/70 bg-white text-sm text-slate-700 shadow-[1px_2px_0_0_rgba(0,0,0,0.06)] transition-all hover:-translate-y-px hover:bg-slate-50 hover:shadow-[2px_3px_0_0_rgba(0,0,0,0.08)] dark:border-slate-600 dark:bg-slate-950/25 dark:text-slate-100 dark:hover:bg-slate-800/60">
+                            <SelectTrigger class="h-7 w-full cursor-pointer rounded-md border-[1.5px] border-black/70 bg-white text-xs text-slate-700 shadow-[1px_2px_0_0_rgba(0,0,0,0.06)] transition-all hover:-translate-y-px hover:bg-slate-50 hover:shadow-[2px_3px_0_0_rgba(0,0,0,0.08)] dark:border-slate-600 dark:bg-slate-950/25 dark:text-slate-100 dark:hover:bg-slate-800/60">
                                 <SelectValue placeholder="Semua Faskes" />
                             </SelectTrigger>
                             <SelectContent class="rounded-lg border-[1.5px] border-black shadow-[3px_4px_0_0_rgba(0,0,0,0.1)] dark:border-slate-600 dark:bg-[#111c2e] dark:text-slate-100">
@@ -308,10 +308,10 @@ const submitImport = () => {
                             </SelectContent>
                         </Select>
                     </div>
-                    <div class="space-y-1.5">
-                        <Label class="ml-1 text-[11px] font-bold uppercase tracking-wider text-tm-text-secondary dark:text-slate-400">Engineer</Label>
+                    <div class="space-y-1">
+                        <Label class="ml-1 text-[10px] font-bold uppercase tracking-wider text-tm-text-secondary dark:text-slate-400">Engineer</Label>
                         <Select v-model="filterForm.engineer_id">
-                            <SelectTrigger class="h-9 w-full cursor-pointer rounded-lg border-[1.5px] border-black/70 bg-white text-sm text-slate-700 shadow-[1px_2px_0_0_rgba(0,0,0,0.06)] transition-all hover:-translate-y-px hover:bg-slate-50 hover:shadow-[2px_3px_0_0_rgba(0,0,0,0.08)] dark:border-slate-600 dark:bg-slate-950/25 dark:text-slate-100 dark:hover:bg-slate-800/60">
+                            <SelectTrigger class="h-7 w-full cursor-pointer rounded-md border-[1.5px] border-black/70 bg-white text-xs text-slate-700 shadow-[1px_2px_0_0_rgba(0,0,0,0.06)] transition-all hover:-translate-y-px hover:bg-slate-50 hover:shadow-[2px_3px_0_0_rgba(0,0,0,0.08)] dark:border-slate-600 dark:bg-slate-950/25 dark:text-slate-100 dark:hover:bg-slate-800/60">
                                 <SelectValue placeholder="Semua Engineer" />
                             </SelectTrigger>
                             <SelectContent class="rounded-lg border-[1.5px] border-black shadow-[3px_4px_0_0_rgba(0,0,0,0.1)] dark:border-slate-600 dark:bg-[#111c2e] dark:text-slate-100">
@@ -320,10 +320,10 @@ const submitImport = () => {
                             </SelectContent>
                         </Select>
                     </div>
-                    <div class="space-y-1.5">
-                        <Label class="ml-1 text-[11px] font-bold uppercase tracking-wider text-tm-text-secondary dark:text-slate-400">Jenis Task</Label>
+                    <div class="space-y-1">
+                        <Label class="ml-1 text-[10px] font-bold uppercase tracking-wider text-tm-text-secondary dark:text-slate-400">Jenis Task</Label>
                         <Select v-model="filterForm.category">
-                            <SelectTrigger class="h-9 w-full cursor-pointer rounded-lg border-[1.5px] border-black/70 bg-white text-sm text-slate-700 shadow-[1px_2px_0_0_rgba(0,0,0,0.06)] transition-all hover:-translate-y-px hover:bg-slate-50 hover:shadow-[2px_3px_0_0_rgba(0,0,0,0.08)] dark:border-slate-600 dark:bg-slate-950/25 dark:text-slate-100 dark:hover:bg-slate-800/60">
+                            <SelectTrigger class="h-7 w-full cursor-pointer rounded-md border-[1.5px] border-black/70 bg-white text-xs text-slate-700 shadow-[1px_2px_0_0_rgba(0,0,0,0.06)] transition-all hover:-translate-y-px hover:bg-slate-50 hover:shadow-[2px_3px_0_0_rgba(0,0,0,0.08)] dark:border-slate-600 dark:bg-slate-950/25 dark:text-slate-100 dark:hover:bg-slate-800/60">
                                 <SelectValue placeholder="Semua Jenis" />
                             </SelectTrigger>
                             <SelectContent class="rounded-lg border-[1.5px] border-black shadow-[3px_4px_0_0_rgba(0,0,0,0.1)] dark:border-slate-600 dark:bg-[#111c2e] dark:text-slate-100">
@@ -335,10 +335,10 @@ const submitImport = () => {
                         </Select>
                     </div>
 
-                    <div class="space-y-1.5">
-                        <Label class="ml-1 text-[11px] font-bold uppercase tracking-wider text-tm-text-secondary dark:text-slate-400">Status Link</Label>
+                    <div class="space-y-1">
+                        <Label class="ml-1 text-[10px] font-bold uppercase tracking-wider text-tm-text-secondary dark:text-slate-400">Status Link</Label>
                         <Select v-model="filterForm.has_link">
-                            <SelectTrigger class="h-9 w-full cursor-pointer rounded-lg border-[1.5px] border-black/70 bg-white text-sm text-slate-700 shadow-[1px_2px_0_0_rgba(0,0,0,0.06)] transition-all hover:-translate-y-px hover:bg-slate-50 hover:shadow-[2px_3px_0_0_rgba(0,0,0,0.08)] dark:border-slate-600 dark:bg-slate-950/25 dark:text-slate-100 dark:hover:bg-slate-800/60">
+                            <SelectTrigger class="h-7 w-full cursor-pointer rounded-md border-[1.5px] border-black/70 bg-white text-xs text-slate-700 shadow-[1px_2px_0_0_rgba(0,0,0,0.06)] transition-all hover:-translate-y-px hover:bg-slate-50 hover:shadow-[2px_3px_0_0_rgba(0,0,0,0.08)] dark:border-slate-600 dark:bg-slate-950/25 dark:text-slate-100 dark:hover:bg-slate-800/60">
                                 <SelectValue placeholder="Semua" />
                             </SelectTrigger>
                             <SelectContent class="rounded-lg border-[1.5px] border-black shadow-[3px_4px_0_0_rgba(0,0,0,0.1)] dark:border-slate-600 dark:bg-[#111c2e] dark:text-slate-100">
@@ -348,10 +348,10 @@ const submitImport = () => {
                             </SelectContent>
                         </Select>
                     </div>
-                    <div class="space-y-1.5">
-                        <Label class="ml-1 text-[11px] font-bold uppercase tracking-wider text-tm-text-secondary dark:text-slate-400">Status Cek</Label>
+                    <div class="space-y-1">
+                        <Label class="ml-1 text-[10px] font-bold uppercase tracking-wider text-tm-text-secondary dark:text-slate-400">Status Cek</Label>
                         <Select v-model="filterForm.status">
-                            <SelectTrigger class="h-9 w-full cursor-pointer rounded-lg border-[1.5px] border-black/70 bg-white text-sm text-slate-700 shadow-[1px_2px_0_0_rgba(0,0,0,0.06)] transition-all hover:-translate-y-px hover:bg-slate-50 hover:shadow-[2px_3px_0_0_rgba(0,0,0,0.08)] dark:border-slate-600 dark:bg-slate-950/25 dark:text-slate-100 dark:hover:bg-slate-800/60">
+                            <SelectTrigger class="h-7 w-full cursor-pointer rounded-md border-[1.5px] border-black/70 bg-white text-xs text-slate-700 shadow-[1px_2px_0_0_rgba(0,0,0,0.06)] transition-all hover:-translate-y-px hover:bg-slate-50 hover:shadow-[2px_3px_0_0_rgba(0,0,0,0.08)] dark:border-slate-600 dark:bg-slate-950/25 dark:text-slate-100 dark:hover:bg-slate-800/60">
                                 <SelectValue placeholder="Semua Status" />
                             </SelectTrigger>
                             <SelectContent class="rounded-lg border-[1.5px] border-black shadow-[3px_4px_0_0_rgba(0,0,0,0.1)] dark:border-slate-600 dark:bg-[#111c2e] dark:text-slate-100">
@@ -364,19 +364,19 @@ const submitImport = () => {
                             </SelectContent>
                         </Select>
                     </div>
-                    <div class="space-y-1.5 lg:col-span-2">
-                        <Label class="ml-1 text-[11px] font-bold uppercase tracking-wider text-tm-text-secondary dark:text-slate-400">Rentang Tanggal Release</Label>
+                    <div class="space-y-1 lg:col-span-2">
+                        <Label class="ml-1 text-[10px] font-bold uppercase tracking-wider text-tm-text-secondary dark:text-slate-400">Rentang Tanggal Release</Label>
                         <div class="flex items-center gap-3">
-                            <Input type="date" v-model="filterForm.date_from" class="h-9 w-full cursor-pointer rounded-lg border-[1.5px] border-black/70 bg-white text-sm text-slate-700 shadow-[1px_2px_0_0_rgba(0,0,0,0.06)] transition-all hover:-translate-y-px hover:bg-slate-50 hover:shadow-[2px_3px_0_0_rgba(0,0,0,0.08)] focus:border-tm-navy focus:ring-1 focus:ring-tm-navy dark:border-slate-600 dark:bg-slate-950/25 dark:text-slate-100 dark:[color-scheme:dark] dark:hover:bg-slate-800/60" />
+                            <Input type="date" v-model="filterForm.date_from" class="h-7 w-full cursor-pointer rounded-md border-[1.5px] border-black/70 bg-white text-xs text-slate-700 shadow-[1px_2px_0_0_rgba(0,0,0,0.06)] transition-all hover:-translate-y-px hover:bg-slate-50 hover:shadow-[2px_3px_0_0_rgba(0,0,0,0.08)] focus:border-tm-navy focus:ring-1 focus:ring-tm-navy dark:border-slate-600 dark:bg-slate-950/25 dark:text-slate-100 dark:[color-scheme:dark] dark:hover:bg-slate-800/60" />
                             <span class="text-sm font-semibold text-tm-text-secondary dark:text-slate-400">s/d</span>
-                            <Input type="date" v-model="filterForm.date_to" class="h-9 w-full cursor-pointer rounded-lg border-[1.5px] border-black/70 bg-white text-sm text-slate-700 shadow-[1px_2px_0_0_rgba(0,0,0,0.06)] transition-all hover:-translate-y-px hover:bg-slate-50 hover:shadow-[2px_3px_0_0_rgba(0,0,0,0.08)] focus:border-tm-navy focus:ring-1 focus:ring-tm-navy dark:border-slate-600 dark:bg-slate-950/25 dark:text-slate-100 dark:[color-scheme:dark] dark:hover:bg-slate-800/60" />
+                            <Input type="date" v-model="filterForm.date_to" class="h-7 w-full cursor-pointer rounded-md border-[1.5px] border-black/70 bg-white text-xs text-slate-700 shadow-[1px_2px_0_0_rgba(0,0,0,0.06)] transition-all hover:-translate-y-px hover:bg-slate-50 hover:shadow-[2px_3px_0_0_rgba(0,0,0,0.08)] focus:border-tm-navy focus:ring-1 focus:ring-tm-navy dark:border-slate-600 dark:bg-slate-950/25 dark:text-slate-100 dark:[color-scheme:dark] dark:hover:bg-slate-800/60" />
                         </div>
                     </div>
                 </div>
             </div>
             
-            <div class="rounded-b-[16px] border-t border-slate-100 bg-slate-50/50 p-2 dark:border-slate-700/70 dark:bg-slate-950/20">
-                 <Input type="text" v-model="filterForm.search" placeholder="Pencarian cepat judul task atau deskripsi..." class="h-10 w-full rounded-lg border-[1.5px] border-black/70 bg-white px-4 text-sm text-slate-700 shadow-[1px_2px_0_0_rgba(0,0,0,0.06)] transition-all hover:-translate-y-px hover:shadow-[2px_3px_0_0_rgba(0,0,0,0.08)] focus:border-tm-navy focus:ring-1 focus:ring-tm-navy dark:border-slate-600 dark:bg-slate-950/25 dark:text-slate-100 dark:placeholder:text-slate-500" />
+            <div class="rounded-b-[12px] border-t border-slate-100 bg-slate-50/50 p-1 dark:border-slate-700/70 dark:bg-slate-950/20">
+                 <Input type="text" v-model="filterForm.search" placeholder="Pencarian cepat judul task atau deskripsi..." class="h-7 w-full rounded-md border-[1.5px] border-black/70 bg-white px-3 text-xs text-slate-700 shadow-[1px_2px_0_0_rgba(0,0,0,0.06)] transition-all hover:-translate-y-px hover:shadow-[2px_3px_0_0_rgba(0,0,0,0.08)] focus:border-tm-navy focus:ring-1 focus:ring-tm-navy dark:border-slate-600 dark:bg-slate-950/25 dark:text-slate-100 dark:placeholder:text-slate-500" />
             </div>
         </div>
 
@@ -409,26 +409,26 @@ const submitImport = () => {
         </div>
 
         <!-- Modern Data Grid with 11 Columns Parity -->
-        <div class="flex flex-1 flex-col overflow-hidden rounded-[18px] border-[2.5px] border-black bg-white shadow-[2px_4px_4px_0_rgba(11,42,107,0.25)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[3px_8px_12px_2px_rgba(11,42,107,0.3)] dark:border-slate-700/80 dark:bg-[#111c2e] dark:shadow-[0_14px_32px_rgba(0,0,0,0.44),0_0_0_1px_rgba(148,163,184,0.08)] dark:hover:shadow-[0_18px_40px_rgba(0,0,0,0.52),0_0_0_1px_rgba(122,162,247,0.22)]">
-            <div class="overflow-x-auto flex-1">
-                <table class="w-full text-left text-sm whitespace-nowrap">
+        <div class="task-table-card flex h-auto max-h-none flex-col overflow-hidden rounded-[18px] border-[2.5px] border-black bg-white shadow-[2px_4px_4px_0_rgba(11,42,107,0.25)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[3px_8px_12px_2px_rgba(11,42,107,0.3)] dark:border-slate-700/80 dark:bg-[#111c2e] dark:shadow-[0_14px_32px_rgba(0,0,0,0.44),0_0_0_1px_rgba(148,163,184,0.08)] dark:hover:shadow-[0_18px_40px_rgba(0,0,0,0.52),0_0_0_1px_rgba(122,162,247,0.22)]">
+            <div class="task-table-scroll h-auto max-h-none overflow-x-auto">
+                <table class="task-index-table w-full text-left text-xs whitespace-nowrap">
                     <thead class="border-b-[2px] border-black/80 bg-tm-navy-pale dark:border-slate-600 dark:bg-slate-800/80">
                         <tr class="text-[11px] font-bold uppercase tracking-wider text-tm-navy dark:text-slate-200">
-                            <th class="py-3 px-4 w-10 text-center">
+                            <th class="py-2 px-3 w-10 text-center">
                                 <input type="checkbox" v-model="selectAll" class="h-4 w-4 cursor-pointer rounded border-slate-300 text-tm-navy focus:ring-tm-navy dark:border-slate-600 dark:bg-slate-950/40" />
                             </th>
-                            <th class="py-3 px-4">Product</th>
-                            <th class="py-3 px-4">Faskes</th>
-                            <th class="py-3 px-4 min-w-[200px]">Fitur</th>
-                            <th class="py-3 px-4 text-center">Task (URL)</th>
-                            <th class="py-3 px-4 min-w-[180px]">Jenis / Keterangan</th>
-                            <th class="py-3 px-4">Engineer</th>
-                            <th class="py-3 px-4 text-center">Dokumen</th>
-                            <th class="py-3 px-4 text-center">Tanggal Release</th>
-                            <th class="py-3 px-4 text-center">SLA Status</th>
-                            <th class="py-3 px-4 text-center">Cek</th>
-                            <th class="py-3 px-4 text-center">Status</th>
-                            <th class="py-3 px-4 text-center">Aksi</th>
+                            <th class="py-2 px-3">Product</th>
+                            <th class="py-2 px-3">Faskes</th>
+                            <th class="py-2 px-3 min-w-[200px]">Fitur</th>
+                            <th class="py-2 px-3 text-center">Task (URL)</th>
+                            <th class="py-2 px-3 min-w-[180px]">Jenis / Keterangan</th>
+                            <th class="py-2 px-3">Engineer</th>
+                            <th class="py-2 px-3 text-center">Dokumen</th>
+                            <th class="py-2 px-3 text-center">Tanggal Release</th>
+                            <th class="py-2 px-3 text-center">SLA Status</th>
+                            <th class="py-2 px-3 text-center">Cek</th>
+                            <th class="py-2 px-3 text-center">Status</th>
+                            <th class="py-2 px-3 text-center">Aksi</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-black/10 dark:divide-slate-700/70">
@@ -440,7 +440,7 @@ const submitImport = () => {
                             }">
                             
                             <!-- 0. CHECKBOX -->
-                            <td class="py-3 px-4 relative">
+                            <td class="py-2 px-3 relative">
                                 <!-- Aksen garis warna di sebelah kiri -->
                                 <div class="absolute left-0 top-0 bottom-0 w-1 transition-all duration-200" 
                                     :class="{
@@ -456,48 +456,48 @@ const submitImport = () => {
                             </td>
 
                             <!-- 1. PRODUCT -->
-                            <td class="py-3 px-4 relative">
+                            <td class="py-2 px-3 relative">
                                 <span class="block max-w-[120px] truncate text-xs font-bold text-slate-700 dark:text-slate-200" :title="task.product?.name">
                                     {{ task.product?.name || '-' }}
                                 </span>
                             </td>
 
                             <!-- 2. FASKES -->
-                            <td class="py-3 px-4">
+                            <td class="py-2 px-3">
                                 <span class="flex max-w-[150px] items-center gap-1.5 truncate text-xs font-semibold text-slate-600 dark:text-slate-300" :title="task.client?.name">
                                     🏥 {{ task.client?.name || '-' }}
                                 </span>
                             </td>
                             
                             <!-- 3. FITUR (Modul) -->
-                            <td class="py-3 px-4">
-                                <div class="flex flex-col gap-1">
+                            <td class="py-2 px-3">
+                                <div class="flex flex-col gap-0.5 leading-tight">
                                     <span class="max-w-[220px] cursor-pointer truncate text-[13px] font-bold text-slate-800 transition-colors hover:text-tm-navy-medium dark:text-slate-100 dark:hover:text-sky-300" :title="task.title">
                                         <Link :href="showTask.url(task.id)">{{ task.title }}</Link>
                                     </span>
                                     <span v-if="task.modul" class="flex items-center gap-1 text-[11px] font-medium text-slate-500 dark:text-slate-400">
                                         <span class="h-1 w-1 rounded-full bg-slate-300 dark:bg-slate-500"></span> {{ task.modul }}
                                     </span>
-                                    <span class="text-[11px] font-medium text-slate-400 dark:text-slate-500">
+                                    <span class="text-[10px] font-medium text-slate-400 dark:text-slate-500">
                                         {{ task.comments_count ?? 0 }} komentar
                                     </span>
                                 </div>
                             </td>
                             
                             <!-- 4. TASK (URL) -->
-                            <td class="py-3 px-4 text-center">
+                            <td class="py-2 px-3 text-center">
                                 <a v-if="task.task_url && task.task_url !== '-'" :href="task.task_url" target="_blank" 
-                                   class="inline-flex h-7 w-7 items-center justify-center rounded-full border border-tm-navy/20 bg-tm-navy-pale text-tm-navy shadow-sm transition-all duration-300 hover:scale-110 hover:bg-tm-navy hover:text-white dark:border-sky-300/35 dark:bg-sky-400/10 dark:text-sky-200 dark:hover:bg-sky-300 dark:hover:text-slate-950" title="Buka Dokumen/URL">
+                                   class="inline-flex h-5 w-5 items-center justify-center rounded-full border border-tm-navy/20 bg-tm-navy-pale text-tm-navy shadow-sm transition-all duration-300 hover:scale-110 hover:bg-tm-navy hover:text-white dark:border-sky-300/35 dark:bg-sky-400/10 dark:text-sky-200 dark:hover:bg-sky-300 dark:hover:text-slate-950" title="Buka Dokumen/URL">
                                     <ExternalLink class="h-3.5 w-3.5" />
                                 </a>
-                                <span v-else class="inline-flex h-7 w-7 items-center justify-center rounded-full border border-slate-100 bg-slate-50 text-slate-300 dark:border-slate-700 dark:bg-slate-950/35 dark:text-slate-500" title="Tidak ada URL">
+                                <span v-else class="inline-flex h-5 w-5 items-center justify-center rounded-full border border-slate-100 bg-slate-50 text-slate-300 dark:border-slate-700 dark:bg-slate-950/35 dark:text-slate-500" title="Tidak ada URL">
                                     <span class="text-lg leading-none -mt-1">-</span>
                                 </span>
                             </td>
                             
                             <!-- 5. JENIS / KETERANGAN -->
-                            <td class="py-3 px-4">
-                                <div class="flex flex-col gap-1 items-start">
+                            <td class="py-2 px-3">
+                                <div class="flex flex-col gap-0.5 items-start leading-tight">
                                     <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold tracking-wider w-fit border shadow-sm"
                                         :class="{
                                             'bg-fuchsia-50 text-fuchsia-700 border-fuchsia-200 dark:bg-fuchsia-400/10 dark:text-fuchsia-200 dark:border-fuchsia-300/35': task.category === 'Fitur Berbayar',
@@ -507,16 +507,16 @@ const submitImport = () => {
                                         }">
                                         {{ task.category }}
                                     </span>
-                                    <span class="mt-0.5 max-w-[180px] truncate text-[11px] italic text-slate-500 dark:text-slate-400" :title="task.description">
+                                    <span class="max-w-[180px] truncate text-[10px] italic text-slate-500 dark:text-slate-400" :title="task.description">
                                         {{ task.description || 'Tidak ada keterangan.' }}
                                     </span>
                                 </div>
                             </td>
 
                             <!-- 6. ENGINEER -->
-                            <td class="py-3 px-4">
+                            <td class="py-2 px-3">
                                 <div class="flex items-center gap-2">
-                                    <div class="flex h-6 w-6 items-center justify-center rounded-full border border-white text-[9px] font-extrabold shadow-sm ring-1 ring-slate-100 dark:border-slate-900 dark:ring-slate-700"
+                                    <div class="flex h-5 w-5 items-center justify-center rounded-full border border-white text-[9px] font-extrabold shadow-sm ring-1 ring-slate-100 dark:border-slate-900 dark:ring-slate-700"
                                         :class="getAvatarColor(task.engineer?.name || task.assignee?.name)">
                                         {{ getInitials(task.engineer?.name || task.assignee?.name) }}
                                     </div>
@@ -525,8 +525,8 @@ const submitImport = () => {
                             </td>
                             
                             <!-- 7. DOKUMEN -->
-                            <td class="py-3 px-4 text-center">
-                                <div v-if="task.documents && task.documents.length > 0" class="flex flex-col items-center gap-1">
+                            <td class="py-2 px-3 text-center">
+                                <div v-if="task.documents && task.documents.length > 0" class="flex flex-col items-center gap-0.5">
                                     <span class="rounded-full border border-tm-navy/20 bg-tm-navy-pale px-2 py-0.5 text-[10px] font-bold text-tm-navy dark:border-sky-300/35 dark:bg-sky-400/10 dark:text-sky-200">
                                         {{ task.documents.length }} dok
                                     </span>
@@ -543,14 +543,14 @@ const submitImport = () => {
                             </td>
 
                             <!-- 8. TANGGAL RELEASE -->
-                            <td class="py-3 px-4 text-center">
+                            <td class="py-2 px-3 text-center">
                                 <span class="text-xs font-semibold text-slate-600 dark:text-slate-300">
                                     {{ task.release_date ? new Date(task.release_date).toLocaleDateString('id-ID', {day:'2-digit', month:'short', year:'numeric'}) : '-' }}
                                 </span>
                             </td>
 
                             <!-- 8.5. SLA STATUS -->
-                            <td class="py-3 px-4 text-center">
+                            <td class="py-2 px-3 text-center">
                                 <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold tracking-wide shadow-sm"
                                     :class="{
                                         'bg-tm-green-pale text-tm-green-dark border border-tm-green/30 dark:bg-emerald-400/10 dark:text-emerald-200 dark:border-emerald-300/35': task.sla_status === 'completed_on_time',
@@ -565,13 +565,13 @@ const submitImport = () => {
                             </td>
 
                             <!-- 9. CEK (TOGGLE BUTTONS MODERN) -->
-                            <td class="py-3 px-4">
+                            <td class="py-2 px-3">
                                 <div v-if="!task.can_update_status"
-                                     class="mx-auto flex h-7 w-full max-w-[120px] cursor-not-allowed items-center justify-center rounded-md border border-slate-200 bg-slate-100/80 text-[9px] font-bold text-slate-400 opacity-70 dark:border-slate-700 dark:bg-slate-900/60 dark:text-slate-500">
+                                     class="mx-auto flex h-6 w-full max-w-[120px] cursor-not-allowed items-center justify-center rounded-md border border-slate-200 bg-slate-100/80 text-[9px] font-bold text-slate-400 opacity-70 dark:border-slate-700 dark:bg-slate-900/60 dark:text-slate-500">
                                     NO AKSES
                                 </div>
                                 <div v-else-if="!task.task_url || task.task_url === '-'" 
-                                     class="mx-auto flex h-7 w-full max-w-[120px] cursor-not-allowed items-center justify-center rounded-md border border-slate-200 bg-slate-100/80 text-[9px] font-bold text-slate-400 opacity-70 dark:border-slate-700 dark:bg-slate-900/60 dark:text-slate-500">
+                                     class="mx-auto flex h-6 w-full max-w-[120px] cursor-not-allowed items-center justify-center rounded-md border border-slate-200 bg-slate-100/80 text-[9px] font-bold text-slate-400 opacity-70 dark:border-slate-700 dark:bg-slate-900/60 dark:text-slate-500">
                                     <Lock class="h-3 w-3 mr-1" /> URL KOSONG
                                 </div>
                                 <div v-else class="mx-auto flex w-fit items-center justify-center rounded-lg border border-tm-border bg-slate-100/80 p-0.5 shadow-inner dark:border-slate-700 dark:bg-slate-950/35">
@@ -589,7 +589,7 @@ const submitImport = () => {
                             </td>
                             
                             <!-- 10. STATUS -->
-                            <td class="py-3 px-4 text-center">
+                            <td class="py-2 px-3 text-center">
                                 <span class="inline-flex items-center justify-center px-2.5 py-1 rounded-md text-[10px] font-bold tracking-wider shadow-sm"
                                     :class="{
                                         'bg-white text-slate-500 border border-slate-200 dark:bg-slate-950/35 dark:text-slate-400 dark:border-slate-700': task.status === 'open' || task.status === 'in_progress',
@@ -612,14 +612,14 @@ const submitImport = () => {
                             </td>
                             
                             <!-- 11. AKSI -->
-                            <td class="py-3 px-4 text-center">
+                            <td class="py-2 px-3 text-center">
                                 <div class="flex items-center justify-center gap-1 opacity-50 group-hover:opacity-100 transition-opacity duration-200">
                                     <Link v-if="task.can_edit" :href="`/tasks/${task.id}/edit`">
-                                        <Button variant="ghost" size="icon" class="h-7 w-7 rounded-lg text-tm-navy-medium transition-colors hover:bg-tm-navy-pale hover:text-tm-navy dark:text-sky-300 dark:hover:bg-sky-400/10 dark:hover:text-sky-100">
+                                        <Button variant="ghost" size="icon" class="h-6 w-6 rounded-lg text-tm-navy-medium transition-colors hover:bg-tm-navy-pale hover:text-tm-navy dark:text-sky-300 dark:hover:bg-sky-400/10 dark:hover:text-sky-100">
                                             <Edit class="h-3.5 w-3.5" />
                                         </Button>
                                     </Link>
-                                    <Button v-if="task.can_delete" variant="ghost" size="icon" @click="deleteTask(task.id, task.title)" class="h-7 w-7 rounded-lg text-tm-danger transition-colors hover:bg-tm-danger-pale hover:text-red-700 dark:text-red-300 dark:hover:bg-red-400/10 dark:hover:text-red-200">
+                                    <Button v-if="task.can_delete" variant="ghost" size="icon" @click="deleteTask(task.id, task.title)" class="h-6 w-6 rounded-lg text-tm-danger transition-colors hover:bg-tm-danger-pale hover:text-red-700 dark:text-red-300 dark:hover:bg-red-400/10 dark:hover:text-red-200">
                                         <Trash2 class="h-3.5 w-3.5" />
                                     </Button>
                                 </div>
@@ -645,7 +645,7 @@ const submitImport = () => {
             </div>
 
             <!-- Modern Pagination Footer -->
-            <div class="flex flex-col items-center justify-between border-t-[2px] border-black/80 bg-slate-50/80 p-3 px-5 text-xs font-semibold text-tm-text-secondary dark:border-slate-600 dark:bg-slate-950/25 dark:text-slate-400 sm:flex-row">
+            <div class="flex flex-col items-center justify-between border-t-[2px] border-black/80 bg-slate-50/80 p-2 px-4 text-xs font-semibold text-tm-text-secondary dark:border-slate-600 dark:bg-slate-950/25 dark:text-slate-400 sm:flex-row">
                 <div>
                     Menampilkan <span class="font-extrabold text-tm-navy dark:text-slate-100">{{ tasks.data.length > 0 ? (tasks.current_page - 1) * tasks.per_page + 1 : 0 }}</span> - 
                     <span class="font-extrabold text-tm-navy dark:text-slate-100">{{ Math.min(tasks.current_page * tasks.per_page, tasks.total) }}</span> dari <span class="font-extrabold text-tm-navy dark:text-slate-100">{{ tasks.total }}</span> tiket
@@ -716,3 +716,41 @@ const submitImport = () => {
         @cancel="confirmAction.open = false"
     />
 </template>
+
+<style scoped>
+.task-filter-card :deep(label) {
+    font-size: 0.625rem;
+    line-height: 1;
+}
+
+.task-filter-card :deep([data-slot='select-trigger']),
+.task-filter-card :deep(input) {
+    min-height: 1.75rem;
+    height: 1.75rem;
+    font-size: 0.75rem;
+}
+
+.task-table-scroll {
+    overflow-y: visible;
+}
+
+.task-index-table :deep(th),
+.task-index-table :deep(td) {
+    padding-top: 0.25rem;
+    padding-bottom: 0.25rem;
+    line-height: 1.15;
+}
+
+.task-index-table :deep(tbody tr) {
+    height: 3.25rem;
+}
+
+.task-index-table :deep(.h-6) {
+    height: 1.25rem;
+}
+
+.task-index-table :deep(.w-6) {
+    width: 1.25rem;
+}
+</style>
+

@@ -14,9 +14,16 @@ class TeamController extends Controller
     {
         $this->authorize('viewAny', Team::class);
 
+        $query = Team::withCount('users')->latest();
+
+        if (request('trashed') === 'only') {
+            $query->onlyTrashed();
+        }
+
         return Inertia::render('Teams/Index', [
             // withCount('users') akan otomatis membuat atribut 'users_count'
-            'teams' => Team::withCount('users')->latest()->get(),
+            'teams' => $query->get(),
+            'activeTrashed' => request('trashed') === 'only',
         ]);
     }
 
@@ -73,5 +80,24 @@ class TeamController extends Controller
         $team->delete();
 
         return back()->with('success', 'Tim berhasil dihapus.');
+    }
+
+    public function restore(int $team)
+    {
+        $team = Team::withTrashed()->findOrFail($team);
+
+        $this->authorize('restore', $team);
+
+        if (! $team->trashed()) {
+            return back()->with('info', 'Tim ini masih aktif, tidak perlu dipulihkan.');
+        }
+
+        $deletedAt = $team->deleted_at;
+
+        $team->restore();
+
+        ActivityLogger::updated('team', $team->id, $team->name, ['deleted_at' => $deletedAt], ['deleted_at' => null], "Memulihkan tim '{$team->name}'");
+
+        return back()->with('success', 'Tim berhasil dipulihkan.');
     }
 }

@@ -223,6 +223,33 @@ test('member cannot delete a task', function () {
 // UPDATE STATUS (member allowed on own task)
 // ──────────────────────────────────────────────────────────────
 
+test('admin can restore a deleted task', function () {
+    $admin = User::factory()->admin()->create();
+    $task = Task::factory()->create();
+    $task->delete();
+
+    $this->assertSoftDeleted('tasks', ['id' => $task->id]);
+
+    $this->actingAs($admin)
+        ->patch(route('tasks.restore', $task->id))
+        ->assertRedirect();
+
+    $this->assertDatabaseHas('tasks', [
+        'id' => $task->id,
+        'deleted_at' => null,
+    ]);
+});
+
+test('member cannot restore a deleted task', function () {
+    $member = User::factory()->member()->create();
+    $task = Task::factory()->assignedTo($member)->create();
+    $task->delete();
+
+    $this->actingAs($member)
+        ->patch(route('tasks.restore', $task->id))
+        ->assertForbidden();
+});
+
 test('member can update status of own assigned task', function () {
     $member = User::factory()->member()->create();
     $task = Task::factory()->assignedTo($member)->create(['status' => 'open']);

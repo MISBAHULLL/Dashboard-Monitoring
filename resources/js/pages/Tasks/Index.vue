@@ -51,12 +51,13 @@ const filterForm = ref({
     has_link: props.filters.has_link || 'all',
     date_from: props.filters.date_from || '',
     date_to: props.filters.date_to || '',
+    trashed: props.filters.trashed || 'active',
 });
 
 watch(filterForm, (newVal) => {
     const params: Record<string, string> = {};
     for (const [key, value] of Object.entries(newVal)) {
-        params[key] = value === 'all' ? '' : value;
+        params[key] = value === 'all' || (key === 'trashed' && value === 'active') ? '' : value;
     }
     router.get('/tasks', params, {
         preserveState: true,
@@ -76,6 +77,7 @@ const resetFilter = () => {
         has_link: 'all',
         date_from: '',
         date_to: '',
+        trashed: 'active',
     };
 };
 
@@ -165,7 +167,7 @@ const toggleCekStatus = (task: any, newStatus: string) => {
 const exportUrl = computed(() => {
     const params = new URLSearchParams();
     for (const [key, value] of Object.entries(filterForm.value)) {
-        const cleanValue = value === 'all' ? '' : value;
+        const cleanValue = value === 'all' || (key === 'trashed' && value === 'active') ? '' : value;
         if (cleanValue) {
             params.append(key, String(cleanValue));
         }
@@ -190,6 +192,12 @@ const deleteTask = (id: number, title: string) => {
             });
         },
     };
+};
+
+const restoreTask = (id: number, title: string) => {
+    if (confirm(`Pulihkan task "${title}" ke daftar aktif?`)) {
+        useForm({}).patch(`/tasks/${id}/restore`);
+    }
 };
 
 // Helper untuk Avatar Initials
@@ -256,13 +264,16 @@ const submitImport = () => {
                 <p class="ml-1 text-xs text-tm-text-secondary dark:text-slate-400">Kelola dan pantau tiket permintaan faskes dengan sistem filter cerdas.</p>
             </div>
             <div class="flex items-center gap-3">
-                <a :href="exportUrl" target="_blank" class="flex h-8 items-center gap-2 rounded-lg border-[1.5px] border-black bg-white px-3 text-slate-700 shadow-[2px_2px_0_0_rgba(0,0,0,0.1)] transition-all hover:-translate-y-1 hover:bg-slate-50 hover:shadow-[3px_4px_0_0_rgba(0,0,0,0.15)] dark:border-slate-600 dark:bg-[#111c2e] dark:text-slate-100 dark:shadow-[0_10px_24px_rgba(0,0,0,0.35)] dark:hover:bg-slate-800/70">
+                <button @click="filterForm.trashed = filterForm.trashed === 'only' ? 'active' : 'only'" class="flex h-8 items-center gap-2 rounded-lg border-[1.5px] border-black bg-white px-3 text-slate-700 shadow-[2px_2px_0_0_rgba(0,0,0,0.1)] transition-all hover:-translate-y-1 hover:bg-slate-50 hover:shadow-[3px_4px_0_0_rgba(0,0,0,0.15)] dark:border-slate-600 dark:bg-[#111c2e] dark:text-slate-100 dark:shadow-[0_10px_24px_rgba(0,0,0,0.35)] dark:hover:bg-slate-800/70">
+                    <RotateCcw class="h-4 w-4 text-tm-navy-medium" /> <span class="font-medium tracking-wide text-sm">{{ filterForm.trashed === 'only' ? 'Aktif' : 'Terhapus' }}</span>
+                </button>
+                <a v-if="filterForm.trashed !== 'only'" :href="exportUrl" target="_blank" class="flex h-8 items-center gap-2 rounded-lg border-[1.5px] border-black bg-white px-3 text-slate-700 shadow-[2px_2px_0_0_rgba(0,0,0,0.1)] transition-all hover:-translate-y-1 hover:bg-slate-50 hover:shadow-[3px_4px_0_0_rgba(0,0,0,0.15)] dark:border-slate-600 dark:bg-[#111c2e] dark:text-slate-100 dark:shadow-[0_10px_24px_rgba(0,0,0,0.35)] dark:hover:bg-slate-800/70">
                     <Download class="h-4 w-4 text-tm-green" /> <span class="font-medium tracking-wide text-sm">Export</span>
                 </a>
-                <button v-if="permissions.can_create" @click="showImportModal = true" class="flex h-8 items-center gap-2 rounded-lg border-[1.5px] border-black bg-white px-3 text-slate-700 shadow-[2px_2px_0_0_rgba(0,0,0,0.1)] transition-all hover:-translate-y-1 hover:bg-slate-50 hover:shadow-[3px_4px_0_0_rgba(0,0,0,0.15)] dark:border-slate-600 dark:bg-[#111c2e] dark:text-slate-100 dark:shadow-[0_10px_24px_rgba(0,0,0,0.35)] dark:hover:bg-slate-800/70">
+                <button v-if="permissions.can_create && filterForm.trashed !== 'only'" @click="showImportModal = true" class="flex h-8 items-center gap-2 rounded-lg border-[1.5px] border-black bg-white px-3 text-slate-700 shadow-[2px_2px_0_0_rgba(0,0,0,0.1)] transition-all hover:-translate-y-1 hover:bg-slate-50 hover:shadow-[3px_4px_0_0_rgba(0,0,0,0.15)] dark:border-slate-600 dark:bg-[#111c2e] dark:text-slate-100 dark:shadow-[0_10px_24px_rgba(0,0,0,0.35)] dark:hover:bg-slate-800/70">
                     <Upload class="h-4 w-4 text-tm-navy-medium" /> <span class="font-medium tracking-wide text-sm">Import</span>
                 </button>
-                <Link v-if="permissions.can_create" href="/tasks/create">
+                <Link v-if="permissions.can_create && filterForm.trashed !== 'only'" href="/tasks/create">
                     <Button class="flex h-8 items-center gap-2 rounded-lg border-[1.5px] border-black bg-tm-green px-4 text-white shadow-[2px_2px_0_0_rgba(0,0,0,0.2)] transition-all hover:-translate-y-1 hover:bg-tm-green-dark hover:shadow-[3px_4px_0_0_rgba(0,0,0,0.25)] dark:border-emerald-300/40 dark:shadow-[0_12px_28px_rgba(16,185,129,0.2)]">
                         <Plus class="h-4 w-4" /> <span class="font-medium tracking-wide">Task Baru</span>
                     </Button>
@@ -381,7 +392,7 @@ const submitImport = () => {
         </div>
 
         <!-- Bulk Actions Toolbar -->
-        <div v-if="selectedTasks.length > 0" class="flex flex-wrap items-center justify-between gap-4 rounded-[14px] border-[1.5px] border-black bg-tm-navy-pale p-3 shadow-[2px_3px_0_0_rgba(0,0,0,0.1)] dark:border-sky-300/35 dark:bg-sky-400/10 dark:shadow-[0_12px_28px_rgba(0,0,0,0.38)]">
+        <div v-if="selectedTasks.length > 0 && filterForm.trashed !== 'only'" class="flex flex-wrap items-center justify-between gap-4 rounded-[14px] border-[1.5px] border-black bg-tm-navy-pale p-3 shadow-[2px_3px_0_0_rgba(0,0,0,0.1)] dark:border-sky-300/35 dark:bg-sky-400/10 dark:shadow-[0_12px_28px_rgba(0,0,0,0.38)]">
             <div class="flex items-center gap-3">
                 <span class="bg-tm-navy text-white text-xs font-bold px-2 py-1 rounded-md">{{ selectedTasks.length }} terpilih</span>
                 <span class="text-sm font-semibold text-tm-navy dark:text-slate-100">Aksi Massal:</span>
@@ -415,7 +426,7 @@ const submitImport = () => {
                     <thead class="border-b-[2px] border-black/80 bg-tm-navy-pale dark:border-slate-600 dark:bg-slate-800/80">
                         <tr class="text-[11px] font-bold uppercase tracking-wider text-tm-navy dark:text-slate-200">
                             <th class="py-2 px-3 w-10 text-center">
-                                <input type="checkbox" v-model="selectAll" class="h-4 w-4 cursor-pointer rounded border-slate-300 text-tm-navy focus:ring-tm-navy dark:border-slate-600 dark:bg-slate-950/40" />
+                                <input v-if="filterForm.trashed !== 'only'" type="checkbox" v-model="selectAll" class="h-4 w-4 cursor-pointer rounded border-slate-300 text-tm-navy focus:ring-tm-navy dark:border-slate-600 dark:bg-slate-950/40" />
                             </th>
                             <th class="py-2 px-3">Product</th>
                             <th class="py-2 px-3">Faskes</th>
@@ -451,7 +462,7 @@ const submitImport = () => {
                                 </div>
                                 
                                 <div class="flex justify-center items-center h-full">
-                                    <input type="checkbox" v-model="selectedTasks" :value="task.id" class="h-4 w-4 cursor-pointer rounded border-slate-300 text-tm-navy focus:ring-tm-navy dark:border-slate-600 dark:bg-slate-950/40" />
+                                    <input v-if="filterForm.trashed !== 'only'" type="checkbox" v-model="selectedTasks" :value="task.id" class="h-4 w-4 cursor-pointer rounded border-slate-300 text-tm-navy focus:ring-tm-navy dark:border-slate-600 dark:bg-slate-950/40" />
                                 </div>
                             </td>
 
@@ -473,7 +484,8 @@ const submitImport = () => {
                             <td class="py-2 px-3">
                                 <div class="flex flex-col gap-0.5 leading-tight">
                                     <span class="max-w-[220px] cursor-pointer truncate text-[13px] font-bold text-slate-800 transition-colors hover:text-tm-navy-medium dark:text-slate-100 dark:hover:text-sky-300" :title="task.title">
-                                        <Link :href="showTask.url(task.id)">{{ task.title }}</Link>
+                                        <Link v-if="!task.deleted_at" :href="showTask.url(task.id)">{{ task.title }}</Link>
+                                        <span v-else>{{ task.title }}</span>
                                     </span>
                                     <span v-if="task.modul" class="flex items-center gap-1 text-[11px] font-medium text-slate-500 dark:text-slate-400">
                                         <span class="h-1 w-1 rounded-full bg-slate-300 dark:bg-slate-500"></span> {{ task.modul }}
@@ -621,6 +633,9 @@ const submitImport = () => {
                                     </Link>
                                     <Button v-if="task.can_delete" variant="ghost" size="icon" @click="deleteTask(task.id, task.title)" class="h-6 w-6 rounded-lg text-tm-danger transition-colors hover:bg-tm-danger-pale hover:text-red-700 dark:text-red-300 dark:hover:bg-red-400/10 dark:hover:text-red-200">
                                         <Trash2 class="h-3.5 w-3.5" />
+                                    </Button>
+                                    <Button v-if="task.can_restore" variant="ghost" size="icon" @click="restoreTask(task.id, task.title)" class="h-6 w-6 rounded-lg text-tm-green transition-colors hover:bg-tm-green-pale hover:text-tm-green-dark dark:text-emerald-300 dark:hover:bg-emerald-400/10 dark:hover:text-emerald-200">
+                                        <RotateCcw class="h-3.5 w-3.5" />
                                     </Button>
                                 </div>
                             </td>

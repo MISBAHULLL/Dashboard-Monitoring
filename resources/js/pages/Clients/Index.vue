@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
 import { Head, useForm, router } from '@inertiajs/vue3';
-import { Building2, Plus, Edit, Trash2, Search, ChevronLeft, ChevronRight, Eye, FilePlus, FileText } from 'lucide-vue-next';
+import { Building2, Plus, Edit, Trash2, Search, ChevronLeft, ChevronRight, Eye, FilePlus, FileText, RotateCcw } from 'lucide-vue-next';
 import { dashboard } from '@/routes';
 
 // Import komponen UI dari shadcn-vue
@@ -39,8 +39,10 @@ const props = defineProps<{
         tasks_count: number;
         documents_count: number;
         created_at: string;
+        deleted_at?: string | null;
     }>;
     documentTypes: string[];
+    activeTrashed?: boolean;
 }>();
 
 // 2. Setup Breadcrumbs Navigasi
@@ -172,6 +174,12 @@ const deleteClient = (id: number, name: string) => {
     }
 };
 
+const restoreClient = (id: number, name: string) => {
+    if (confirm(`Pulihkan Faskes "${name}"?`)) {
+        router.patch(`/clients/${id}/restore`);
+    }
+};
+
 // === DOKUMEN ===
 const isDocModalOpen = ref(false);
 const selectedClientName = ref('');
@@ -221,12 +229,21 @@ const submitDoc = () => {
                 </h1>
                 <p class="text-sm text-tm-text-secondary mt-1.5 ml-[52px] dark:text-muted-foreground">Kelola data Fasilitas Kesehatan yang menjadi pelanggan Anda.</p>
             </div>
-            <button
-                @click="openAddModal"
-                class="inline-flex items-center gap-2 rounded-[10px] border-2 border-black bg-tm-green px-4 py-2.5 text-sm font-bold text-white shadow-[2px_2px_0px_0px_rgba(0,0,0,0.8)] transition-all hover:-translate-y-0.5 hover:shadow-[3px_4px_0px_0px_rgba(0,0,0,0.8)] active:translate-y-0 active:shadow-[1px_1px_0px_0px_rgba(0,0,0,0.8)] dark:border-border dark:shadow-none"
-            >
-                <Plus class="h-4 w-4" /> Tambah Faskes
-            </button>
+            <div class="flex flex-wrap items-center gap-2">
+                <button
+                    @click="router.visit(activeTrashed ? '/clients' : '/clients?trashed=only')"
+                    class="inline-flex items-center gap-2 rounded-[10px] border-2 border-black bg-white px-4 py-2.5 text-sm font-bold text-tm-navy shadow-[2px_2px_0px_0px_rgba(0,0,0,0.8)] transition-all hover:-translate-y-0.5 hover:bg-tm-navy-pale hover:shadow-[3px_4px_0px_0px_rgba(0,0,0,0.8)] active:translate-y-0 active:shadow-[1px_1px_0px_0px_rgba(0,0,0,0.8)] dark:border-border dark:bg-card dark:text-foreground dark:shadow-none"
+                >
+                    <RotateCcw class="h-4 w-4" /> {{ activeTrashed ? 'Lihat Aktif' : 'Lihat Terhapus' }}
+                </button>
+                <button
+                    v-if="!activeTrashed"
+                    @click="openAddModal"
+                    class="inline-flex items-center gap-2 rounded-[10px] border-2 border-black bg-tm-green px-4 py-2.5 text-sm font-bold text-white shadow-[2px_2px_0px_0px_rgba(0,0,0,0.8)] transition-all hover:-translate-y-0.5 hover:shadow-[3px_4px_0px_0px_rgba(0,0,0,0.8)] active:translate-y-0 active:shadow-[1px_1px_0px_0px_rgba(0,0,0,0.8)] dark:border-border dark:shadow-none"
+                >
+                    <Plus class="h-4 w-4" /> Tambah Faskes
+                </button>
+            </div>
         </div>
         <!-- Filter Bar -->
         <div class="rounded-[14px] border-2 border-black bg-white p-4 shadow-[2px_3px_0px_0px_rgba(0,0,0,0.8)] dark:bg-card dark:border-border dark:shadow-none">
@@ -328,10 +345,10 @@ const submitDoc = () => {
                             <td class="px-4 py-3.5">
                                 <div class="flex items-center gap-1.5">
                                     <span class="text-sm font-semibold text-tm-navy dark:text-foreground">{{ client.documents_count }}</span>
-                                    <button @click="router.visit(`/documents?client_id=${client.id}`)" title="Lihat Dokumen" class="inline-flex h-6 w-6 items-center justify-center rounded-[6px] text-tm-navy-medium transition-colors hover:bg-tm-navy-pale dark:text-foreground dark:hover:bg-secondary">
+                                    <button v-if="!client.deleted_at" @click="router.visit(`/documents?client_id=${client.id}`)" title="Lihat Dokumen" class="inline-flex h-6 w-6 items-center justify-center rounded-[6px] text-tm-navy-medium transition-colors hover:bg-tm-navy-pale dark:text-foreground dark:hover:bg-secondary">
                                         <Eye class="h-3.5 w-3.5" />
                                     </button>
-                                    <button @click="openDocModal(client)" title="Tambah Dokumen" class="inline-flex h-6 w-6 items-center justify-center rounded-[6px] text-tm-green transition-colors hover:bg-tm-green-pale dark:hover:bg-tm-green/10">
+                                    <button v-if="!client.deleted_at" @click="openDocModal(client)" title="Tambah Dokumen" class="inline-flex h-6 w-6 items-center justify-center rounded-[6px] text-tm-green transition-colors hover:bg-tm-green-pale dark:hover:bg-tm-green/10">
                                         <FilePlus class="h-3.5 w-3.5" />
                                     </button>
                                 </div>
@@ -348,10 +365,13 @@ const submitDoc = () => {
                             </td>
                             <td class="px-4 py-3.5 text-right">
                                 <div class="flex items-center justify-end gap-1">
-                                    <button @click="openEditModal(client)" title="Edit" class="inline-flex h-8 w-8 items-center justify-center rounded-[8px] border border-tm-border text-tm-navy-medium transition-all hover:border-tm-navy hover:bg-tm-navy-pale dark:border-border dark:text-foreground dark:hover:bg-secondary">
+                                    <button v-if="client.deleted_at" @click="restoreClient(client.id, client.name)" title="Pulihkan" class="inline-flex h-8 w-8 items-center justify-center rounded-[8px] border border-tm-border text-tm-green transition-all hover:border-tm-green hover:bg-tm-green-pale dark:border-border dark:hover:bg-tm-green/10">
+                                        <RotateCcw class="h-4 w-4" />
+                                    </button>
+                                    <button v-if="!client.deleted_at" @click="openEditModal(client)" title="Edit" class="inline-flex h-8 w-8 items-center justify-center rounded-[8px] border border-tm-border text-tm-navy-medium transition-all hover:border-tm-navy hover:bg-tm-navy-pale dark:border-border dark:text-foreground dark:hover:bg-secondary">
                                         <Edit class="h-4 w-4" />
                                     </button>
-                                    <button @click="deleteClient(client.id, client.name)" title="Hapus" class="inline-flex h-8 w-8 items-center justify-center rounded-[8px] border border-tm-border text-tm-danger transition-all hover:border-tm-danger hover:bg-tm-danger-pale dark:border-border dark:hover:bg-tm-danger/10">
+                                    <button v-if="!client.deleted_at" @click="deleteClient(client.id, client.name)" title="Hapus" class="inline-flex h-8 w-8 items-center justify-center rounded-[8px] border border-tm-border text-tm-danger transition-all hover:border-tm-danger hover:bg-tm-danger-pale dark:border-border dark:hover:bg-tm-danger/10">
                                         <Trash2 class="h-4 w-4" />
                                     </button>
                                 </div>

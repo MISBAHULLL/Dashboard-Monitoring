@@ -15,9 +15,16 @@ class ClientController extends Controller
     {
         $this->authorize('viewAny', Client::class);
 
+        $query = Client::withCount(['tasks', 'documents'])->latest();
+
+        if (request('trashed') === 'only') {
+            $query->onlyTrashed();
+        }
+
         return Inertia::render('Clients/Index', [
-            'clients'       => Client::withCount(['tasks', 'documents'])->latest()->get(),
+            'clients'       => $query->get(),
             'documentTypes' => DocumentType::orderBy('name')->pluck('name'),
+            'activeTrashed' => request('trashed') === 'only',
         ]);
     }
 
@@ -75,8 +82,27 @@ class ClientController extends Controller
 
         ActivityLogger::deleted('client', $client->id, $client->name, "Menghapus faskes '{$client->name}'");
 
-        $client->Delete();
+        $client->delete();
 
         return back()->with('success', 'Faskes / Client berhasil dihapus.');
+    }
+
+    public function restore(int $client)
+    {
+        $client = Client::withTrashed()->findOrFail($client);
+
+        $this->authorize('restore', $client);
+
+        if (! $client->trashed()) {
+            return back()->with('info', 'Faskes / Client ini masih aktif, tidak perlu dipulihkan.');
+        }
+
+        $deletedAt = $client->deleted_at;
+
+        $client->restore();
+
+        ActivityLogger::updated('client', $client->id, $client->name, ['deleted_at' => $deletedAt], ['deleted_at' => null], "Memulihkan faskes '{$client->name}'");
+
+        return back()->with('success', 'Faskes / Client berhasil dipulihkan.');
     }
 }

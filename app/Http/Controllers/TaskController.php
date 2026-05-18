@@ -28,6 +28,10 @@ class TaskController extends Controller
         $user = $request->user();
         $query = Task::with(['client', 'product', 'engineer', 'assignee', 'documents:id,title,type'])->withCount('comments');
 
+        if ($request->input('trashed') === 'only') {
+            $query->onlyTrashed();
+        }
+
         if ($user->isMember()) {
             $query->where('assigned_to', $user->id);
         }
@@ -93,15 +97,16 @@ class TaskController extends Controller
             return [
                 ...$task->toArray(),
                 'comments_count' => $task->comments_count,
-                'can_edit' => $user->can('update', $task),
-                'can_delete' => $user->can('delete', $task),
-                'can_update_status' => $user->can('updateStatus', $task),
+                'can_edit' => ! $task->trashed() && $user->can('update', $task),
+                'can_delete' => ! $task->trashed() && $user->can('delete', $task),
+                'can_restore' => $task->trashed() && $user->can('restore', $task),
+                'can_update_status' => ! $task->trashed() && $user->can('updateStatus', $task),
             ];
         });
 
         return Inertia::render('Tasks/Index', [
             'tasks' => $tasks,
-            'filters' => $request->all(['search', 'product_id', 'client_id', 'engineer_id', 'category', 'status', 'has_link', 'date_from', 'date_to']),
+            'filters' => $request->all(['search', 'product_id', 'client_id', 'engineer_id', 'category', 'status', 'has_link', 'date_from', 'date_to', 'trashed']),
             'permissions' => [
                 'can_create' => $user->can('create', Task::class),
             ],
@@ -317,6 +322,25 @@ class TaskController extends Controller
         $task->delete();
 
         return back()->with('success', 'Task berhasil dihapus.');
+    }
+
+    public function restore(int $task)
+    {
+        $task = Task::withTrashed()->findOrFail($task);
+
+        $this->authorize('restore', $task);
+
+        if (! $task->trashed()) {
+            return back()->with('info', 'Task ini masih aktif, tidak perlu dipulihkan.');
+        }
+
+        $deletedAt = $task->deleted_at;
+
+        $task->restore();
+
+        ActivityLogger::updated('task', $task->id, $task->title, ['deleted_at' => $deletedAt], ['deleted_at' => null], "Memulihkan task '{$task->title}'");
+
+        return back()->with('success', 'Task berhasil dipulihkan.');
     }
 
     public function kanban()

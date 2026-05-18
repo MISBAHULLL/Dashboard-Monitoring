@@ -22,6 +22,10 @@ class DocumentController extends Controller
 
         $query = Document::with(['client:id,name', 'creator:id,name'])->latest();
 
+        if (request('trashed') === 'only') {
+            $query->onlyTrashed();
+        }
+
         if (request('client_id')) {
             $query->where('client_id', request('client_id'));
         }
@@ -36,6 +40,7 @@ class DocumentController extends Controller
             'clients' => $clients,
             'documentTypes' => $documentTypes,
             'activeClientId' => request('client_id') ? (int) request('client_id') : null,
+            'activeTrashed' => request('trashed') === 'only',
         ]);
     }
 
@@ -226,13 +231,27 @@ class DocumentController extends Controller
 
         ActivityLogger::deleted('document', $document->id, $document->title, "Menghapus dokumen '{$document->title}'");
 
-        if ($document->file_path) {
-            Storage::disk('public')->delete($document->file_path);
-        }
-
-        $document->versions()->delete();
         $document->delete();
 
         return back()->with('success', 'Dokumen berhasil dihapus.');
+    }
+
+    public function restore(int $document)
+    {
+        $document = Document::withTrashed()->findOrFail($document);
+
+        $this->authorize('restore', $document);
+
+        if (! $document->trashed()) {
+            return back()->with('info', 'Dokumen ini masih aktif, tidak perlu dipulihkan.');
+        }
+
+        $deletedAt = $document->deleted_at;
+
+        $document->restore();
+
+        ActivityLogger::updated('document', $document->id, $document->title, ['deleted_at' => $deletedAt], ['deleted_at' => null], "Memulihkan dokumen '{$document->title}'");
+
+        return back()->with('success', 'Dokumen berhasil dipulihkan.');
     }
 }

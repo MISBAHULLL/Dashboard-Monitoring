@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head, router, useForm } from '@inertiajs/vue3';
-import { FileText, Plus, Download, Trash2, Eye, Upload, X, File, FolderOpen } from 'lucide-vue-next';
+import { FileText, Plus, Download, Trash2, Eye, Upload, X, File, FolderOpen, RotateCcw } from 'lucide-vue-next';
 import { Button } from '@/components/ui/button';
 import { dashboard } from '@/routes';
 import { ref } from 'vue';
@@ -25,6 +25,7 @@ interface Document {
     client: { id: number; name: string } | null;
     creator: { id: number; name: string } | null;
     created_at: string;
+    deleted_at?: string | null;
 }
 
 interface PaginatedDocuments {
@@ -40,6 +41,7 @@ const props = defineProps<{
     documents: PaginatedDocuments;
     clients?: Array<{ id: number; name: string }>;
     documentTypes: string[];
+    activeTrashed?: boolean;
 }>();
 
 const showModal = ref(false);
@@ -110,6 +112,12 @@ function deleteDocument(id: number, title: string) {
     }
 }
 
+function restoreDocument(id: number, title: string) {
+    if (confirm(`Pulihkan dokumen "${title}"?`)) {
+        router.patch(`/documents/${id}/restore`);
+    }
+}
+
 function formatBytes(bytes: number | null): string {
     if (!bytes) return '-';
     const sizes = ['B', 'KB', 'MB', 'GB'];
@@ -152,13 +160,23 @@ function getTypeColor(type: string): string {
                     <span class="font-semibold text-tm-navy dark:text-foreground">{{ documents.total }}</span> dokumen tersimpan.
                 </p>
             </div>
-            <button
-                @click="openCreate"
-                class="inline-flex items-center gap-2 rounded-[10px] border-2 border-black bg-tm-green px-4 py-2.5 text-sm font-bold text-white shadow-[2px_2px_0px_0px_rgba(0,0,0,0.8)] transition-all hover:-translate-y-0.5 hover:shadow-[3px_4px_0px_0px_rgba(0,0,0,0.8)] active:translate-y-0 active:shadow-[1px_1px_0px_0px_rgba(0,0,0,0.8)] dark:border-border dark:shadow-none"
-            >
-                <Plus class="h-4 w-4" />
-                Tambah Dokumen
-            </button>
+            <div class="flex flex-wrap items-center gap-2">
+                <button
+                    @click="router.visit(activeTrashed ? '/documents' : '/documents?trashed=only')"
+                    class="inline-flex items-center gap-2 rounded-[10px] border-2 border-black bg-white px-4 py-2.5 text-sm font-bold text-tm-navy shadow-[2px_2px_0px_0px_rgba(0,0,0,0.8)] transition-all hover:-translate-y-0.5 hover:bg-tm-navy-pale hover:shadow-[3px_4px_0px_0px_rgba(0,0,0,0.8)] active:translate-y-0 active:shadow-[1px_1px_0px_0px_rgba(0,0,0,0.8)] dark:border-border dark:bg-card dark:text-foreground dark:shadow-none"
+                >
+                    <RotateCcw class="h-4 w-4" />
+                    {{ activeTrashed ? 'Lihat Aktif' : 'Lihat Terhapus' }}
+                </button>
+                <button
+                    v-if="!activeTrashed"
+                    @click="openCreate"
+                    class="inline-flex items-center gap-2 rounded-[10px] border-2 border-black bg-tm-green px-4 py-2.5 text-sm font-bold text-white shadow-[2px_2px_0px_0px_rgba(0,0,0,0.8)] transition-all hover:-translate-y-0.5 hover:shadow-[3px_4px_0px_0px_rgba(0,0,0,0.8)] active:translate-y-0 active:shadow-[1px_1px_0px_0px_rgba(0,0,0,0.8)] dark:border-border dark:shadow-none"
+                >
+                    <Plus class="h-4 w-4" />
+                    Tambah Dokumen
+                </button>
+            </div>
         </div>
 
         <!-- Table Card -->
@@ -168,8 +186,8 @@ function getTypeColor(type: string): string {
                 <div class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-[14px] border-2 border-black bg-tm-navy-pale shadow-[2px_3px_0px_0px_rgba(0,0,0,0.8)] dark:bg-card dark:border-border">
                     <FolderOpen class="h-7 w-7 text-tm-navy dark:text-muted-foreground" />
                 </div>
-                <p class="text-sm font-semibold text-tm-text-secondary dark:text-muted-foreground">Belum ada dokumen.</p>
-                <p class="text-xs text-tm-text-muted mt-1 dark:text-muted-foreground">Klik "Tambah Dokumen" untuk memulai.</p>
+                <p class="text-sm font-semibold text-tm-text-secondary dark:text-muted-foreground">{{ activeTrashed ? 'Tidak ada dokumen terhapus.' : 'Belum ada dokumen.' }}</p>
+                <p v-if="!activeTrashed" class="text-xs text-tm-text-muted mt-1 dark:text-muted-foreground">Klik "Tambah Dokumen" untuk memulai.</p>
             </div>
 
             <!-- Table -->
@@ -225,6 +243,15 @@ function getTypeColor(type: string): string {
                             <div class="flex items-center justify-end gap-1">
                                 <!-- View -->
                                 <button
+                                    v-if="doc.deleted_at"
+                                    @click="restoreDocument(doc.id, doc.title)"
+                                    class="flex h-8 w-8 items-center justify-center rounded-[8px] border border-transparent text-tm-green transition-all hover:border-tm-green/20 hover:bg-tm-green-pale hover:text-[#1E8A54] dark:hover:bg-emerald-950/30 dark:hover:text-emerald-400"
+                                    title="Pulihkan dokumen"
+                                >
+                                    <RotateCcw class="h-4 w-4" />
+                                </button>
+                                <button
+                                    v-if="!doc.deleted_at"
                                     @click="router.visit(`/documents/${doc.id}`)"
                                     class="flex h-8 w-8 items-center justify-center rounded-[8px] border border-transparent text-tm-text-muted transition-all hover:border-tm-navy/20 hover:bg-tm-navy-pale hover:text-tm-navy dark:hover:bg-secondary dark:hover:text-foreground"
                                     title="Lihat detail"
@@ -233,6 +260,7 @@ function getTypeColor(type: string): string {
                                 </button>
                                 <!-- Upload new version -->
                                 <button
+                                    v-if="!doc.deleted_at"
                                     @click="openEdit(doc)"
                                     class="flex h-8 w-8 items-center justify-center rounded-[8px] border border-transparent text-tm-text-muted transition-all hover:border-tm-green/20 hover:bg-tm-green-pale hover:text-[#1E8A54] dark:hover:bg-emerald-950/30 dark:hover:text-emerald-400"
                                     title="Upload versi baru"
@@ -241,7 +269,7 @@ function getTypeColor(type: string): string {
                                 </button>
                                 <!-- Download -->
                                 <a
-                                    v-if="doc.file_path"
+                                    v-if="doc.file_path && !doc.deleted_at"
                                     :href="`/storage/${doc.file_path}`"
                                     target="_blank"
                                     download
@@ -252,6 +280,7 @@ function getTypeColor(type: string): string {
                                 </a>
                                 <!-- Delete -->
                                 <button
+                                    v-if="!doc.deleted_at"
                                     @click="deleteDocument(doc.id, doc.title)"
                                     class="flex h-8 w-8 items-center justify-center rounded-[8px] border border-transparent text-tm-text-muted transition-all hover:border-tm-danger/20 hover:bg-tm-danger-pale hover:text-tm-danger dark:hover:bg-red-950/30 dark:hover:text-red-400"
                                     title="Hapus dokumen"

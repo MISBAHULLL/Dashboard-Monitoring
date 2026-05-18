@@ -32,6 +32,11 @@ class TaskPolicy
         return $user->isAdmin();
     }
 
+    public function restore(User $user, Task $task): bool
+    {
+        return $user->isAdmin();
+    }
+
     public function updateStatus(User $user, Task $task): bool
     {
         return $user->isAdmin() || $task->assigned_to === $user->id;

@@ -31,4 +31,9 @@ class ClientPolicy
     {
         return $user->isAdmin();
     }
+
+    public function restore(User $user, Client $client): bool
+    {
+        return $user->isAdmin();
+    }
 }

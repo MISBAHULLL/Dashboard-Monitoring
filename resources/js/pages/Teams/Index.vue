@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
-import { Head, useForm, usePage } from '@inertiajs/vue3';
-import { UsersRound, Plus, Edit, Trash2 } from 'lucide-vue-next';
+import { Head, router, useForm, usePage } from '@inertiajs/vue3';
+import { UsersRound, Plus, Edit, Trash2, RotateCcw } from 'lucide-vue-next';
 import { dashboard } from '@/routes';
 
 // Import komponen UI
@@ -26,7 +26,9 @@ const props = defineProps<{
         phone: string;
         is_active: boolean;
         users_count?: number; // Menampilkan jumlah anggota tim
+        deleted_at?: string | null;
     }>;
+    activeTrashed?: boolean;
 }>();
 
 // 2. Setup Breadcrumbs
@@ -101,6 +103,12 @@ const deleteTeam = (id: number, name: string) => {
         useForm({}).delete(`/teams/${id}`);
     }
 };
+
+const restoreTeam = (id: number, name: string) => {
+    if (confirm(`Pulihkan tim "${name}"?`)) {
+        router.patch(`/teams/${id}/restore`);
+    }
+};
 </script>
 
 <template>
@@ -119,12 +127,21 @@ const deleteTeam = (id: number, name: string) => {
                 </h1>
                 <p class="text-sm text-tm-text-secondary mt-1.5 ml-[52px] dark:text-muted-foreground">Kelola departemen atau divisi tim internal Anda.</p>
             </div>
-            <button
-                @click="openAddModal"
-                class="inline-flex items-center gap-2 rounded-[10px] border-2 border-black bg-tm-green px-4 py-2.5 text-sm font-bold text-white shadow-[2px_2px_0px_0px_rgba(0,0,0,0.8)] transition-all hover:-translate-y-0.5 hover:shadow-[3px_4px_0px_0px_rgba(0,0,0,0.8)] active:translate-y-0 active:shadow-[1px_1px_0px_0px_rgba(0,0,0,0.8)] dark:border-border dark:shadow-none"
-            >
-                <Plus class="h-4 w-4" /> Tambah Tim
-            </button>
+            <div class="flex flex-wrap items-center gap-2">
+                <button
+                    @click="router.visit(activeTrashed ? '/teams' : '/teams?trashed=only')"
+                    class="inline-flex items-center gap-2 rounded-[10px] border-2 border-black bg-white px-4 py-2.5 text-sm font-bold text-tm-navy shadow-[2px_2px_0px_0px_rgba(0,0,0,0.8)] transition-all hover:-translate-y-0.5 hover:bg-tm-navy-pale hover:shadow-[3px_4px_0px_0px_rgba(0,0,0,0.8)] active:translate-y-0 active:shadow-[1px_1px_0px_0px_rgba(0,0,0,0.8)] dark:border-border dark:bg-card dark:text-foreground dark:shadow-none"
+                >
+                    <RotateCcw class="h-4 w-4" /> {{ activeTrashed ? 'Lihat Aktif' : 'Lihat Terhapus' }}
+                </button>
+                <button
+                    v-if="!activeTrashed"
+                    @click="openAddModal"
+                    class="inline-flex items-center gap-2 rounded-[10px] border-2 border-black bg-tm-green px-4 py-2.5 text-sm font-bold text-white shadow-[2px_2px_0px_0px_rgba(0,0,0,0.8)] transition-all hover:-translate-y-0.5 hover:shadow-[3px_4px_0px_0px_rgba(0,0,0,0.8)] active:translate-y-0 active:shadow-[1px_1px_0px_0px_rgba(0,0,0,0.8)] dark:border-border dark:shadow-none"
+                >
+                    <Plus class="h-4 w-4" /> Tambah Tim
+                </button>
+            </div>
         </div>
 
         <!-- Tabel Data -->
@@ -165,10 +182,13 @@ const deleteTeam = (id: number, name: string) => {
                             </td>
                             <td class="px-4 py-3.5 text-right">
                                 <div class="flex items-center justify-end gap-1">
-                                    <button @click="openEditModal(team)" title="Edit" class="inline-flex h-8 w-8 items-center justify-center rounded-[8px] border border-tm-border text-tm-navy-medium transition-all hover:border-tm-navy hover:bg-tm-navy-pale dark:border-border dark:text-foreground dark:hover:bg-secondary">
+                                    <button v-if="team.deleted_at" @click="restoreTeam(team.id, team.name)" title="Pulihkan" class="inline-flex h-8 w-8 items-center justify-center rounded-[8px] border border-tm-border text-tm-green transition-all hover:border-tm-green hover:bg-tm-green-pale dark:border-border dark:hover:bg-tm-green/10">
+                                        <RotateCcw class="h-4 w-4" />
+                                    </button>
+                                    <button v-if="!team.deleted_at" @click="openEditModal(team)" title="Edit" class="inline-flex h-8 w-8 items-center justify-center rounded-[8px] border border-tm-border text-tm-navy-medium transition-all hover:border-tm-navy hover:bg-tm-navy-pale dark:border-border dark:text-foreground dark:hover:bg-secondary">
                                         <Edit class="h-4 w-4" />
                                     </button>
-                                    <button @click="deleteTeam(team.id, team.name)" title="Hapus" class="inline-flex h-8 w-8 items-center justify-center rounded-[8px] border border-tm-border text-tm-danger transition-all hover:border-tm-danger hover:bg-tm-danger-pale dark:border-border dark:hover:bg-tm-danger/10">
+                                    <button v-if="!team.deleted_at" @click="deleteTeam(team.id, team.name)" title="Hapus" class="inline-flex h-8 w-8 items-center justify-center rounded-[8px] border border-tm-border text-tm-danger transition-all hover:border-tm-danger hover:bg-tm-danger-pale dark:border-border dark:hover:bg-tm-danger/10">
                                         <Trash2 class="h-4 w-4" />
                                     </button>
                                 </div>

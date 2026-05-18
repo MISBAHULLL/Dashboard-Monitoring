@@ -31,4 +31,9 @@ class TeamPolicy
     {
         return $user->isAdmin();
     }
+
+    public function restore(User $user, Team $team): bool
+    {
+        return $user->isAdmin();
+    }
 }

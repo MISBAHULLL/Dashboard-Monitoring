@@ -2,6 +2,7 @@
 
 use App\Models\Client;
 use App\Models\Document;
+use App\Models\DocumentVersion;
 use App\Models\User;
 
 test('guests cannot view documents', function () {
@@ -96,6 +97,43 @@ test('admin can delete a document', function () {
     $this->assertSoftDeleted('documents', ['id' => $doc->id]);
 });
 
+test('admin can restore a deleted document with its version history intact', function () {
+    $admin = User::factory()->admin()->create();
+    $client = Client::factory()->create();
+    $doc = Document::create([
+        'client_id' => $client->id,
+        'title' => 'Restore Me',
+        'type' => 'UAT',
+        'current_version' => 1,
+        'created_by' => $admin->id,
+    ]);
+    $version = DocumentVersion::create([
+        'document_id' => $doc->id,
+        'version_number' => 1,
+        'file_path' => 'documents/example.pdf',
+        'doc_url' => '/storage/documents/example.pdf',
+        'file_size' => 100,
+        'uploaded_by' => $admin->id,
+    ]);
+
+    $this->actingAs($admin)
+        ->delete(route('documents.destroy', $doc))
+        ->assertRedirect();
+
+    $this->assertSoftDeleted('documents', ['id' => $doc->id]);
+    $this->assertDatabaseHas('document_versions', ['id' => $version->id]);
+
+    $this->actingAs($admin)
+        ->patch(route('documents.restore', $doc->id))
+        ->assertRedirect();
+
+    $this->assertDatabaseHas('documents', [
+        'id' => $doc->id,
+        'deleted_at' => null,
+    ]);
+    $this->assertDatabaseHas('document_versions', ['id' => $version->id]);
+});
+
 test('member cannot delete a document', function () {
     $member = User::factory()->member()->create();
     $client = Client::factory()->create();
@@ -109,5 +147,23 @@ test('member cannot delete a document', function () {
 
     $this->actingAs($member)
         ->delete(route('documents.destroy', $doc))
+        ->assertForbidden();
+});
+
+test('member cannot restore a deleted document', function () {
+    $admin = User::factory()->admin()->create();
+    $member = User::factory()->member()->create();
+    $client = Client::factory()->create();
+    $doc = Document::create([
+        'client_id' => $client->id,
+        'title' => 'Member Restore Forbidden',
+        'type' => 'UAT',
+        'current_version' => 1,
+        'created_by' => $admin->id,
+    ]);
+    $doc->delete();
+
+    $this->actingAs($member)
+        ->patch(route('documents.restore', $doc->id))
         ->assertForbidden();
 });

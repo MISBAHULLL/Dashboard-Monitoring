@@ -46,4 +46,9 @@ class DocumentPolicy
     {
         return $user->isAdmin();
     }
+
+    public function restore(User $user, Document $document): bool
+    {
+        return $user->isAdmin();
+    }
 }

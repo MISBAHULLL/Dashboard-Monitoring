@@ -42,6 +42,7 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/tasks/import', [TaskController::class, 'import'])->name('tasks.import');
 
     Route::get('/tasks-kanban', [TaskController::class, 'kanban'])->name('tasks.kanban');
+    Route::patch('/tasks/{task}/restore', [TaskController::class, 'restore'])->name('tasks.restore');
     Route::patch('/tasks/{task}/status', [TaskController::class, 'updateStatus'])->name('tasks.updateStatus');
     Route::post('/tasks/{task}/comments', [TaskCommentController::class, 'store'])->name('tasks.comments.store');
     Route::delete('/tasks/{task}/comments/{comment}', [TaskCommentController::class, 'destroy'])->name('tasks.comments.destroy');
@@ -49,6 +50,7 @@ Route::middleware(['auth'])->group(function () {
     Route::resource('tasks', TaskController::class);
 
     // Documents (File Versioning)
+    Route::patch('/documents/{document}/restore', [DocumentController::class, 'restore'])->name('documents.restore');
     Route::post('/documents/{document}/sync-tasks', [DocumentController::class, 'syncTasks'])->name('documents.syncTasks');
     Route::resource('documents', DocumentController::class)->except(['create', 'edit']);
 
@@ -60,7 +62,9 @@ Route::middleware(['auth'])->group(function () {
 
         // Master Data (Hanya Index, Store, Update, Destroy)
         Route::resource('users', UserController::class)->except(['create', 'show', 'edit']);
+        Route::patch('/teams/{team}/restore', [TeamController::class, 'restore'])->name('teams.restore');
         Route::resource('teams', TeamController::class)->except(['create', 'show', 'edit']);
+        Route::patch('/clients/{client}/restore', [ClientController::class, 'restore'])->name('clients.restore');
         Route::resource('clients', ClientController::class)->except(['create', 'show', 'edit']);
         Route::post('/task-templates', [TaskTemplateController::class, 'store'])->name('task-templates.store');
         Route::delete('/task-templates/{taskTemplate}', [TaskTemplateController::class, 'destroy'])->name('task-templates.destroy');

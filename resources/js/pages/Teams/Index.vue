@@ -6,6 +6,7 @@ import { dashboard } from '@/routes';
 
 // Import komponen UI
 import { Button } from '@/components/ui/button';
+import ConfirmDialog from '@/components/ConfirmDialog.vue';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
@@ -46,6 +47,14 @@ const isModalOpen = ref(false);
 const isEditing = ref(false);
 const editingId = ref<number | null>(null);
 const selectedTeams = ref<number[]>([]);
+const confirmAction = ref({
+    open: false,
+    title: '',
+    description: '',
+    confirmLabel: 'Hapus',
+    variant: 'danger' as 'danger' | 'warning' | 'success' | 'default',
+    onConfirm: () => {},
+});
 
 const selectAllTeams = computed({
     get: () => props.teams.length > 0 && selectedTeams.value.length === props.teams.length,
@@ -111,32 +120,64 @@ const submitForm = () => {
 
 // Hapus Data
 const deleteTeam = (id: number, name: string) => {
-    if (confirm(`Peringatan: Menghapus tim "${name}" bisa berdampak pada user di dalamnya. Yakin?`)) {
-        useForm({}).delete(`/teams/${id}`);
-    }
+    confirmAction.value = {
+        open: true,
+        title: 'Hapus Tim',
+        description: `Tim "${name}" akan dipindahkan ke daftar terhapus dan masih bisa dipulihkan kembali.`,
+        confirmLabel: 'Hapus Tim',
+        variant: 'danger',
+        onConfirm: () => {
+            useForm({}).delete(`/teams/${id}`, {
+                preserveScroll: true,
+                onSuccess: () => {
+                    confirmAction.value.open = false;
+                },
+            });
+        },
+    };
 };
 
 const restoreTeam = (id: number, name: string) => {
-    if (confirm(`Pulihkan tim "${name}"?`)) {
-        router.patch(`/teams/${id}/restore`);
-    }
+    confirmAction.value = {
+        open: true,
+        title: 'Pulihkan Tim',
+        description: `Tim "${name}" akan dikembalikan ke daftar aktif dan bisa digunakan lagi.`,
+        confirmLabel: 'Pulihkan',
+        variant: 'success',
+        onConfirm: () => {
+            router.patch(`/teams/${id}/restore`, {}, {
+                preserveScroll: true,
+                onSuccess: () => {
+                    confirmAction.value.open = false;
+                },
+            });
+        },
+    };
 };
 
 const bulkRestoreTeams = (restoreAll = false) => {
     const total = restoreAll ? props.teams.length : selectedTeams.value.length;
     if (total === 0) return;
 
-    if (confirm(`Pulihkan ${restoreAll ? 'semua' : total} tim terhapus?`)) {
-        router.patch('/teams/bulk-restore', {
-            ids: restoreAll ? [] : selectedTeams.value,
-            restore_all: restoreAll,
-        }, {
-            preserveScroll: true,
-            onSuccess: () => {
-                selectedTeams.value = [];
-            },
-        });
-    }
+    confirmAction.value = {
+        open: true,
+        title: restoreAll ? 'Pulihkan Semua Tim' : 'Pulihkan Tim Terpilih',
+        description: `${restoreAll ? 'Semua' : total} tim terhapus akan dikembalikan ke daftar aktif.`,
+        confirmLabel: 'Pulihkan',
+        variant: 'success',
+        onConfirm: () => {
+            router.patch('/teams/bulk-restore', {
+                ids: restoreAll ? [] : selectedTeams.value,
+                restore_all: restoreAll,
+            }, {
+                preserveScroll: true,
+                onSuccess: () => {
+                    selectedTeams.value = [];
+                    confirmAction.value.open = false;
+                },
+            });
+        },
+    };
 };
 </script>
 
@@ -308,4 +349,16 @@ const bulkRestoreTeams = (restoreAll = false) => {
             </DialogContent>
         </Dialog>
     </div>
+
+    <ConfirmDialog
+        :open="confirmAction.open"
+        :title="confirmAction.title"
+        :description="confirmAction.description"
+        :confirm-label="confirmAction.confirmLabel"
+        cancel-label="Batal"
+        :variant="confirmAction.variant"
+        @update:open="(val) => confirmAction.open = val"
+        @confirm="confirmAction.onConfirm"
+        @cancel="confirmAction.open = false"
+    />
 </template>

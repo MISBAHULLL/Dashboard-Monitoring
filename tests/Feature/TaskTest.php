@@ -250,6 +250,41 @@ test('member cannot restore a deleted task', function () {
         ->assertForbidden();
 });
 
+test('admin can permanently delete a soft deleted task', function () {
+    $admin = User::factory()->admin()->create();
+    $task = Task::factory()->create();
+    $task->delete();
+
+    $this->actingAs($admin)
+        ->delete(route('tasks.forceDestroy', $task->id))
+        ->assertRedirect();
+
+    $this->assertDatabaseMissing('tasks', ['id' => $task->id]);
+});
+
+test('admin cannot permanently delete an active task directly', function () {
+    $admin = User::factory()->admin()->create();
+    $task = Task::factory()->create();
+
+    $this->actingAs($admin)
+        ->delete(route('tasks.forceDestroy', $task->id))
+        ->assertRedirect();
+
+    $this->assertDatabaseHas('tasks', ['id' => $task->id]);
+});
+
+test('member cannot permanently delete a soft deleted task', function () {
+    $member = User::factory()->member()->create();
+    $task = Task::factory()->assignedTo($member)->create();
+    $task->delete();
+
+    $this->actingAs($member)
+        ->delete(route('tasks.forceDestroy', $task->id))
+        ->assertForbidden();
+
+    $this->assertSoftDeleted('tasks', ['id' => $task->id]);
+});
+
 test('admin can bulk restore selected deleted tasks', function () {
     $admin = User::factory()->admin()->create();
     $tasks = Task::factory()->count(3)->create();
@@ -288,6 +323,38 @@ test('admin can bulk restore all deleted tasks', function () {
             'id' => $task->id,
             'deleted_at' => null,
         ]);
+    }
+});
+
+test('admin can permanently delete selected soft deleted tasks', function () {
+    $admin = User::factory()->admin()->create();
+    $tasks = Task::factory()->count(3)->create();
+    $tasks->each->delete();
+
+    $this->actingAs($admin)
+        ->delete(route('tasks.bulkForceDestroy'), [
+            'ids' => $tasks->take(2)->pluck('id')->all(),
+        ])
+        ->assertRedirect();
+
+    $this->assertDatabaseMissing('tasks', ['id' => $tasks[0]->id]);
+    $this->assertDatabaseMissing('tasks', ['id' => $tasks[1]->id]);
+    $this->assertSoftDeleted('tasks', ['id' => $tasks[2]->id]);
+});
+
+test('admin can permanently delete all soft deleted tasks', function () {
+    $admin = User::factory()->admin()->create();
+    $tasks = Task::factory()->count(3)->create();
+    $tasks->each->delete();
+
+    $this->actingAs($admin)
+        ->delete(route('tasks.bulkForceDestroy'), [
+            'delete_all' => true,
+        ])
+        ->assertRedirect();
+
+    foreach ($tasks as $task) {
+        $this->assertDatabaseMissing('tasks', ['id' => $task->id]);
     }
 });
 

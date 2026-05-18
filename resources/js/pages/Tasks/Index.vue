@@ -218,6 +218,24 @@ const restoreTask = (id: number, title: string) => {
     };
 };
 
+const forceDeleteTask = (id: number, title: string) => {
+    confirmAction.value = {
+        open: true,
+        title: 'Hapus Permanen Task',
+        description: `Task "${title}" akan dihapus permanen dan tidak bisa dipulihkan lagi.`,
+        confirmLabel: 'Hapus Permanen',
+        variant: 'danger',
+        onConfirm: () => {
+            useForm({}).delete(`/tasks/${id}/force`, {
+                preserveScroll: true,
+                onSuccess: () => {
+                    confirmAction.value.open = false;
+                },
+            });
+        },
+    };
+};
+
 const bulkRestoreTasks = (restoreAll = false) => {
     const total = restoreAll ? props.tasks.total : selectedTasks.value.length;
     if (total === 0) return;
@@ -233,6 +251,31 @@ const bulkRestoreTasks = (restoreAll = false) => {
                 ids: restoreAll ? [] : selectedTasks.value,
                 restore_all: restoreAll,
             }).patch('/tasks/bulk-restore', {
+                preserveScroll: true,
+                onSuccess: () => {
+                    selectedTasks.value = [];
+                    confirmAction.value.open = false;
+                },
+            });
+        },
+    };
+};
+
+const bulkForceDeleteTasks = (deleteAll = false) => {
+    const total = deleteAll ? props.tasks.total : selectedTasks.value.length;
+    if (total === 0) return;
+
+    confirmAction.value = {
+        open: true,
+        title: deleteAll ? 'Hapus Permanen Semua Task' : 'Hapus Permanen Task Terpilih',
+        description: `${deleteAll ? 'Semua' : total} task terhapus akan dihapus permanen dan tidak bisa dipulihkan lagi.`,
+        confirmLabel: 'Hapus Permanen',
+        variant: 'danger',
+        onConfirm: () => {
+            useForm({
+                ids: deleteAll ? [] : selectedTasks.value,
+                delete_all: deleteAll,
+            }).delete('/tasks/bulk-force-delete', {
                 preserveScroll: true,
                 onSuccess: () => {
                     selectedTasks.value = [];
@@ -312,6 +355,9 @@ const submitImport = () => {
                 </button>
                 <button v-if="filterForm.trashed === 'only' && tasks.total > 0" @click="bulkRestoreTasks(true)" class="flex h-8 items-center gap-2 rounded-lg border-[1.5px] border-black bg-tm-green px-3 text-white shadow-[2px_2px_0_0_rgba(0,0,0,0.16)] transition-all hover:-translate-y-1 hover:bg-tm-green-dark hover:shadow-[3px_4px_0_0_rgba(0,0,0,0.2)] dark:border-emerald-300/40 dark:shadow-[0_12px_28px_rgba(16,185,129,0.2)]">
                     <RotateCcw class="h-4 w-4" /> <span class="font-medium tracking-wide text-sm">Restore Semua</span>
+                </button>
+                <button v-if="filterForm.trashed === 'only' && tasks.total > 0" @click="bulkForceDeleteTasks(true)" class="flex h-8 items-center gap-2 rounded-lg border-[1.5px] border-black bg-tm-danger px-3 text-white shadow-[2px_2px_0_0_rgba(0,0,0,0.16)] transition-all hover:-translate-y-1 hover:bg-red-600 hover:shadow-[3px_4px_0_0_rgba(0,0,0,0.2)] dark:border-red-300/40 dark:shadow-[0_12px_28px_rgba(239,68,68,0.2)]">
+                    <Trash2 class="h-4 w-4" /> <span class="font-medium tracking-wide text-sm">Hapus Semua</span>
                 </button>
                 <a v-if="filterForm.trashed !== 'only'" :href="exportUrl" target="_blank" class="flex h-8 items-center gap-2 rounded-lg border-[1.5px] border-black bg-white px-3 text-slate-700 shadow-[2px_2px_0_0_rgba(0,0,0,0.1)] transition-all hover:-translate-y-1 hover:bg-slate-50 hover:shadow-[3px_4px_0_0_rgba(0,0,0,0.15)] dark:border-slate-600 dark:bg-[#111c2e] dark:text-slate-100 dark:shadow-[0_10px_24px_rgba(0,0,0,0.35)] dark:hover:bg-slate-800/70">
                     <Download class="h-4 w-4 text-tm-green" /> <span class="font-medium tracking-wide text-sm">Export</span>
@@ -446,6 +492,9 @@ const submitImport = () => {
             <div v-if="filterForm.trashed === 'only'" class="flex items-center gap-3 flex-wrap">
                 <Button @click="bulkRestoreTasks(false)" size="sm" class="h-8 bg-tm-green text-xs hover:bg-tm-green-dark">
                     <RotateCcw class="h-3.5 w-3.5 mr-1.5" /> Pulihkan Terpilih
+                </Button>
+                <Button @click="bulkForceDeleteTasks(false)" variant="destructive" size="sm" class="h-8 bg-tm-danger text-xs hover:bg-red-600">
+                    <Trash2 class="h-3.5 w-3.5 mr-1.5" /> Hapus Permanen
                 </Button>
             </div>
             <div v-else class="flex items-center gap-3 flex-wrap">
@@ -687,6 +736,9 @@ const submitImport = () => {
                                     </Button>
                                     <Button v-if="task.can_restore" variant="ghost" size="icon" @click="restoreTask(task.id, task.title)" class="h-6 w-6 rounded-lg text-tm-green transition-colors hover:bg-tm-green-pale hover:text-tm-green-dark dark:text-emerald-300 dark:hover:bg-emerald-400/10 dark:hover:text-emerald-200">
                                         <RotateCcw class="h-3.5 w-3.5" />
+                                    </Button>
+                                    <Button v-if="task.can_force_delete" variant="ghost" size="icon" @click="forceDeleteTask(task.id, task.title)" class="h-6 w-6 rounded-lg text-tm-danger transition-colors hover:bg-tm-danger-pale hover:text-red-700 dark:text-red-300 dark:hover:bg-red-400/10 dark:hover:text-red-200">
+                                        <Trash2 class="h-3.5 w-3.5" />
                                     </Button>
                                 </div>
                             </td>

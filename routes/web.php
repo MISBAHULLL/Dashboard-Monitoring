@@ -43,7 +43,9 @@ Route::middleware(['auth'])->group(function () {
 
     Route::get('/tasks-kanban', [TaskController::class, 'kanban'])->name('tasks.kanban');
     Route::patch('/tasks/bulk-restore', [TaskController::class, 'bulkRestore'])->name('tasks.bulkRestore');
+    Route::delete('/tasks/bulk-force-delete', [TaskController::class, 'bulkForceDestroy'])->name('tasks.bulkForceDestroy');
     Route::patch('/tasks/{task}/restore', [TaskController::class, 'restore'])->name('tasks.restore');
+    Route::delete('/tasks/{task}/force', [TaskController::class, 'forceDestroy'])->name('tasks.forceDestroy');
     Route::patch('/tasks/{task}/status', [TaskController::class, 'updateStatus'])->name('tasks.updateStatus');
     Route::post('/tasks/{task}/comments', [TaskCommentController::class, 'store'])->name('tasks.comments.store');
     Route::delete('/tasks/{task}/comments/{comment}', [TaskCommentController::class, 'destroy'])->name('tasks.comments.destroy');

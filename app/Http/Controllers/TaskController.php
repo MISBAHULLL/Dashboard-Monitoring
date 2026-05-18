@@ -100,6 +100,7 @@ class TaskController extends Controller
                 'can_edit' => ! $task->trashed() && $user->can('update', $task),
                 'can_delete' => ! $task->trashed() && $user->can('delete', $task),
                 'can_restore' => $task->trashed() && $user->can('restore', $task),
+                'can_force_delete' => $task->trashed() && $user->can('forceDelete', $task),
                 'can_update_status' => ! $task->trashed() && $user->can('updateStatus', $task),
             ];
         });
@@ -343,6 +344,23 @@ class TaskController extends Controller
         return back()->with('success', 'Task berhasil dipulihkan.');
     }
 
+    public function forceDestroy(int $task)
+    {
+        $task = Task::withTrashed()->findOrFail($task);
+
+        $this->authorize('forceDelete', $task);
+
+        if (! $task->trashed()) {
+            return back()->with('error', 'Task aktif harus dihapus biasa dulu sebelum dihapus permanen.');
+        }
+
+        ActivityLogger::deleted('task', $task->id, $task->title, "Menghapus permanen task '{$task->title}'");
+
+        $task->forceDelete();
+
+        return back()->with('success', 'Task berhasil dihapus permanen.');
+    }
+
     public function bulkRestore(Request $request)
     {
         $this->authorize('restoreAny', Task::class);
@@ -372,6 +390,35 @@ class TaskController extends Controller
         }
 
         return back()->with('success', "{$tasks->count()} task berhasil dipulihkan.");
+    }
+
+    public function bulkForceDestroy(Request $request)
+    {
+        $this->authorize('forceDeleteAny', Task::class);
+
+        $validated = $request->validate([
+            'ids' => ['nullable', 'array'],
+            'ids.*' => ['integer', 'exists:tasks,id'],
+            'delete_all' => ['nullable', 'boolean'],
+        ]);
+
+        $deleteAll = $request->boolean('delete_all');
+        $ids = $validated['ids'] ?? [];
+
+        if (! $deleteAll && $ids === []) {
+            return back()->with('error', 'Pilih minimal satu task untuk dihapus permanen.');
+        }
+
+        $tasks = Task::onlyTrashed()
+            ->when(! $deleteAll, fn ($query) => $query->whereIn('id', $ids))
+            ->get();
+
+        foreach ($tasks as $task) {
+            ActivityLogger::deleted('task', $task->id, $task->title, "Menghapus permanen task '{$task->title}' secara massal");
+            $task->forceDelete();
+        }
+
+        return back()->with('success', "{$tasks->count()} task berhasil dihapus permanen.");
     }
 
     public function kanban()

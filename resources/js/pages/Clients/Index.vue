@@ -6,6 +6,7 @@ import { dashboard } from '@/routes';
 
 // Import komponen UI dari shadcn-vue
 import { Button } from '@/components/ui/button';
+import ConfirmDialog from '@/components/ConfirmDialog.vue';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -60,6 +61,14 @@ const isModalOpen = ref(false);
 const isEditing = ref(false);
 const editingId = ref<number | null>(null);
 const selectedClients = ref<number[]>([]);
+const confirmAction = ref({
+    open: false,
+    title: '',
+    description: '',
+    confirmLabel: 'Hapus',
+    variant: 'danger' as 'danger' | 'warning' | 'success' | 'default',
+    onConfirm: () => {},
+});
 
 // Filter & Pagination
 const filterCity = ref('all');
@@ -181,32 +190,64 @@ const submitForm = () => {
 
 // Fungsi Hapus Data
 const deleteClient = (id: number, name: string) => {
-    if (confirm(`Apakah Anda yakin ingin menghapus Faskes "${name}"?`)) {
-        useForm({}).delete(`/clients/${id}`);
-    }
+    confirmAction.value = {
+        open: true,
+        title: 'Hapus Faskes',
+        description: `Faskes "${name}" akan dipindahkan ke daftar terhapus dan masih bisa dipulihkan kembali.`,
+        confirmLabel: 'Hapus Faskes',
+        variant: 'danger',
+        onConfirm: () => {
+            useForm({}).delete(`/clients/${id}`, {
+                preserveScroll: true,
+                onSuccess: () => {
+                    confirmAction.value.open = false;
+                },
+            });
+        },
+    };
 };
 
 const restoreClient = (id: number, name: string) => {
-    if (confirm(`Pulihkan Faskes "${name}"?`)) {
-        router.patch(`/clients/${id}/restore`);
-    }
+    confirmAction.value = {
+        open: true,
+        title: 'Pulihkan Faskes',
+        description: `Faskes "${name}" akan dikembalikan ke daftar aktif dan bisa digunakan lagi.`,
+        confirmLabel: 'Pulihkan',
+        variant: 'success',
+        onConfirm: () => {
+            router.patch(`/clients/${id}/restore`, {}, {
+                preserveScroll: true,
+                onSuccess: () => {
+                    confirmAction.value.open = false;
+                },
+            });
+        },
+    };
 };
 
 const bulkRestoreClients = (restoreAll = false) => {
     const total = restoreAll ? props.clients.length : selectedClients.value.length;
     if (total === 0) return;
 
-    if (confirm(`Pulihkan ${restoreAll ? 'semua' : total} faskes terhapus?`)) {
-        router.patch('/clients/bulk-restore', {
-            ids: restoreAll ? [] : selectedClients.value,
-            restore_all: restoreAll,
-        }, {
-            preserveScroll: true,
-            onSuccess: () => {
-                selectedClients.value = [];
-            },
-        });
-    }
+    confirmAction.value = {
+        open: true,
+        title: restoreAll ? 'Pulihkan Semua Faskes' : 'Pulihkan Faskes Terpilih',
+        description: `${restoreAll ? 'Semua' : total} faskes terhapus akan dikembalikan ke daftar aktif.`,
+        confirmLabel: 'Pulihkan',
+        variant: 'success',
+        onConfirm: () => {
+            router.patch('/clients/bulk-restore', {
+                ids: restoreAll ? [] : selectedClients.value,
+                restore_all: restoreAll,
+            }, {
+                preserveScroll: true,
+                onSuccess: () => {
+                    selectedClients.value = [];
+                    confirmAction.value.open = false;
+                },
+            });
+        },
+    };
 };
 
 // === DOKUMEN ===
@@ -604,4 +645,16 @@ const submitDoc = () => {
             </DialogContent>
         </Dialog>
     </div>
+
+    <ConfirmDialog
+        :open="confirmAction.open"
+        :title="confirmAction.title"
+        :description="confirmAction.description"
+        :confirm-label="confirmAction.confirmLabel"
+        cancel-label="Batal"
+        :variant="confirmAction.variant"
+        @update:open="(val) => confirmAction.open = val"
+        @confirm="confirmAction.onConfirm"
+        @cancel="confirmAction.open = false"
+    />
 </template>

@@ -1,13 +1,19 @@
 <script setup lang="ts">
 import { Form, Head } from '@inertiajs/vue3';
-import { ShieldCheck } from 'lucide-vue-next';
+import {
+    CheckCircle2,
+    KeyRound,
+    LockKeyhole,
+    Save,
+    ShieldCheck,
+    ShieldOff,
+} from 'lucide-vue-next';
 import { onUnmounted, ref } from 'vue';
 import { update as securityUpdate } from '@/routes/user-password';
 
 const SecurityController = {
     update: securityUpdate,
 };
-import Heading from '@/components/Heading.vue';
 import InputError from '@/components/InputError.vue';
 import PasswordInput from '@/components/PasswordInput.vue';
 import TwoFactorRecoveryCodes from '@/components/TwoFactorRecoveryCodes.vue';
@@ -53,133 +59,300 @@ onUnmounted(() => clearTwoFactorAuthData());
     <h1 class="sr-only">Security settings</h1>
 
     <div class="space-y-6">
-        <Heading
-            variant="small"
-            title="Update password"
-            description="Ensure your account is using a long, random password to stay secure"
-        />
-
-        <Form
-            v-bind="SecurityController.update.form()"
-            :options="{
-                preserveScroll: true,
-            }"
-            reset-on-success
-            :reset-on-error="[
-                'password',
-                'password_confirmation',
-                'current_password',
-            ]"
-            class="space-y-6"
-            v-slot="{ errors, processing }"
+        <section
+            class="overflow-hidden rounded-[18px] border-2 border-black bg-white shadow-[3px_5px_0_0_rgba(0,0,0,0.18)] dark:border-slate-700 dark:bg-[#111c2e] dark:shadow-[0_18px_44px_rgba(0,0,0,0.42)]"
         >
-            <div class="grid gap-2">
-                <Label for="current_password">Current password</Label>
-                <PasswordInput
-                    id="current_password"
-                    name="current_password"
-                    class="mt-1 block w-full"
-                    autocomplete="current-password"
-                    placeholder="Current password"
-                />
-                <InputError :message="errors.current_password" />
-            </div>
-
-            <div class="grid gap-2">
-                <Label for="password">New password</Label>
-                <PasswordInput
-                    id="password"
-                    name="password"
-                    class="mt-1 block w-full"
-                    autocomplete="new-password"
-                    placeholder="New password"
-                />
-                <InputError :message="errors.password" />
-            </div>
-
-            <div class="grid gap-2">
-                <Label for="password_confirmation">Confirm password</Label>
-                <PasswordInput
-                    id="password_confirmation"
-                    name="password_confirmation"
-                    class="mt-1 block w-full"
-                    autocomplete="new-password"
-                    placeholder="Confirm password"
-                />
-                <InputError :message="errors.password_confirmation" />
-            </div>
-
-            <div class="flex items-center gap-4">
-                <Button
-                    :disabled="processing"
-                    data-test="update-password-button"
-                >
-                    Save password
-                </Button>
-            </div>
-        </Form>
-    </div>
-
-    <div v-if="canManageTwoFactor" class="space-y-6">
-        <Heading
-            variant="small"
-            title="Two-factor authentication"
-            description="Manage your two-factor authentication settings"
-        />
-
-        <div
-            v-if="!twoFactorEnabled"
-            class="flex flex-col items-start justify-start space-y-4"
-        >
-            <p class="text-sm text-muted-foreground">
-                When you enable two-factor authentication, you will be prompted
-                for a secure pin during login. This pin can be retrieved from a
-                TOTP-supported application on your phone.
-            </p>
-
-            <div>
-                <Button v-if="hasSetupData" @click="showSetupModal = true">
-                    <ShieldCheck />Continue setup
-                </Button>
-                <Form
-                    v-else
-                    v-bind="enable.form()"
-                    @success="showSetupModal = true"
-                    #default="{ processing }"
-                >
-                    <Button type="submit" :disabled="processing">
-                        Enable 2FA
-                    </Button>
-                </Form>
-            </div>
-        </div>
-
-        <div v-else class="flex flex-col items-start justify-start space-y-4">
-            <p class="text-sm text-muted-foreground">
-                You will be prompted for a secure, random pin during login,
-                which you can retrieve from the TOTP-supported application on
-                your phone.
-            </p>
-
-            <div class="relative inline">
-                <Form v-bind="disable.form()" #default="{ processing }">
-                    <Button
-                        variant="destructive"
-                        type="submit"
-                        :disabled="processing"
+            <div
+                class="flex flex-col gap-4 border-b-2 border-black bg-tm-navy-pale px-5 py-5 sm:flex-row sm:items-center sm:justify-between dark:border-slate-700 dark:bg-slate-800/70"
+            >
+                <div class="flex items-center gap-4">
+                    <div
+                        class="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border-2 border-black bg-white text-tm-navy shadow-[2px_2px_0_0_rgba(0,0,0,0.18)] dark:border-slate-600 dark:bg-slate-950/40 dark:text-slate-100"
                     >
-                        Disable 2FA
-                    </Button>
-                </Form>
+                        <LockKeyhole class="h-6 w-6" />
+                    </div>
+                    <div>
+                        <h2
+                            class="text-xl font-extrabold text-tm-navy dark:text-slate-100"
+                        >
+                            Keamanan Akun
+                        </h2>
+                        <p
+                            class="mt-1 text-sm text-tm-text-secondary dark:text-slate-400"
+                        >
+                            Kelola password dan proteksi tambahan untuk akun
+                            Anda.
+                        </p>
+                    </div>
+                </div>
+                <div
+                    class="inline-flex w-fit items-center gap-2 rounded-xl border border-tm-navy/15 bg-white px-3 py-2 text-xs font-bold text-tm-navy shadow-sm dark:border-slate-600 dark:bg-slate-950/40 dark:text-slate-200"
+                >
+                    <ShieldCheck class="h-4 w-4 text-tm-green" />
+                    Pengaturan sensitif
+                </div>
             </div>
 
-            <TwoFactorRecoveryCodes />
-        </div>
+            <div class="p-5">
+                <div>
+                    <h3
+                        class="text-base font-extrabold text-tm-navy dark:text-slate-100"
+                    >
+                        Update Password
+                    </h3>
+                    <p
+                        class="mt-1 text-sm text-tm-text-secondary dark:text-slate-400"
+                    >
+                        Gunakan password yang panjang dan unik untuk menjaga
+                        akun tetap aman.
+                    </p>
+                </div>
 
-        <TwoFactorSetupModal
-            v-model:isOpen="showSetupModal"
-            :requiresConfirmation="requiresConfirmation"
-            :twoFactorEnabled="twoFactorEnabled"
-        />
+                <Form
+                    v-bind="SecurityController.update.form()"
+                    :options="{
+                        preserveScroll: true,
+                    }"
+                    reset-on-success
+                    :reset-on-error="[
+                        'password',
+                        'password_confirmation',
+                        'current_password',
+                    ]"
+                    class="mt-5 space-y-5"
+                    v-slot="{ errors, processing }"
+                >
+                    <div class="grid gap-5">
+                        <div class="grid gap-2">
+                            <Label
+                                for="current_password"
+                                class="text-xs font-bold tracking-wide text-tm-navy uppercase dark:text-slate-200"
+                            >
+                                Password Saat Ini
+                            </Label>
+                            <div class="relative">
+                                <KeyRound
+                                    class="pointer-events-none absolute top-1/2 left-3 z-10 h-4 w-4 -translate-y-1/2 text-tm-text-muted dark:text-slate-500"
+                                />
+                                <PasswordInput
+                                    id="current_password"
+                                    name="current_password"
+                                    class="h-11 rounded-xl border-[1.5px] border-black bg-white pr-11 pl-9 text-sm font-semibold text-tm-navy shadow-[1px_2px_0_0_rgba(0,0,0,0.08)] focus-visible:ring-tm-green dark:border-slate-600 dark:bg-slate-950/30 dark:text-slate-100"
+                                    autocomplete="current-password"
+                                    placeholder="Masukkan password saat ini"
+                                />
+                            </div>
+                            <InputError :message="errors.current_password" />
+                        </div>
+
+                        <div class="grid gap-5 md:grid-cols-2">
+                            <div class="grid gap-2">
+                                <Label
+                                    for="password"
+                                    class="text-xs font-bold tracking-wide text-tm-navy uppercase dark:text-slate-200"
+                                >
+                                    Password Baru
+                                </Label>
+                                <div class="relative">
+                                    <KeyRound
+                                        class="pointer-events-none absolute top-1/2 left-3 z-10 h-4 w-4 -translate-y-1/2 text-tm-text-muted dark:text-slate-500"
+                                    />
+                                    <PasswordInput
+                                        id="password"
+                                        name="password"
+                                        class="h-11 rounded-xl border-[1.5px] border-black bg-white pr-11 pl-9 text-sm font-semibold text-tm-navy shadow-[1px_2px_0_0_rgba(0,0,0,0.08)] focus-visible:ring-tm-green dark:border-slate-600 dark:bg-slate-950/30 dark:text-slate-100"
+                                        autocomplete="new-password"
+                                        placeholder="Masukkan password baru"
+                                    />
+                                </div>
+                                <InputError :message="errors.password" />
+                            </div>
+
+                            <div class="grid gap-2">
+                                <Label
+                                    for="password_confirmation"
+                                    class="text-xs font-bold tracking-wide text-tm-navy uppercase dark:text-slate-200"
+                                >
+                                    Konfirmasi Password
+                                </Label>
+                                <div class="relative">
+                                    <KeyRound
+                                        class="pointer-events-none absolute top-1/2 left-3 z-10 h-4 w-4 -translate-y-1/2 text-tm-text-muted dark:text-slate-500"
+                                    />
+                                    <PasswordInput
+                                        id="password_confirmation"
+                                        name="password_confirmation"
+                                        class="h-11 rounded-xl border-[1.5px] border-black bg-white pr-11 pl-9 text-sm font-semibold text-tm-navy shadow-[1px_2px_0_0_rgba(0,0,0,0.08)] focus-visible:ring-tm-green dark:border-slate-600 dark:bg-slate-950/30 dark:text-slate-100"
+                                        autocomplete="new-password"
+                                        placeholder="Ulangi password baru"
+                                    />
+                                </div>
+                                <InputError
+                                    :message="errors.password_confirmation"
+                                />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div
+                        class="flex items-center justify-end border-t border-slate-100 pt-4 dark:border-slate-700/80"
+                    >
+                        <Button
+                            :disabled="processing"
+                            data-test="update-password-button"
+                            class="inline-flex h-10 items-center gap-2 rounded-xl border-[1.5px] border-black bg-tm-green px-4 text-sm font-bold text-white shadow-[2px_2px_0_0_rgba(0,0,0,0.18)] transition-all hover:-translate-y-0.5 hover:bg-tm-green-dark hover:shadow-[3px_3px_0_0_rgba(0,0,0,0.2)] dark:border-emerald-300/40"
+                        >
+                            <Save class="h-4 w-4" />
+                            {{
+                                processing ? 'Menyimpan...' : 'Simpan Password'
+                            }}
+                        </Button>
+                    </div>
+                </Form>
+            </div>
+        </section>
+
+        <section
+            v-if="canManageTwoFactor"
+            class="overflow-hidden rounded-[18px] border-2 border-black bg-white shadow-[3px_5px_0_0_rgba(0,0,0,0.18)] dark:border-slate-700 dark:bg-[#111c2e] dark:shadow-[0_18px_44px_rgba(0,0,0,0.42)]"
+        >
+            <div
+                class="flex flex-col gap-4 border-b-2 border-black bg-tm-navy-pale px-5 py-5 sm:flex-row sm:items-center sm:justify-between dark:border-slate-700 dark:bg-slate-800/70"
+            >
+                <div class="flex items-center gap-4">
+                    <div
+                        class="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border-2 border-black bg-white text-tm-navy shadow-[2px_2px_0_0_rgba(0,0,0,0.18)] dark:border-slate-600 dark:bg-slate-950/40 dark:text-slate-100"
+                    >
+                        <ShieldCheck class="h-6 w-6" />
+                    </div>
+                    <div>
+                        <h2
+                            class="text-xl font-extrabold text-tm-navy dark:text-slate-100"
+                        >
+                            Two-Factor Authentication
+                        </h2>
+                        <p
+                            class="mt-1 text-sm text-tm-text-secondary dark:text-slate-400"
+                        >
+                            Tambahkan verifikasi TOTP saat login.
+                        </p>
+                    </div>
+                </div>
+                <div
+                    :class="[
+                        'inline-flex w-fit items-center gap-2 rounded-xl border px-3 py-2 text-xs font-bold shadow-sm',
+                        twoFactorEnabled
+                            ? 'border-tm-green/30 bg-tm-green-pale text-tm-green-dark dark:border-emerald-300/40 dark:bg-emerald-400/10 dark:text-emerald-200'
+                            : 'border-amber-300/50 bg-amber-50 text-amber-700 dark:border-amber-300/30 dark:bg-amber-400/10 dark:text-amber-200',
+                    ]"
+                >
+                    <CheckCircle2 v-if="twoFactorEnabled" class="h-4 w-4" />
+                    <ShieldOff v-else class="h-4 w-4" />
+                    {{ twoFactorEnabled ? 'Aktif' : 'Belum aktif' }}
+                </div>
+            </div>
+
+            <div class="space-y-5 p-5">
+                <div
+                    v-if="!twoFactorEnabled"
+                    class="rounded-2xl border-[1.5px] border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-950/30"
+                >
+                    <div
+                        class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between"
+                    >
+                        <div class="max-w-2xl">
+                            <h3
+                                class="text-base font-extrabold text-tm-navy dark:text-slate-100"
+                            >
+                                Proteksi login belum aktif
+                            </h3>
+                            <p
+                                class="mt-1 text-sm leading-relaxed text-tm-text-secondary dark:text-slate-400"
+                            >
+                                Setelah diaktifkan, Anda akan diminta kode aman
+                                dari aplikasi authenticator setiap kali login.
+                            </p>
+                        </div>
+
+                        <Button
+                            v-if="hasSetupData"
+                            @click="showSetupModal = true"
+                            class="inline-flex h-10 items-center gap-2 rounded-xl border-[1.5px] border-black bg-tm-navy px-4 text-sm font-bold text-white shadow-[2px_2px_0_0_rgba(0,0,0,0.18)] transition-all hover:-translate-y-0.5 hover:bg-tm-navy-medium"
+                        >
+                            <ShieldCheck class="h-4 w-4" />
+                            Lanjutkan Setup
+                        </Button>
+                        <Form
+                            v-else
+                            v-bind="enable.form()"
+                            @success="showSetupModal = true"
+                            #default="{ processing }"
+                        >
+                            <Button
+                                type="submit"
+                                :disabled="processing"
+                                class="inline-flex h-10 items-center gap-2 rounded-xl border-[1.5px] border-black bg-tm-navy px-4 text-sm font-bold text-white shadow-[2px_2px_0_0_rgba(0,0,0,0.18)] transition-all hover:-translate-y-0.5 hover:bg-tm-navy-medium"
+                            >
+                                <ShieldCheck class="h-4 w-4" />
+                                {{
+                                    processing ? 'Memproses...' : 'Aktifkan 2FA'
+                                }}
+                            </Button>
+                        </Form>
+                    </div>
+                </div>
+
+                <div
+                    v-else
+                    class="rounded-2xl border-[1.5px] border-tm-green/30 bg-tm-green-pale p-4 dark:border-emerald-300/35 dark:bg-emerald-400/10"
+                >
+                    <div
+                        class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between"
+                    >
+                        <div class="max-w-2xl">
+                            <h3
+                                class="text-base font-extrabold text-tm-navy dark:text-slate-100"
+                            >
+                                Two-factor authentication aktif
+                            </h3>
+                            <p
+                                class="mt-1 text-sm leading-relaxed text-tm-text-secondary dark:text-slate-400"
+                            >
+                                Akun Anda membutuhkan kode verifikasi tambahan
+                                dari aplikasi authenticator saat login.
+                            </p>
+                        </div>
+
+                        <Form v-bind="disable.form()" #default="{ processing }">
+                            <Button
+                                variant="destructive"
+                                type="submit"
+                                :disabled="processing"
+                                class="inline-flex h-10 items-center gap-2 rounded-xl border-[1.5px] border-black bg-tm-danger px-4 text-sm font-bold text-white shadow-[2px_2px_0_0_rgba(0,0,0,0.18)] transition-all hover:-translate-y-0.5 hover:bg-red-600"
+                            >
+                                <ShieldOff class="h-4 w-4" />
+                                {{
+                                    processing
+                                        ? 'Memproses...'
+                                        : 'Nonaktifkan 2FA'
+                                }}
+                            </Button>
+                        </Form>
+                    </div>
+
+                    <div
+                        class="mt-5 border-t border-tm-green/20 pt-5 dark:border-emerald-300/20"
+                    >
+                        <TwoFactorRecoveryCodes />
+                    </div>
+                </div>
+            </div>
+
+            <TwoFactorSetupModal
+                v-model:isOpen="showSetupModal"
+                :requiresConfirmation="requiresConfirmation"
+                :twoFactorEnabled="twoFactorEnabled"
+            />
+        </section>
     </div>
 </template>

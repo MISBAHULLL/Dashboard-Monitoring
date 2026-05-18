@@ -6,6 +6,7 @@ import {
     Download, ExternalLink, Link2, CheckCircle2, Circle, ChevronLeft,
 } from 'lucide-vue-next';
 import { Button } from '@/components/ui/button';
+import ConfirmDialog from '@/components/ConfirmDialog.vue';
 import { dashboard } from '@/routes';
 import {
     Dialog, DialogContent, DialogDescription,
@@ -44,6 +45,15 @@ const props = defineProps<{
     clientTasks: Task[];
     documentTypes: string[];
 }>();
+
+const confirmAction = ref({
+    open: false,
+    title: '',
+    description: '',
+    confirmLabel: 'Hapus',
+    variant: 'danger' as 'danger' | 'warning' | 'success' | 'default',
+    onConfirm: () => {},
+});
 
 defineOptions({
     layout: {
@@ -186,13 +196,23 @@ function submitSync() {
 
 // ── Hapus Dokumen ────────────────────────────────────────────
 function deleteDocument(doc: DocumentItem) {
-    if (!confirm(`Hapus dokumen "${doc.title}"?`)) return;
-    router.delete(`/documents/${doc.id}`, {
-        onSuccess: () => {
-            if (doc.id === props.document.id) router.visit('/documents');
-            else router.reload();
+    confirmAction.value = {
+        open: true,
+        title: 'Hapus Dokumen',
+        description: `Dokumen "${doc.title}" akan dipindahkan ke daftar terhapus dan masih bisa dipulihkan kembali.`,
+        confirmLabel: 'Hapus Dokumen',
+        variant: 'danger',
+        onConfirm: () => {
+            router.delete(`/documents/${doc.id}`, {
+                preserveScroll: true,
+                onSuccess: () => {
+                    confirmAction.value.open = false;
+                    if (doc.id === props.document.id) router.visit('/documents');
+                    else router.reload();
+                },
+            });
         },
-    });
+    };
 }
 </script>
 
@@ -536,4 +556,16 @@ function deleteDocument(doc: DocumentItem) {
         </Dialog>
 
     </div>
+
+    <ConfirmDialog
+        :open="confirmAction.open"
+        :title="confirmAction.title"
+        :description="confirmAction.description"
+        :confirm-label="confirmAction.confirmLabel"
+        cancel-label="Batal"
+        :variant="confirmAction.variant"
+        @update:open="(val) => confirmAction.open = val"
+        @confirm="confirmAction.onConfirm"
+        @cancel="confirmAction.open = false"
+    />
 </template>

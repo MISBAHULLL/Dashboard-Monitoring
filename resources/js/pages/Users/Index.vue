@@ -6,6 +6,7 @@ import { dashboard } from '@/routes';
 
 // Import komponen UI
 import { Button } from '@/components/ui/button';
+import ConfirmDialog from '@/components/ConfirmDialog.vue';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
@@ -37,6 +38,14 @@ defineOptions({
 const isModalOpen = ref(false);
 const isEditing = ref(false);
 const editingId = ref<number | null>(null);
+const confirmAction = ref({
+    open: false,
+    title: '',
+    description: '',
+    confirmLabel: 'Hapus',
+    variant: 'danger' as 'danger' | 'warning' | 'success' | 'default',
+    onConfirm: () => {},
+});
 
 // 4. Inertia Form
 const form = useForm({
@@ -86,9 +95,21 @@ const submitForm = () => {
 
 // Hapus Data
 const deleteUser = (id: number, name: string) => {
-    if (confirm(`Apakah Anda yakin ingin menghapus akun "${name}" secara permanen?`)) {
-        useForm({}).delete(`/users/${id}`);
-    }
+    confirmAction.value = {
+        open: true,
+        title: 'Hapus User',
+        description: `Akun "${name}" akan dihapus dari sistem. Pastikan akun ini tidak sedang dibutuhkan untuk akses aplikasi.`,
+        confirmLabel: 'Hapus User',
+        variant: 'danger',
+        onConfirm: () => {
+            useForm({}).delete(`/users/${id}`, {
+                preserveScroll: true,
+                onSuccess: () => {
+                    confirmAction.value.open = false;
+                },
+            });
+        },
+    };
 };
 </script>
 
@@ -246,4 +267,16 @@ const deleteUser = (id: number, name: string) => {
             </DialogContent>
         </Dialog>
     </div>
+
+    <ConfirmDialog
+        :open="confirmAction.open"
+        :title="confirmAction.title"
+        :description="confirmAction.description"
+        :confirm-label="confirmAction.confirmLabel"
+        cancel-label="Batal"
+        :variant="confirmAction.variant"
+        @update:open="(val) => confirmAction.open = val"
+        @confirm="confirmAction.onConfirm"
+        @cancel="confirmAction.open = false"
+    />
 </template>

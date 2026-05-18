@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { router, usePage } from '@inertiajs/vue3';
-import { Bell, BellRing, CheckCheck, Clock3, Ticket } from 'lucide-vue-next';
+import { AlertTriangle, Bell, BellRing, CheckCheck, Clock3, MessageSquare, RefreshCw, Ticket } from 'lucide-vue-next';
 import {
     readAll as markAllNotificationsAsRead,
     read as markNotificationAsRead,
@@ -16,7 +16,7 @@ import {
 
 type NotificationItem = {
     id: number;
-    type: 'task_assigned' | 'deadline_soon' | string;
+    type: 'task_assigned' | 'deadline_soon' | 'deadline_overdue' | 'status_changed' | 'new_comment' | string;
     title: string;
     body: string | null;
     link: string | null;
@@ -55,11 +55,71 @@ const formatTimestamp = (value: string | null) => {
 };
 
 const iconForType = (type: NotificationItem['type']) => {
+    if (type === 'deadline_overdue') {
+        return AlertTriangle;
+    }
+
     if (type === 'deadline_soon') {
         return Clock3;
     }
 
+    if (type === 'status_changed') {
+        return RefreshCw;
+    }
+
+    if (type === 'new_comment') {
+        return MessageSquare;
+    }
+
     return Ticket;
+};
+
+const toneForType = (type: NotificationItem['type']) => {
+    if (type === 'deadline_overdue') {
+        return {
+            item: 'bg-red-50/90 dark:bg-red-950/25',
+            icon: 'border-red-200 bg-red-100 text-red-700 dark:border-red-400/30 dark:bg-red-950/40 dark:text-red-300',
+            dot: 'bg-red-500',
+        };
+    }
+
+    if (type === 'deadline_soon') {
+        return {
+            item: 'bg-amber-50/90 dark:bg-amber-950/25',
+            icon: 'border-amber-200 bg-amber-100 text-amber-700 dark:border-amber-400/30 dark:bg-amber-950/40 dark:text-amber-300',
+            dot: 'bg-amber-500',
+        };
+    }
+
+    if (type === 'task_assigned') {
+        return {
+            item: 'bg-sky-50/90 dark:bg-sky-950/25',
+            icon: 'border-sky-200 bg-sky-100 text-sky-700 dark:border-sky-400/30 dark:bg-sky-950/40 dark:text-sky-300',
+            dot: 'bg-sky-500',
+        };
+    }
+
+    if (type === 'status_changed') {
+        return {
+            item: 'bg-violet-50/90 dark:bg-violet-950/25',
+            icon: 'border-violet-200 bg-violet-100 text-violet-700 dark:border-violet-400/30 dark:bg-violet-950/40 dark:text-violet-300',
+            dot: 'bg-violet-500',
+        };
+    }
+
+    if (type === 'new_comment') {
+        return {
+            item: 'bg-emerald-50/90 dark:bg-emerald-950/25',
+            icon: 'border-emerald-200 bg-emerald-100 text-emerald-700 dark:border-emerald-400/30 dark:bg-emerald-950/40 dark:text-emerald-300',
+            dot: 'bg-emerald-500',
+        };
+    }
+
+    return {
+        item: 'bg-slate-50/90 dark:bg-slate-900/45',
+        icon: 'border-slate-200 bg-slate-100 text-slate-700 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300',
+        dot: 'bg-slate-500',
+    };
 };
 
 const openNotification = (notification: NotificationItem) => {
@@ -157,14 +217,12 @@ const markAllAsRead = () => {
                     v-for="notification in items"
                     :key="notification.id"
                     class="mx-2 mb-1 flex cursor-pointer items-start gap-3 rounded-lg px-3 py-3 transition-colors"
-                    :class="notification.is_read ? 'opacity-70' : 'bg-amber-50/70 dark:bg-amber-950/20'"
+                    :class="notification.is_read ? 'opacity-70' : toneForType(notification.type).item"
                     @select="openNotification(notification)"
                 >
                     <div
                         class="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-slate-200"
-                        :class="notification.type === 'deadline_soon'
-                            ? 'bg-amber-100 text-amber-700 dark:bg-amber-950/30 dark:text-amber-300'
-                            : 'bg-sky-100 text-sky-700 dark:bg-sky-950/30 dark:text-sky-300'"
+                        :class="toneForType(notification.type).icon"
                     >
                         <component :is="iconForType(notification.type)" class="h-4 w-4" />
                     </div>
@@ -176,7 +234,8 @@ const markAllAsRead = () => {
                             </p>
                             <span
                                 v-if="!notification.is_read"
-                                class="mt-1 h-2 w-2 shrink-0 rounded-full bg-amber-500"
+                                class="mt-1 h-2 w-2 shrink-0 rounded-full"
+                                :class="toneForType(notification.type).dot"
                             />
                         </div>
                         <p class="line-clamp-2 text-xs leading-5 text-slate-500 dark:text-slate-400">

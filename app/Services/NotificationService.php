@@ -140,7 +140,7 @@ class NotificationService
             ->get();
 
         return $tasks->reduce(function ($count, Task $task) use ($today) {
-            if ($this->deadlineNotificationExistsForToday($task)) {
+            if ($this->deadlineNotificationExistsForToday($task, 'deadline_soon', $task->assigned_to)) {
                 return $count;
             }
 
@@ -166,11 +166,76 @@ class NotificationService
         }, 0);
     }
 
-    protected function deadlineNotificationExistsForToday(Task $task): bool
+    /**
+     * Send notifications for overdue tasks to the assignee and active admins.
+     */
+    public function sendOverdueNotifications(): int
     {
+        $today = CarbonImmutable::today();
+
+        $tasks = Task::query()
+            ->with(['client:id,name'])
+            ->whereNotNull('release_date')
+            ->where('status', '!=', 'completed')
+            ->whereDate('release_date', '<', $today)
+            ->get();
+
+        $adminIds = User::query()
+            ->where('role', 'admin')
+            ->where('is_active', true)
+            ->pluck('id');
+
+        return $tasks->reduce(function ($count, Task $task) use ($adminIds, $today) {
+            $recipientIds = collect([$task->assigned_to])
+                ->merge($adminIds)
+                ->filter()
+                ->unique()
+                ->values();
+
+            if ($recipientIds->isEmpty()) {
+                return $count;
+            }
+
+            $releaseDate = CarbonImmutable::parse($task->release_date);
+            $daysLate = $releaseDate->diffInDays($today);
+            $created = 0;
+
+            foreach ($recipientIds as $userId) {
+                if ($this->deadlineNotificationExistsForToday($task, 'deadline_overdue', (int) $userId)) {
+                    continue;
+                }
+
+                Notification::create([
+                    'user_id' => $userId,
+                    'type' => 'deadline_overdue',
+                    'title' => 'Task melewati deadline',
+                    'body' => sprintf(
+                        'Task "%s" untuk %s sudah lewat deadline %s (%d hari terlambat).',
+                        $task->title,
+                        $task->client?->name ?? 'client terkait',
+                        $releaseDate->translatedFormat('d F Y'),
+                        $daysLate
+                    ),
+                    'link' => route('tasks.show', $task),
+                    'is_read' => false,
+                ]);
+
+                $created++;
+            }
+
+            return $count + $created;
+        }, 0);
+    }
+
+    protected function deadlineNotificationExistsForToday(Task $task, string $type, ?int $userId): bool
+    {
+        if (! $userId) {
+            return false;
+        }
+
         return Notification::query()
-            ->where('user_id', $task->assigned_to)
-            ->where('type', 'deadline_soon')
+            ->where('user_id', $userId)
+            ->where('type', $type)
             ->where('link', route('tasks.show', $task))
             ->whereDate('created_at', CarbonImmutable::today())
             ->exists();

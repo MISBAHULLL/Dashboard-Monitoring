@@ -3,6 +3,7 @@
 use App\Models\Notification;
 use App\Models\Task;
 use App\Models\User;
+use App\Services\NotificationService;
 
 // ──────────────────────────────────────────────────────────────
 // STATUS CHANGE NOTIFICATIONS
@@ -187,5 +188,59 @@ test('commenting on unassigned task creates no notification', function () {
 
     $this->assertDatabaseMissing('notifications', [
         'type' => 'new_comment',
+    ]);
+});
+
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// DEADLINE NOTIFICATIONS
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+test('due soon notification is sent to task assignee once per day', function () {
+    $member = User::factory()->member()->create();
+    $task = Task::factory()->assignedTo($member)->create([
+        'status' => 'open',
+        'release_date' => now()->addDays(2)->toDateString(),
+    ]);
+
+    $service = app(NotificationService::class);
+
+    expect($service->sendDueSoonNotifications())->toBe(1);
+    expect($service->sendDueSoonNotifications())->toBe(0);
+
+    $this->assertDatabaseHas('notifications', [
+        'user_id' => $member->id,
+        'type' => 'deadline_soon',
+        'link' => route('tasks.show', $task),
+    ]);
+});
+
+test('overdue notification is sent to assignee and active admins once per day', function () {
+    $admin = User::factory()->admin()->create();
+    $inactiveAdmin = User::factory()->admin()->create(['is_active' => false]);
+    $member = User::factory()->member()->create();
+    $task = Task::factory()->assignedTo($member)->create([
+        'created_by' => $member->id,
+        'status' => 'open',
+        'release_date' => now()->subDays(2)->toDateString(),
+    ]);
+
+    $service = app(NotificationService::class);
+
+    expect($service->sendOverdueNotifications())->toBe(2);
+    expect($service->sendOverdueNotifications())->toBe(0);
+
+    $this->assertDatabaseHas('notifications', [
+        'user_id' => $member->id,
+        'type' => 'deadline_overdue',
+        'link' => route('tasks.show', $task),
+    ]);
+    $this->assertDatabaseHas('notifications', [
+        'user_id' => $admin->id,
+        'type' => 'deadline_overdue',
+        'link' => route('tasks.show', $task),
+    ]);
+    $this->assertDatabaseMissing('notifications', [
+        'user_id' => $inactiveAdmin->id,
+        'type' => 'deadline_overdue',
     ]);
 });

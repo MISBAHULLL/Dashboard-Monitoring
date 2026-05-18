@@ -10,9 +10,11 @@ Artisan::command('inspire', function () {
 })->purpose('Display an inspiring quote');
 
 Artisan::command('notifications:due-soon', function (NotificationService $notificationService) {
-    $created = $notificationService->sendDueSoonNotifications();
+    $dueSoonCreated = $notificationService->sendDueSoonNotifications();
+    $overdueCreated = $notificationService->sendOverdueNotifications();
 
-    $this->info("Created {$created} due soon notifications.");
-})->purpose('Send in-app notifications for tasks nearing their deadline');
+    $this->info("Created {$dueSoonCreated} due soon notifications.");
+    $this->info("Created {$overdueCreated} overdue notifications.");
+})->purpose('Send in-app notifications for tasks nearing or past their deadline');
 
 Schedule::command('notifications:due-soon')->hourly();

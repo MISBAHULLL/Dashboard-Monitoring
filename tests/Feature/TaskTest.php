@@ -250,6 +250,47 @@ test('member cannot restore a deleted task', function () {
         ->assertForbidden();
 });
 
+test('admin can bulk restore selected deleted tasks', function () {
+    $admin = User::factory()->admin()->create();
+    $tasks = Task::factory()->count(3)->create();
+    $tasks->each->delete();
+
+    $this->actingAs($admin)
+        ->patch(route('tasks.bulkRestore'), [
+            'ids' => $tasks->take(2)->pluck('id')->all(),
+        ])
+        ->assertRedirect();
+
+    $this->assertDatabaseHas('tasks', [
+        'id' => $tasks[0]->id,
+        'deleted_at' => null,
+    ]);
+    $this->assertDatabaseHas('tasks', [
+        'id' => $tasks[1]->id,
+        'deleted_at' => null,
+    ]);
+    $this->assertSoftDeleted('tasks', ['id' => $tasks[2]->id]);
+});
+
+test('admin can bulk restore all deleted tasks', function () {
+    $admin = User::factory()->admin()->create();
+    $tasks = Task::factory()->count(3)->create();
+    $tasks->each->delete();
+
+    $this->actingAs($admin)
+        ->patch(route('tasks.bulkRestore'), [
+            'restore_all' => true,
+        ])
+        ->assertRedirect();
+
+    foreach ($tasks as $task) {
+        $this->assertDatabaseHas('tasks', [
+            'id' => $task->id,
+            'deleted_at' => null,
+        ]);
+    }
+});
+
 test('member can update status of own assigned task', function () {
     $member = User::factory()->member()->create();
     $task = Task::factory()->assignedTo($member)->create(['status' => 'open']);

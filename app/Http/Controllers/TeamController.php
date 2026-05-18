@@ -100,4 +100,35 @@ class TeamController extends Controller
 
         return back()->with('success', 'Tim berhasil dipulihkan.');
     }
+
+    public function bulkRestore(Request $request)
+    {
+        $this->authorize('restoreAny', Team::class);
+
+        $validated = $request->validate([
+            'ids' => ['nullable', 'array'],
+            'ids.*' => ['integer', 'exists:teams,id'],
+            'restore_all' => ['nullable', 'boolean'],
+        ]);
+
+        $restoreAll = $request->boolean('restore_all');
+        $ids = $validated['ids'] ?? [];
+
+        if (! $restoreAll && $ids === []) {
+            return back()->with('error', 'Pilih minimal satu tim untuk dipulihkan.');
+        }
+
+        $teams = Team::onlyTrashed()
+            ->when(! $restoreAll, fn ($query) => $query->whereIn('id', $ids))
+            ->get();
+
+        foreach ($teams as $team) {
+            $deletedAt = $team->deleted_at;
+            $team->restore();
+
+            ActivityLogger::updated('team', $team->id, $team->name, ['deleted_at' => $deletedAt], ['deleted_at' => null], "Memulihkan tim '{$team->name}' secara massal");
+        }
+
+        return back()->with('success', "{$teams->count()} tim berhasil dipulihkan.");
+    }
 }

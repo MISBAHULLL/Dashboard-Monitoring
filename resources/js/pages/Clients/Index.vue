@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
 import { Head, useForm, router } from '@inertiajs/vue3';
 import { Building2, Plus, Edit, Trash2, Search, ChevronLeft, ChevronRight, Eye, FilePlus, FileText, RotateCcw } from 'lucide-vue-next';
 import { dashboard } from '@/routes';
@@ -59,6 +59,7 @@ defineOptions({
 const isModalOpen = ref(false);
 const isEditing = ref(false);
 const editingId = ref<number | null>(null);
+const selectedClients = ref<number[]>([]);
 
 // Filter & Pagination
 const filterCity = ref('all');
@@ -92,6 +93,17 @@ const totalPages = computed(() => Math.ceil(filteredClients.value.length / perPa
 const paginatedClients = computed(() => {
     const start = (currentPage.value - 1) * perPage;
     return filteredClients.value.slice(start, start + perPage);
+});
+
+const selectAllClients = computed({
+    get: () => paginatedClients.value.length > 0 && selectedClients.value.length === paginatedClients.value.length,
+    set: (value) => {
+        selectedClients.value = value ? paginatedClients.value.map((client) => client.id) : [];
+    },
+});
+
+watch(paginatedClients, () => {
+    selectedClients.value = [];
 });
 
 const resetFilters = () => {
@@ -180,6 +192,23 @@ const restoreClient = (id: number, name: string) => {
     }
 };
 
+const bulkRestoreClients = (restoreAll = false) => {
+    const total = restoreAll ? props.clients.length : selectedClients.value.length;
+    if (total === 0) return;
+
+    if (confirm(`Pulihkan ${restoreAll ? 'semua' : total} faskes terhapus?`)) {
+        router.patch('/clients/bulk-restore', {
+            ids: restoreAll ? [] : selectedClients.value,
+            restore_all: restoreAll,
+        }, {
+            preserveScroll: true,
+            onSuccess: () => {
+                selectedClients.value = [];
+            },
+        });
+    }
+};
+
 // === DOKUMEN ===
 const isDocModalOpen = ref(false);
 const selectedClientName = ref('');
@@ -237,6 +266,13 @@ const submitDoc = () => {
                     <RotateCcw class="h-4 w-4" /> {{ activeTrashed ? 'Lihat Aktif' : 'Lihat Terhapus' }}
                 </button>
                 <button
+                    v-if="activeTrashed && clients.length > 0"
+                    @click="bulkRestoreClients(true)"
+                    class="inline-flex items-center gap-2 rounded-[10px] border-2 border-black bg-tm-green px-4 py-2.5 text-sm font-bold text-white shadow-[2px_2px_0px_0px_rgba(0,0,0,0.8)] transition-all hover:-translate-y-0.5 hover:shadow-[3px_4px_0px_0px_rgba(0,0,0,0.8)] active:translate-y-0 active:shadow-[1px_1px_0px_0px_rgba(0,0,0,0.8)] dark:border-border dark:shadow-none"
+                >
+                    <RotateCcw class="h-4 w-4" /> Restore Semua
+                </button>
+                <button
                     v-if="!activeTrashed"
                     @click="openAddModal"
                     class="inline-flex items-center gap-2 rounded-[10px] border-2 border-black bg-tm-green px-4 py-2.5 text-sm font-bold text-white shadow-[2px_2px_0px_0px_rgba(0,0,0,0.8)] transition-all hover:-translate-y-0.5 hover:shadow-[3px_4px_0px_0px_rgba(0,0,0,0.8)] active:translate-y-0 active:shadow-[1px_1px_0px_0px_rgba(0,0,0,0.8)] dark:border-border dark:shadow-none"
@@ -244,6 +280,13 @@ const submitDoc = () => {
                     <Plus class="h-4 w-4" /> Tambah Faskes
                 </button>
             </div>
+        </div>
+        <div v-if="activeTrashed && selectedClients.length > 0" class="flex flex-wrap items-center justify-between gap-3 rounded-[14px] border-2 border-black bg-tm-navy-pale p-3 shadow-[2px_3px_0px_0px_rgba(0,0,0,0.8)] dark:border-border dark:bg-secondary dark:shadow-none">
+            <span class="text-sm font-bold text-tm-navy dark:text-foreground">{{ selectedClients.length }} faskes dipilih</span>
+            <Button @click="bulkRestoreClients(false)" size="sm" class="bg-tm-green hover:bg-tm-green-dark">
+                <RotateCcw class="mr-2 h-4 w-4" />
+                Pulihkan Terpilih
+            </Button>
         </div>
         <!-- Filter Bar -->
         <div class="rounded-[14px] border-2 border-black bg-white p-4 shadow-[2px_3px_0px_0px_rgba(0,0,0,0.8)] dark:bg-card dark:border-border dark:shadow-none">
@@ -314,7 +357,12 @@ const submitDoc = () => {
                 <table class="w-full text-sm">
                     <thead>
                         <tr class="border-b-2 border-black bg-tm-navy-pale dark:bg-secondary dark:border-border">
-                            <th class="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-tm-navy dark:text-foreground">No</th>
+                            <th class="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-tm-navy dark:text-foreground">
+                                <span class="flex items-center gap-2">
+                                    <input v-if="activeTrashed" type="checkbox" v-model="selectAllClients" class="h-4 w-4 cursor-pointer rounded border-slate-300 text-tm-navy focus:ring-tm-navy" />
+                                    No
+                                </span>
+                            </th>
                             <th class="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-tm-navy dark:text-foreground">Nama Faskes</th>
                             <th class="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-tm-navy dark:text-foreground">Kota</th>
                             <th class="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-tm-navy dark:text-foreground">Tipe</th>
@@ -328,7 +376,12 @@ const submitDoc = () => {
                     </thead>
                     <tbody>
                         <tr v-for="(client, index) in paginatedClients" :key="client.id" class="border-b border-tm-border transition-colors hover:bg-tm-navy-pale/40 dark:border-border dark:hover:bg-secondary/50">
-                            <td class="px-4 py-3.5 text-tm-text-secondary dark:text-muted-foreground">{{ (currentPage - 1) * perPage + index + 1 }}</td>
+                            <td class="px-4 py-3.5 text-tm-text-secondary dark:text-muted-foreground">
+                                <span class="flex items-center gap-2">
+                                    <input v-if="activeTrashed" type="checkbox" v-model="selectedClients" :value="client.id" class="h-4 w-4 cursor-pointer rounded border-slate-300 text-tm-navy focus:ring-tm-navy" />
+                                    {{ (currentPage - 1) * perPage + index + 1 }}
+                                </span>
+                            </td>
                             <td class="px-4 py-3.5">
                                 <div class="font-bold text-tm-navy dark:text-foreground">{{ client.name }}</div>
                                 <div class="text-xs text-tm-text-muted mt-0.5 dark:text-muted-foreground">{{ client.address || '-' }}</div>

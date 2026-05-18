@@ -167,3 +167,58 @@ test('member cannot restore a deleted document', function () {
         ->patch(route('documents.restore', $doc->id))
         ->assertForbidden();
 });
+
+test('admin can bulk restore selected deleted documents', function () {
+    $admin = User::factory()->admin()->create();
+    $client = Client::factory()->create();
+    $docs = collect(['Doc A', 'Doc B', 'Doc C'])->map(fn (string $title) => Document::create([
+        'client_id' => $client->id,
+        'title' => $title,
+        'type' => 'UAT',
+        'current_version' => 1,
+        'created_by' => $admin->id,
+    ]));
+    $docs->each->delete();
+
+    $this->actingAs($admin)
+        ->patch(route('documents.bulkRestore'), [
+            'ids' => $docs->take(2)->pluck('id')->all(),
+        ])
+        ->assertRedirect();
+
+    $this->assertDatabaseHas('documents', [
+        'id' => $docs[0]->id,
+        'deleted_at' => null,
+    ]);
+    $this->assertDatabaseHas('documents', [
+        'id' => $docs[1]->id,
+        'deleted_at' => null,
+    ]);
+    $this->assertSoftDeleted('documents', ['id' => $docs[2]->id]);
+});
+
+test('admin can bulk restore all deleted documents', function () {
+    $admin = User::factory()->admin()->create();
+    $client = Client::factory()->create();
+    $docs = collect(['Doc A', 'Doc B', 'Doc C'])->map(fn (string $title) => Document::create([
+        'client_id' => $client->id,
+        'title' => $title,
+        'type' => 'UAT',
+        'current_version' => 1,
+        'created_by' => $admin->id,
+    ]));
+    $docs->each->delete();
+
+    $this->actingAs($admin)
+        ->patch(route('documents.bulkRestore'), [
+            'restore_all' => true,
+        ])
+        ->assertRedirect();
+
+    foreach ($docs as $doc) {
+        $this->assertDatabaseHas('documents', [
+            'id' => $doc->id,
+            'deleted_at' => null,
+        ]);
+    }
+});

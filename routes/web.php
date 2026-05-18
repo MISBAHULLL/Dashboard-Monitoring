@@ -42,6 +42,7 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/tasks/import', [TaskController::class, 'import'])->name('tasks.import');
 
     Route::get('/tasks-kanban', [TaskController::class, 'kanban'])->name('tasks.kanban');
+    Route::patch('/tasks/bulk-restore', [TaskController::class, 'bulkRestore'])->name('tasks.bulkRestore');
     Route::patch('/tasks/{task}/restore', [TaskController::class, 'restore'])->name('tasks.restore');
     Route::patch('/tasks/{task}/status', [TaskController::class, 'updateStatus'])->name('tasks.updateStatus');
     Route::post('/tasks/{task}/comments', [TaskCommentController::class, 'store'])->name('tasks.comments.store');
@@ -50,6 +51,7 @@ Route::middleware(['auth'])->group(function () {
     Route::resource('tasks', TaskController::class);
 
     // Documents (File Versioning)
+    Route::patch('/documents/bulk-restore', [DocumentController::class, 'bulkRestore'])->name('documents.bulkRestore');
     Route::patch('/documents/{document}/restore', [DocumentController::class, 'restore'])->name('documents.restore');
     Route::post('/documents/{document}/sync-tasks', [DocumentController::class, 'syncTasks'])->name('documents.syncTasks');
     Route::resource('documents', DocumentController::class)->except(['create', 'edit']);
@@ -62,8 +64,10 @@ Route::middleware(['auth'])->group(function () {
 
         // Master Data (Hanya Index, Store, Update, Destroy)
         Route::resource('users', UserController::class)->except(['create', 'show', 'edit']);
+        Route::patch('/teams/bulk-restore', [TeamController::class, 'bulkRestore'])->name('teams.bulkRestore');
         Route::patch('/teams/{team}/restore', [TeamController::class, 'restore'])->name('teams.restore');
         Route::resource('teams', TeamController::class)->except(['create', 'show', 'edit']);
+        Route::patch('/clients/bulk-restore', [ClientController::class, 'bulkRestore'])->name('clients.bulkRestore');
         Route::patch('/clients/{client}/restore', [ClientController::class, 'restore'])->name('clients.restore');
         Route::resource('clients', ClientController::class)->except(['create', 'show', 'edit']);
         Route::post('/task-templates', [TaskTemplateController::class, 'store'])->name('task-templates.store');

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { computed, ref, onMounted, watch } from 'vue';
 import { Head, router, useForm, usePage } from '@inertiajs/vue3';
 import { UsersRound, Plus, Edit, Trash2, RotateCcw } from 'lucide-vue-next';
 import { dashboard } from '@/routes';
@@ -45,6 +45,18 @@ defineOptions({
 const isModalOpen = ref(false);
 const isEditing = ref(false);
 const editingId = ref<number | null>(null);
+const selectedTeams = ref<number[]>([]);
+
+const selectAllTeams = computed({
+    get: () => props.teams.length > 0 && selectedTeams.value.length === props.teams.length,
+    set: (value) => {
+        selectedTeams.value = value ? props.teams.map((team) => team.id) : [];
+    },
+});
+
+watch(() => props.teams, () => {
+    selectedTeams.value = [];
+});
 
 // 4. Inertia Form
 const form = useForm({
@@ -109,6 +121,23 @@ const restoreTeam = (id: number, name: string) => {
         router.patch(`/teams/${id}/restore`);
     }
 };
+
+const bulkRestoreTeams = (restoreAll = false) => {
+    const total = restoreAll ? props.teams.length : selectedTeams.value.length;
+    if (total === 0) return;
+
+    if (confirm(`Pulihkan ${restoreAll ? 'semua' : total} tim terhapus?`)) {
+        router.patch('/teams/bulk-restore', {
+            ids: restoreAll ? [] : selectedTeams.value,
+            restore_all: restoreAll,
+        }, {
+            preserveScroll: true,
+            onSuccess: () => {
+                selectedTeams.value = [];
+            },
+        });
+    }
+};
 </script>
 
 <template>
@@ -135,6 +164,13 @@ const restoreTeam = (id: number, name: string) => {
                     <RotateCcw class="h-4 w-4" /> {{ activeTrashed ? 'Lihat Aktif' : 'Lihat Terhapus' }}
                 </button>
                 <button
+                    v-if="activeTrashed && teams.length > 0"
+                    @click="bulkRestoreTeams(true)"
+                    class="inline-flex items-center gap-2 rounded-[10px] border-2 border-black bg-tm-green px-4 py-2.5 text-sm font-bold text-white shadow-[2px_2px_0px_0px_rgba(0,0,0,0.8)] transition-all hover:-translate-y-0.5 hover:shadow-[3px_4px_0px_0px_rgba(0,0,0,0.8)] active:translate-y-0 active:shadow-[1px_1px_0px_0px_rgba(0,0,0,0.8)] dark:border-border dark:shadow-none"
+                >
+                    <RotateCcw class="h-4 w-4" /> Restore Semua
+                </button>
+                <button
                     v-if="!activeTrashed"
                     @click="openAddModal"
                     class="inline-flex items-center gap-2 rounded-[10px] border-2 border-black bg-tm-green px-4 py-2.5 text-sm font-bold text-white shadow-[2px_2px_0px_0px_rgba(0,0,0,0.8)] transition-all hover:-translate-y-0.5 hover:shadow-[3px_4px_0px_0px_rgba(0,0,0,0.8)] active:translate-y-0 active:shadow-[1px_1px_0px_0px_rgba(0,0,0,0.8)] dark:border-border dark:shadow-none"
@@ -144,13 +180,26 @@ const restoreTeam = (id: number, name: string) => {
             </div>
         </div>
 
+        <div v-if="activeTrashed && selectedTeams.length > 0" class="flex flex-wrap items-center justify-between gap-3 rounded-[14px] border-2 border-black bg-tm-navy-pale p-3 shadow-[2px_3px_0px_0px_rgba(0,0,0,0.8)] dark:border-border dark:bg-secondary dark:shadow-none">
+            <span class="text-sm font-bold text-tm-navy dark:text-foreground">{{ selectedTeams.length }} tim dipilih</span>
+            <Button @click="bulkRestoreTeams(false)" size="sm" class="bg-tm-green hover:bg-tm-green-dark">
+                <RotateCcw class="mr-2 h-4 w-4" />
+                Pulihkan Terpilih
+            </Button>
+        </div>
+
         <!-- Tabel Data -->
         <div class="rounded-[14px] border-2 border-black bg-white shadow-[2px_3px_0px_0px_rgba(0,0,0,0.8)] overflow-hidden dark:bg-card dark:border-border dark:shadow-none">
             <div class="overflow-x-auto">
                 <table class="w-full text-sm">
                     <thead>
                         <tr class="border-b-2 border-black bg-tm-navy-pale dark:bg-secondary dark:border-border">
-                            <th class="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-tm-navy dark:text-foreground">No</th>
+                            <th class="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-tm-navy dark:text-foreground">
+                                <span class="flex items-center gap-2">
+                                    <input v-if="activeTrashed" type="checkbox" v-model="selectAllTeams" class="h-4 w-4 cursor-pointer rounded border-slate-300 text-tm-navy focus:ring-tm-navy" />
+                                    No
+                                </span>
+                            </th>
                             <th class="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-tm-navy dark:text-foreground">Nama Tim</th>
                             <th class="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-tm-navy dark:text-foreground">Tipe / Divisi</th>
                             <th class="px-4 py-3.5 text-center text-xs font-bold uppercase tracking-wider text-tm-navy dark:text-foreground">Jumlah Anggota</th>
@@ -160,7 +209,12 @@ const restoreTeam = (id: number, name: string) => {
                     </thead>
                     <tbody>
                         <tr v-for="(team, index) in teams" :key="team.id" class="border-b border-tm-border transition-colors hover:bg-tm-navy-pale/40 dark:border-border dark:hover:bg-secondary/50">
-                            <td class="px-4 py-3.5 text-tm-text-secondary dark:text-muted-foreground">{{ index + 1 }}</td>
+                            <td class="px-4 py-3.5 text-tm-text-secondary dark:text-muted-foreground">
+                                <span class="flex items-center gap-2">
+                                    <input v-if="activeTrashed" type="checkbox" v-model="selectedTeams" :value="team.id" class="h-4 w-4 cursor-pointer rounded border-slate-300 text-tm-navy focus:ring-tm-navy" />
+                                    {{ index + 1 }}
+                                </span>
+                            </td>
                             <td class="px-4 py-3.5 font-bold text-tm-navy dark:text-foreground">{{ team.name }}</td>
                             <td class="px-4 py-3.5">
                                 <span v-if="team.type" class="inline-flex items-center rounded-[6px] border-2 border-tm-navy bg-tm-navy-pale px-2.5 py-0.5 text-xs font-bold uppercase text-tm-navy dark:bg-tm-navy/20 dark:border-tm-navy-medium dark:text-tm-navy-medium">{{ team.type }}</span>

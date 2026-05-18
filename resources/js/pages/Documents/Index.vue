@@ -3,7 +3,7 @@ import { Head, router, useForm } from '@inertiajs/vue3';
 import { FileText, Plus, Download, Trash2, Eye, Upload, X, File, FolderOpen, RotateCcw } from 'lucide-vue-next';
 import { Button } from '@/components/ui/button';
 import { dashboard } from '@/routes';
-import { ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 
 defineOptions({
     layout: {
@@ -46,6 +46,18 @@ const props = defineProps<{
 
 const showModal = ref(false);
 const editingDocument = ref<Document | null>(null);
+const selectedDocuments = ref<number[]>([]);
+
+const selectAllDocuments = computed({
+    get: () => props.documents.data.length > 0 && selectedDocuments.value.length === props.documents.data.length,
+    set: (value) => {
+        selectedDocuments.value = value ? props.documents.data.map((doc) => doc.id) : [];
+    },
+});
+
+watch(() => props.documents.data, () => {
+    selectedDocuments.value = [];
+});
 
 const form = useForm({
     client_id: '',
@@ -118,6 +130,23 @@ function restoreDocument(id: number, title: string) {
     }
 }
 
+function bulkRestoreDocuments(restoreAll = false) {
+    const total = restoreAll ? props.documents.total : selectedDocuments.value.length;
+    if (total === 0) return;
+
+    if (confirm(`Pulihkan ${restoreAll ? 'semua' : total} dokumen terhapus?`)) {
+        router.patch('/documents/bulk-restore', {
+            ids: restoreAll ? [] : selectedDocuments.value,
+            restore_all: restoreAll,
+        }, {
+            preserveScroll: true,
+            onSuccess: () => {
+                selectedDocuments.value = [];
+            },
+        });
+    }
+}
+
 function formatBytes(bytes: number | null): string {
     if (!bytes) return '-';
     const sizes = ['B', 'KB', 'MB', 'GB'];
@@ -169,6 +198,14 @@ function getTypeColor(type: string): string {
                     {{ activeTrashed ? 'Lihat Aktif' : 'Lihat Terhapus' }}
                 </button>
                 <button
+                    v-if="activeTrashed && documents.total > 0"
+                    @click="bulkRestoreDocuments(true)"
+                    class="inline-flex items-center gap-2 rounded-[10px] border-2 border-black bg-tm-green px-4 py-2.5 text-sm font-bold text-white shadow-[2px_2px_0px_0px_rgba(0,0,0,0.8)] transition-all hover:-translate-y-0.5 hover:shadow-[3px_4px_0px_0px_rgba(0,0,0,0.8)] active:translate-y-0 active:shadow-[1px_1px_0px_0px_rgba(0,0,0,0.8)] dark:border-border dark:shadow-none"
+                >
+                    <RotateCcw class="h-4 w-4" />
+                    Restore Semua
+                </button>
+                <button
                     v-if="!activeTrashed"
                     @click="openCreate"
                     class="inline-flex items-center gap-2 rounded-[10px] border-2 border-black bg-tm-green px-4 py-2.5 text-sm font-bold text-white shadow-[2px_2px_0px_0px_rgba(0,0,0,0.8)] transition-all hover:-translate-y-0.5 hover:shadow-[3px_4px_0px_0px_rgba(0,0,0,0.8)] active:translate-y-0 active:shadow-[1px_1px_0px_0px_rgba(0,0,0,0.8)] dark:border-border dark:shadow-none"
@@ -177,6 +214,14 @@ function getTypeColor(type: string): string {
                     Tambah Dokumen
                 </button>
             </div>
+        </div>
+
+        <div v-if="activeTrashed && selectedDocuments.length > 0" class="flex flex-wrap items-center justify-between gap-3 rounded-[14px] border-2 border-black bg-tm-navy-pale p-3 shadow-[2px_3px_0px_0px_rgba(0,0,0,0.8)] dark:border-border dark:bg-secondary dark:shadow-none">
+            <span class="text-sm font-bold text-tm-navy dark:text-foreground">{{ selectedDocuments.length }} dokumen dipilih</span>
+            <Button @click="bulkRestoreDocuments(false)" size="sm" class="bg-tm-green hover:bg-tm-green-dark">
+                <RotateCcw class="mr-2 h-4 w-4" />
+                Pulihkan Terpilih
+            </Button>
         </div>
 
         <!-- Table Card -->
@@ -194,7 +239,12 @@ function getTypeColor(type: string): string {
             <table v-else class="w-full text-sm">
                 <thead>
                     <tr class="border-b-2 border-black bg-tm-navy-pale dark:bg-secondary dark:border-border">
-                        <th class="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-tm-navy dark:text-foreground">Judul</th>
+                        <th class="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-tm-navy dark:text-foreground">
+                            <span class="flex items-center gap-2.5">
+                                <input v-if="activeTrashed" type="checkbox" v-model="selectAllDocuments" class="h-4 w-4 cursor-pointer rounded border-slate-300 text-tm-navy focus:ring-tm-navy" />
+                                Judul
+                            </span>
+                        </th>
                         <th class="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-tm-navy dark:text-foreground">Tipe</th>
                         <th class="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-tm-navy dark:text-foreground">Faskes</th>
                         <th class="px-4 py-3.5 text-center text-xs font-bold uppercase tracking-wider text-tm-navy dark:text-foreground">Versi</th>
@@ -211,6 +261,7 @@ function getTypeColor(type: string): string {
                     >
                         <td class="px-4 py-3.5">
                             <div class="flex items-center gap-2.5">
+                                <input v-if="activeTrashed" type="checkbox" v-model="selectedDocuments" :value="doc.id" class="h-4 w-4 cursor-pointer rounded border-slate-300 text-tm-navy focus:ring-tm-navy" />
                                 <div class="flex h-8 w-8 items-center justify-center rounded-[8px] bg-tm-navy-pale border border-tm-navy/10 dark:bg-secondary">
                                     <File class="h-4 w-4 text-tm-navy dark:text-foreground" />
                                 </div>

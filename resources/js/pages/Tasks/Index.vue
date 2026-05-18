@@ -200,6 +200,23 @@ const restoreTask = (id: number, title: string) => {
     }
 };
 
+const bulkRestoreTasks = (restoreAll = false) => {
+    const total = restoreAll ? props.tasks.total : selectedTasks.value.length;
+    if (total === 0) return;
+
+    if (confirm(`Pulihkan ${restoreAll ? 'semua' : total} task terhapus?`)) {
+        useForm({
+            ids: restoreAll ? [] : selectedTasks.value,
+            restore_all: restoreAll,
+        }).patch('/tasks/bulk-restore', {
+            preserveScroll: true,
+            onSuccess: () => {
+                selectedTasks.value = [];
+            },
+        });
+    }
+};
+
 // Helper untuk Avatar Initials
 const getInitials = (name: string) => {
     if (!name) return '?';
@@ -266,6 +283,9 @@ const submitImport = () => {
             <div class="flex items-center gap-3">
                 <button @click="filterForm.trashed = filterForm.trashed === 'only' ? 'active' : 'only'" class="flex h-8 items-center gap-2 rounded-lg border-[1.5px] border-black bg-white px-3 text-slate-700 shadow-[2px_2px_0_0_rgba(0,0,0,0.1)] transition-all hover:-translate-y-1 hover:bg-slate-50 hover:shadow-[3px_4px_0_0_rgba(0,0,0,0.15)] dark:border-slate-600 dark:bg-[#111c2e] dark:text-slate-100 dark:shadow-[0_10px_24px_rgba(0,0,0,0.35)] dark:hover:bg-slate-800/70">
                     <RotateCcw class="h-4 w-4 text-tm-navy-medium" /> <span class="font-medium tracking-wide text-sm">{{ filterForm.trashed === 'only' ? 'Aktif' : 'Terhapus' }}</span>
+                </button>
+                <button v-if="filterForm.trashed === 'only' && tasks.total > 0" @click="bulkRestoreTasks(true)" class="flex h-8 items-center gap-2 rounded-lg border-[1.5px] border-black bg-tm-green px-3 text-white shadow-[2px_2px_0_0_rgba(0,0,0,0.16)] transition-all hover:-translate-y-1 hover:bg-tm-green-dark hover:shadow-[3px_4px_0_0_rgba(0,0,0,0.2)] dark:border-emerald-300/40 dark:shadow-[0_12px_28px_rgba(16,185,129,0.2)]">
+                    <RotateCcw class="h-4 w-4" /> <span class="font-medium tracking-wide text-sm">Restore Semua</span>
                 </button>
                 <a v-if="filterForm.trashed !== 'only'" :href="exportUrl" target="_blank" class="flex h-8 items-center gap-2 rounded-lg border-[1.5px] border-black bg-white px-3 text-slate-700 shadow-[2px_2px_0_0_rgba(0,0,0,0.1)] transition-all hover:-translate-y-1 hover:bg-slate-50 hover:shadow-[3px_4px_0_0_rgba(0,0,0,0.15)] dark:border-slate-600 dark:bg-[#111c2e] dark:text-slate-100 dark:shadow-[0_10px_24px_rgba(0,0,0,0.35)] dark:hover:bg-slate-800/70">
                     <Download class="h-4 w-4 text-tm-green" /> <span class="font-medium tracking-wide text-sm">Export</span>
@@ -392,12 +412,17 @@ const submitImport = () => {
         </div>
 
         <!-- Bulk Actions Toolbar -->
-        <div v-if="selectedTasks.length > 0 && filterForm.trashed !== 'only'" class="flex flex-wrap items-center justify-between gap-4 rounded-[14px] border-[1.5px] border-black bg-tm-navy-pale p-3 shadow-[2px_3px_0_0_rgba(0,0,0,0.1)] dark:border-sky-300/35 dark:bg-sky-400/10 dark:shadow-[0_12px_28px_rgba(0,0,0,0.38)]">
+        <div v-if="selectedTasks.length > 0" class="flex flex-wrap items-center justify-between gap-4 rounded-[14px] border-[1.5px] border-black bg-tm-navy-pale p-3 shadow-[2px_3px_0_0_rgba(0,0,0,0.1)] dark:border-sky-300/35 dark:bg-sky-400/10 dark:shadow-[0_12px_28px_rgba(0,0,0,0.38)]">
             <div class="flex items-center gap-3">
                 <span class="bg-tm-navy text-white text-xs font-bold px-2 py-1 rounded-md">{{ selectedTasks.length }} terpilih</span>
-                <span class="text-sm font-semibold text-tm-navy dark:text-slate-100">Aksi Massal:</span>
+                <span class="text-sm font-semibold text-tm-navy dark:text-slate-100">{{ filterForm.trashed === 'only' ? 'Restore Massal:' : 'Aksi Massal:' }}</span>
             </div>
-            <div class="flex items-center gap-3 flex-wrap">
+            <div v-if="filterForm.trashed === 'only'" class="flex items-center gap-3 flex-wrap">
+                <Button @click="bulkRestoreTasks(false)" size="sm" class="h-8 bg-tm-green text-xs hover:bg-tm-green-dark">
+                    <RotateCcw class="h-3.5 w-3.5 mr-1.5" /> Pulihkan Terpilih
+                </Button>
+            </div>
+            <div v-else class="flex items-center gap-3 flex-wrap">
                 <!-- Assign -->
                 <select @change="handleBulkAssign(($event.target as HTMLSelectElement).value); ($event.target as HTMLSelectElement).value = ''" class="h-8 w-32 cursor-pointer rounded-lg border-0 bg-white px-2 text-xs text-slate-700 ring-1 ring-inset ring-tm-border focus:ring-2 focus:ring-inset focus:ring-tm-navy dark:bg-slate-950/40 dark:text-slate-100 dark:ring-slate-600">
                     <option value="">Assign ke...</option>
@@ -426,7 +451,7 @@ const submitImport = () => {
                     <thead class="border-b-[2px] border-black/80 bg-tm-navy-pale dark:border-slate-600 dark:bg-slate-800/80">
                         <tr class="text-[11px] font-bold uppercase tracking-wider text-tm-navy dark:text-slate-200">
                             <th class="py-2 px-3 w-10 text-center">
-                                <input v-if="filterForm.trashed !== 'only'" type="checkbox" v-model="selectAll" class="h-4 w-4 cursor-pointer rounded border-slate-300 text-tm-navy focus:ring-tm-navy dark:border-slate-600 dark:bg-slate-950/40" />
+                                <input type="checkbox" v-model="selectAll" class="h-4 w-4 cursor-pointer rounded border-slate-300 text-tm-navy focus:ring-tm-navy dark:border-slate-600 dark:bg-slate-950/40" />
                             </th>
                             <th class="py-2 px-3">Product</th>
                             <th class="py-2 px-3">Faskes</th>
@@ -462,7 +487,7 @@ const submitImport = () => {
                                 </div>
                                 
                                 <div class="flex justify-center items-center h-full">
-                                    <input v-if="filterForm.trashed !== 'only'" type="checkbox" v-model="selectedTasks" :value="task.id" class="h-4 w-4 cursor-pointer rounded border-slate-300 text-tm-navy focus:ring-tm-navy dark:border-slate-600 dark:bg-slate-950/40" />
+                                    <input type="checkbox" v-model="selectedTasks" :value="task.id" class="h-4 w-4 cursor-pointer rounded border-slate-300 text-tm-navy focus:ring-tm-navy dark:border-slate-600 dark:bg-slate-950/40" />
                                 </div>
                             </td>
 

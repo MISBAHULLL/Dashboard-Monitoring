@@ -254,4 +254,35 @@ class DocumentController extends Controller
 
         return back()->with('success', 'Dokumen berhasil dipulihkan.');
     }
+
+    public function bulkRestore(Request $request)
+    {
+        $this->authorize('restoreAny', Document::class);
+
+        $validated = $request->validate([
+            'ids' => ['nullable', 'array'],
+            'ids.*' => ['integer', 'exists:documents,id'],
+            'restore_all' => ['nullable', 'boolean'],
+        ]);
+
+        $restoreAll = $request->boolean('restore_all');
+        $ids = $validated['ids'] ?? [];
+
+        if (! $restoreAll && $ids === []) {
+            return back()->with('error', 'Pilih minimal satu dokumen untuk dipulihkan.');
+        }
+
+        $documents = Document::onlyTrashed()
+            ->when(! $restoreAll, fn ($query) => $query->whereIn('id', $ids))
+            ->get();
+
+        foreach ($documents as $document) {
+            $deletedAt = $document->deleted_at;
+            $document->restore();
+
+            ActivityLogger::updated('document', $document->id, $document->title, ['deleted_at' => $deletedAt], ['deleted_at' => null], "Memulihkan dokumen '{$document->title}' secara massal");
+        }
+
+        return back()->with('success', "{$documents->count()} dokumen berhasil dipulihkan.");
+    }
 }

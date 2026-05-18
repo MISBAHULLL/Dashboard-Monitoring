@@ -343,6 +343,37 @@ class TaskController extends Controller
         return back()->with('success', 'Task berhasil dipulihkan.');
     }
 
+    public function bulkRestore(Request $request)
+    {
+        $this->authorize('restoreAny', Task::class);
+
+        $validated = $request->validate([
+            'ids' => ['nullable', 'array'],
+            'ids.*' => ['integer', 'exists:tasks,id'],
+            'restore_all' => ['nullable', 'boolean'],
+        ]);
+
+        $restoreAll = $request->boolean('restore_all');
+        $ids = $validated['ids'] ?? [];
+
+        if (! $restoreAll && $ids === []) {
+            return back()->with('error', 'Pilih minimal satu task untuk dipulihkan.');
+        }
+
+        $tasks = Task::onlyTrashed()
+            ->when(! $restoreAll, fn ($query) => $query->whereIn('id', $ids))
+            ->get();
+
+        foreach ($tasks as $task) {
+            $deletedAt = $task->deleted_at;
+            $task->restore();
+
+            ActivityLogger::updated('task', $task->id, $task->title, ['deleted_at' => $deletedAt], ['deleted_at' => null], "Memulihkan task '{$task->title}' secara massal");
+        }
+
+        return back()->with('success', "{$tasks->count()} task berhasil dipulihkan.");
+    }
+
     public function kanban()
     {
         $this->authorize('viewAny', Task::class);

@@ -105,4 +105,35 @@ class ClientController extends Controller
 
         return back()->with('success', 'Faskes / Client berhasil dipulihkan.');
     }
+
+    public function bulkRestore(Request $request)
+    {
+        $this->authorize('restoreAny', Client::class);
+
+        $validated = $request->validate([
+            'ids' => ['nullable', 'array'],
+            'ids.*' => ['integer', 'exists:clients,id'],
+            'restore_all' => ['nullable', 'boolean'],
+        ]);
+
+        $restoreAll = $request->boolean('restore_all');
+        $ids = $validated['ids'] ?? [];
+
+        if (! $restoreAll && $ids === []) {
+            return back()->with('error', 'Pilih minimal satu faskes untuk dipulihkan.');
+        }
+
+        $clients = Client::onlyTrashed()
+            ->when(! $restoreAll, fn ($query) => $query->whereIn('id', $ids))
+            ->get();
+
+        foreach ($clients as $client) {
+            $deletedAt = $client->deleted_at;
+            $client->restore();
+
+            ActivityLogger::updated('client', $client->id, $client->name, ['deleted_at' => $deletedAt], ['deleted_at' => null], "Memulihkan faskes '{$client->name}' secara massal");
+        }
+
+        return back()->with('success', "{$clients->count()} faskes berhasil dipulihkan.");
+    }
 }

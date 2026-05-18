@@ -72,6 +72,113 @@ test('admin does not get self-notification for status change', function () {
 // BULK STATUS CHANGE NOTIFICATIONS
 // ──────────────────────────────────────────────────────────────
 
+test('task notifications are dismissed when task is completed', function () {
+    $admin = User::factory()->admin()->create();
+    $member = User::factory()->member()->create();
+    $task = Task::factory()->assignedTo($member)->create(['status' => 'open']);
+
+    Notification::create([
+        'user_id' => $member->id,
+        'type' => 'deadline_soon',
+        'title' => 'Deadline task mendekat',
+        'body' => 'Task mendekati deadline.',
+        'link' => route('tasks.show', $task),
+        'is_read' => false,
+    ]);
+
+    Notification::create([
+        'user_id' => $admin->id,
+        'type' => 'deadline_overdue',
+        'title' => 'Task melewati deadline',
+        'body' => 'Task sudah melewati deadline.',
+        'link' => route('tasks.show', $task),
+        'is_read' => false,
+    ]);
+
+    $this->actingAs($admin)
+        ->patch(route('tasks.updateStatus', $task), ['status' => 'completed'])
+        ->assertRedirect();
+
+    Notification::query()
+        ->where('link', route('tasks.show', $task))
+        ->get()
+        ->each(function (Notification $notification) {
+            expect($notification->is_read)->toBeTrue();
+            expect($notification->dismissed_at)->not->toBeNull();
+        });
+});
+
+test('dismiss read notifications hides only current user read notifications', function () {
+    $user = User::factory()->member()->create();
+    $otherUser = User::factory()->member()->create();
+
+    $readNotification = Notification::create([
+        'user_id' => $user->id,
+        'type' => 'status_changed',
+        'title' => 'Read notification',
+        'body' => 'Already read.',
+        'is_read' => true,
+    ]);
+    $unreadNotification = Notification::create([
+        'user_id' => $user->id,
+        'type' => 'new_comment',
+        'title' => 'Unread notification',
+        'body' => 'Still unread.',
+        'is_read' => false,
+    ]);
+    $otherNotification = Notification::create([
+        'user_id' => $otherUser->id,
+        'type' => 'status_changed',
+        'title' => 'Other notification',
+        'body' => 'Belongs to another user.',
+        'is_read' => true,
+    ]);
+
+    $this->actingAs($user)
+        ->patch(route('notifications.dismiss-read'))
+        ->assertRedirect();
+
+    expect($readNotification->fresh()->dismissed_at)->not->toBeNull();
+    expect($unreadNotification->fresh()->dismissed_at)->toBeNull();
+    expect($otherNotification->fresh()->dismissed_at)->toBeNull();
+});
+
+test('dismiss all notifications hides only current user notifications', function () {
+    $user = User::factory()->member()->create();
+    $otherUser = User::factory()->member()->create();
+
+    $readNotification = Notification::create([
+        'user_id' => $user->id,
+        'type' => 'status_changed',
+        'title' => 'Read notification',
+        'body' => 'Already read.',
+        'is_read' => true,
+    ]);
+    $unreadNotification = Notification::create([
+        'user_id' => $user->id,
+        'type' => 'new_comment',
+        'title' => 'Unread notification',
+        'body' => 'Still unread.',
+        'is_read' => false,
+    ]);
+    $otherNotification = Notification::create([
+        'user_id' => $otherUser->id,
+        'type' => 'status_changed',
+        'title' => 'Other notification',
+        'body' => 'Belongs to another user.',
+        'is_read' => false,
+    ]);
+
+    $this->actingAs($user)
+        ->patch(route('notifications.dismiss-all'))
+        ->assertRedirect();
+
+    expect($readNotification->fresh()->dismissed_at)->not->toBeNull();
+    expect($unreadNotification->fresh()->is_read)->toBeTrue();
+    expect($unreadNotification->fresh()->dismissed_at)->not->toBeNull();
+    expect($otherNotification->fresh()->dismissed_at)->toBeNull();
+});
+
 test('bulk status change sends notifications', function () {
     $admin = User::factory()->admin()->create();
     $member = User::factory()->member()->create();

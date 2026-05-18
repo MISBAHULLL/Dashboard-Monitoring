@@ -26,6 +26,7 @@ import { dashboard } from '@/routes';
 import { index as activityLogsIndex } from '@/routes/activity-logs';
 import { index as clientsIndex } from '@/routes/clients';
 import { index as documentsIndex } from '@/routes/documents';
+import { edit as profileEdit } from '@/routes/profile';
 import { index as tasksIndex } from '@/routes/tasks';
 import { index as teamsIndex } from '@/routes/teams';
 import { index as usersIndex } from '@/routes/users';
@@ -90,7 +91,7 @@ const mainNavItems = computed<NavItemLucide[]>(() => {
 const footerNavItems: NavItemLucide[] = [
     {
         title: 'Pengaturan Sistem',
-        href: '#',
+        href: profileEdit(),
         icon: Settings,
     },
 ];
@@ -103,10 +104,7 @@ const footerNavItems: NavItemLucide[] = [
         </SidebarHeader>
 
         <SidebarContent>
-            <SidebarNavLucide
-                :items="mainNavItems"
-                label="Main navigation"
-            />
+            <SidebarNavLucide :items="mainNavItems" label="Main navigation" />
         </SidebarContent>
 
         <SidebarFooter class="gap-1 p-0">

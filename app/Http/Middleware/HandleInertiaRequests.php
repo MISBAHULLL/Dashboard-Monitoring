@@ -55,10 +55,12 @@ class HandleInertiaRequests extends Middleware
                 return [
                     'unread_count' => Notification::query()
                         ->where('user_id', $user->id)
+                        ->whereNull('dismissed_at')
                         ->where('is_read', false)
                         ->count(),
                     'items' => Notification::query()
                         ->where('user_id', $user->id)
+                        ->whereNull('dismissed_at')
                         ->latest()
                         ->limit(8)
                         ->get(['id', 'type', 'title', 'body', 'link', 'is_read', 'created_at'])

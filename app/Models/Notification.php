@@ -15,6 +15,7 @@ use Illuminate\Support\Carbon;
  * @property string $type
  * @property string|null $link
  * @property bool $is_read
+ * @property Carbon|null $dismissed_at
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  */
@@ -29,10 +30,12 @@ class Notification extends Model
         'type',
         'link',
         'is_read',
+        'dismissed_at',
     ];
 
     protected $casts = [
         'is_read' => 'boolean',
+        'dismissed_at' => 'datetime',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
     ];

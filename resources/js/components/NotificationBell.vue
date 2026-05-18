@@ -1,8 +1,20 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { router, usePage } from '@inertiajs/vue3';
-import { AlertTriangle, Bell, BellRing, CheckCheck, Clock3, MessageSquare, RefreshCw, Ticket } from 'lucide-vue-next';
 import {
+    AlertTriangle,
+    Bell,
+    BellRing,
+    CheckCheck,
+    Clock3,
+    MessageSquare,
+    RefreshCw,
+    Trash2,
+    Ticket,
+} from 'lucide-vue-next';
+import {
+    dismissAll as dismissAllNotifications,
+    dismissRead as dismissReadNotifications,
     readAll as markAllNotificationsAsRead,
     read as markNotificationAsRead,
 } from '@/routes/notifications';
@@ -16,7 +28,13 @@ import {
 
 type NotificationItem = {
     id: number;
-    type: 'task_assigned' | 'deadline_soon' | 'deadline_overdue' | 'status_changed' | 'new_comment' | string;
+    type:
+        | 'task_assigned'
+        | 'deadline_soon'
+        | 'deadline_overdue'
+        | 'status_changed'
+        | 'new_comment'
+        | string;
     title: string;
     body: string | null;
     link: string | null;
@@ -32,14 +50,19 @@ type NotificationState = {
 const page = usePage();
 
 const notificationState = computed<NotificationState>(() => {
-    return (page.props.notifications as NotificationState | undefined) ?? {
-        unread_count: 0,
-        items: [],
-    };
+    return (
+        (page.props.notifications as NotificationState | undefined) ?? {
+            unread_count: 0,
+            items: [],
+        }
+    );
 });
 
 const unreadCount = computed(() => notificationState.value.unread_count);
 const items = computed(() => notificationState.value.items);
+const readItemsCount = computed(
+    () => items.value.filter((notification) => notification.is_read).length,
+);
 
 const formatTimestamp = (value: string | null) => {
     if (!value) {
@@ -161,6 +184,38 @@ const markAllAsRead = () => {
         },
     );
 };
+
+const dismissRead = () => {
+    if (readItemsCount.value === 0) {
+        return;
+    }
+
+    router.patch(
+        dismissReadNotifications.url(),
+        {},
+        {
+            preserveState: true,
+            preserveScroll: true,
+            only: ['notifications'],
+        },
+    );
+};
+
+const dismissAll = () => {
+    if (items.value.length === 0) {
+        return;
+    }
+
+    router.patch(
+        dismissAllNotifications.url(),
+        {},
+        {
+            preserveState: true,
+            preserveScroll: true,
+            only: ['notifications'],
+        },
+    );
+};
 </script>
 
 <template>
@@ -170,20 +225,23 @@ const markAllAsRead = () => {
             <button class="group relative cursor-pointer focus:outline-none">
                 <!-- Shadow layer -->
                 <div
-                    class="absolute left-[3px] top-[3px] h-[42px] w-[42px] rounded-xl border border-slate-900 bg-slate-900"
+                    class="absolute top-[3px] left-[3px] h-[42px] w-[42px] rounded-xl border border-slate-900 bg-slate-900"
                 />
                 <!-- Main yellow button -->
                 <div
                     class="relative flex h-[42px] w-[42px] items-center justify-center rounded-xl border-[1.5px] border-slate-900 bg-amber-400 transition-transform group-hover:-translate-x-[1px] group-hover:-translate-y-[1px] group-active:translate-x-[3px] group-active:translate-y-[3px]"
                 >
-                    <BellRing v-if="unreadCount > 0" class="h-5 w-5 text-slate-900" />
+                    <BellRing
+                        v-if="unreadCount > 0"
+                        class="h-5 w-5 text-slate-900"
+                    />
                     <Bell v-else class="h-5 w-5 text-slate-900" />
                 </div>
 
                 <!-- Red notification badge -->
                 <span
                     v-if="unreadCount > 0"
-                    class="absolute -right-1 -top-1 z-10 inline-flex min-w-[20px] items-center justify-center rounded-full border-2 border-white bg-red-500 px-1 py-0.5 text-[10px] font-bold leading-none text-white"
+                    class="absolute -top-1 -right-1 z-10 inline-flex min-w-[20px] items-center justify-center rounded-full border-2 border-white bg-red-500 px-1 py-0.5 text-[10px] leading-none font-bold text-white"
                 >
                     {{ unreadCount > 9 ? '9+' : unreadCount }}
                 </span>
@@ -191,24 +249,51 @@ const markAllAsRead = () => {
             </button>
         </DropdownMenuTrigger>
 
-        <DropdownMenuContent align="end" class="w-[22rem] rounded-xl border-2 border-slate-900 p-0 shadow-[4px_4px_0px_0px_#0f172a]">
-            <div class="flex items-center justify-between border-b-2 border-slate-900 px-4 py-3">
-                <span class="text-sm font-bold text-slate-800 dark:text-slate-100">
-                    Notifikasi
-                </span>
-                <button
-                    class="text-xs font-semibold text-amber-600 transition hover:text-amber-700 disabled:cursor-not-allowed disabled:opacity-50"
-                    :disabled="unreadCount === 0"
-                    @click="markAllAsRead"
-                >
-                    <span class="inline-flex items-center gap-1">
-                        <CheckCheck class="h-3.5 w-3.5" />
-                        Tandai semua dibaca
+        <DropdownMenuContent
+            align="end"
+            class="w-[22rem] rounded-xl border-2 border-slate-900 p-0 shadow-[4px_4px_0px_0px_#0f172a]"
+        >
+            <div class="border-b-2 border-slate-900 px-4 py-3">
+                <div class="flex items-center justify-between gap-3">
+                    <span
+                        class="text-sm font-bold text-slate-800 dark:text-slate-100"
+                    >
+                        Notifikasi
                     </span>
-                </button>
+                    <button
+                        class="inline-flex items-center gap-1 text-xs font-semibold text-amber-600 transition hover:text-amber-700 disabled:cursor-not-allowed disabled:opacity-50"
+                        :disabled="unreadCount === 0"
+                        @click="markAllAsRead"
+                    >
+                        <CheckCheck class="h-3.5 w-3.5" />
+                        Tandai dibaca
+                    </button>
+                </div>
+
+                <div class="mt-3 grid grid-cols-2 gap-2">
+                    <button
+                        class="inline-flex h-8 items-center justify-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2 text-xs font-semibold text-slate-600 transition hover:border-slate-300 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800"
+                        :disabled="readItemsCount === 0"
+                        @click="dismissRead"
+                    >
+                        <Trash2 class="h-3.5 w-3.5" />
+                        Bersihkan dibaca
+                    </button>
+                    <button
+                        class="inline-flex h-8 items-center justify-center gap-1.5 rounded-lg border border-red-200 bg-red-50 px-2 text-xs font-semibold text-red-600 transition hover:border-red-300 hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-red-400/30 dark:bg-red-950/30 dark:text-red-300"
+                        :disabled="items.length === 0"
+                        @click="dismissAll"
+                    >
+                        <Trash2 class="h-3.5 w-3.5" />
+                        Bersihkan semua
+                    </button>
+                </div>
             </div>
 
-            <div v-if="items.length === 0" class="px-4 py-8 text-center text-sm text-slate-500 dark:text-slate-400">
+            <div
+                v-if="items.length === 0"
+                class="px-4 py-8 text-center text-sm text-slate-500 dark:text-slate-400"
+            >
                 Belum ada notifikasi baru.
             </div>
 
@@ -217,19 +302,28 @@ const markAllAsRead = () => {
                     v-for="notification in items"
                     :key="notification.id"
                     class="mx-2 mb-1 flex cursor-pointer items-start gap-3 rounded-lg px-3 py-3 transition-colors"
-                    :class="notification.is_read ? 'opacity-70' : toneForType(notification.type).item"
+                    :class="
+                        notification.is_read
+                            ? 'opacity-70'
+                            : toneForType(notification.type).item
+                    "
                     @select="openNotification(notification)"
                 >
                     <div
                         class="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-slate-200"
                         :class="toneForType(notification.type).icon"
                     >
-                        <component :is="iconForType(notification.type)" class="h-4 w-4" />
+                        <component
+                            :is="iconForType(notification.type)"
+                            class="h-4 w-4"
+                        />
                     </div>
 
                     <div class="min-w-0 space-y-1">
                         <div class="flex items-start gap-2">
-                            <p class="line-clamp-1 flex-1 text-sm font-semibold text-slate-800 dark:text-slate-100">
+                            <p
+                                class="line-clamp-1 flex-1 text-sm font-semibold text-slate-800 dark:text-slate-100"
+                            >
                                 {{ notification.title }}
                             </p>
                             <span
@@ -238,10 +332,14 @@ const markAllAsRead = () => {
                                 :class="toneForType(notification.type).dot"
                             />
                         </div>
-                        <p class="line-clamp-2 text-xs leading-5 text-slate-500 dark:text-slate-400">
+                        <p
+                            class="line-clamp-2 text-xs leading-5 text-slate-500 dark:text-slate-400"
+                        >
                             {{ notification.body }}
                         </p>
-                        <p class="text-[11px] font-medium text-slate-400 dark:text-slate-500">
+                        <p
+                            class="text-[11px] font-medium text-slate-400 dark:text-slate-500"
+                        >
                             {{ formatTimestamp(notification.created_at) }}
                         </p>
                     </div>

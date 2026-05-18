@@ -29,6 +29,8 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/api/search', [SearchController::class, 'search'])->name('api.search');
 
     // Notifications
+    Route::patch('/notifications/dismiss-read', [NotificationController::class, 'dismissRead'])->name('notifications.dismiss-read');
+    Route::patch('/notifications/dismiss-all', [NotificationController::class, 'dismissAll'])->name('notifications.dismiss-all');
     Route::patch('/notifications/read-all', [NotificationController::class, 'markAllAsRead'])->name('notifications.read-all');
     Route::patch('/notifications/{notification}/read', [NotificationController::class, 'markAsRead'])->name('notifications.read');
 

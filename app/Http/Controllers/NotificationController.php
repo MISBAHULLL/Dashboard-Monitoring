@@ -30,8 +30,39 @@ class NotificationController extends Controller
 
         Notification::query()
             ->where('user_id', $user->id)
+            ->whereNull('dismissed_at')
             ->where('is_read', false)
             ->update(['is_read' => true]);
+
+        return back();
+    }
+
+    public function dismissRead(Request $request): RedirectResponse
+    {
+        /** @var User $user */
+        $user = $request->user();
+
+        Notification::query()
+            ->where('user_id', $user->id)
+            ->where('is_read', true)
+            ->whereNull('dismissed_at')
+            ->update(['dismissed_at' => now()]);
+
+        return back();
+    }
+
+    public function dismissAll(Request $request): RedirectResponse
+    {
+        /** @var User $user */
+        $user = $request->user();
+
+        Notification::query()
+            ->where('user_id', $user->id)
+            ->whereNull('dismissed_at')
+            ->update([
+                'is_read' => true,
+                'dismissed_at' => now(),
+            ]);
 
         return back();
     }

@@ -97,6 +97,10 @@ class NotificationService
                 ]);
             }
         }
+
+        if ($newStatus === 'completed') {
+            $this->dismissTaskNotifications($task);
+        }
     }
 
     /**
@@ -239,5 +243,16 @@ class NotificationService
             ->where('link', route('tasks.show', $task))
             ->whereDate('created_at', CarbonImmutable::today())
             ->exists();
+    }
+
+    public function dismissTaskNotifications(Task $task): void
+    {
+        Notification::query()
+            ->where('link', route('tasks.show', $task))
+            ->whereNull('dismissed_at')
+            ->update([
+                'is_read' => true,
+                'dismissed_at' => now(),
+            ]);
     }
 }

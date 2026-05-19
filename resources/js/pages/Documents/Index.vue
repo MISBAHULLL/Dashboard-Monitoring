@@ -2,6 +2,7 @@
 import { Head, router, useForm } from '@inertiajs/vue3';
 import { FileText, Plus, Download, Trash2, Eye, Upload, X, File, FolderOpen, RotateCcw } from 'lucide-vue-next';
 import { Button } from '@/components/ui/button';
+import ActionTooltip from '@/components/ActionTooltip.vue';
 import ConfirmDialog from '@/components/ConfirmDialog.vue';
 import { dashboard } from '@/routes';
 import {
@@ -357,51 +358,51 @@ function getTypeColor(type: string): string {
                         <td class="px-4 py-3.5">
                             <div class="flex items-center justify-end gap-1">
                                 <!-- View -->
-                                <button
-                                    v-if="doc.deleted_at"
-                                    @click="restoreDocument(doc.id, doc.title)"
-                                    class="flex h-8 w-8 items-center justify-center rounded-[8px] border border-transparent text-tm-green transition-all hover:border-tm-green/20 hover:bg-tm-green-pale hover:text-[#1E8A54] dark:hover:bg-emerald-950/30 dark:hover:text-emerald-400"
-                                    title="Pulihkan dokumen"
-                                >
-                                    <RotateCcw class="h-4 w-4" />
-                                </button>
-                                <button
-                                    v-if="!doc.deleted_at"
-                                    @click="router.visit(showDocument.url(doc.id))"
-                                    class="flex h-8 w-8 items-center justify-center rounded-[8px] border border-transparent text-tm-text-muted transition-all hover:border-tm-navy/20 hover:bg-tm-navy-pale hover:text-tm-navy dark:hover:bg-secondary dark:hover:text-foreground"
-                                    title="Lihat detail"
-                                >
-                                    <Eye class="h-4 w-4" />
-                                </button>
+                                <ActionTooltip v-if="doc.deleted_at" label="Pulihkan dokumen">
+                                    <button
+                                        @click="restoreDocument(doc.id, doc.title)"
+                                        class="flex h-8 w-8 items-center justify-center rounded-[8px] border border-transparent text-tm-green transition-all hover:border-tm-green/20 hover:bg-tm-green-pale hover:text-[#1E8A54] dark:hover:bg-emerald-950/30 dark:hover:text-emerald-400"
+                                    >
+                                        <RotateCcw class="h-4 w-4" />
+                                    </button>
+                                </ActionTooltip>
+                                <ActionTooltip v-if="!doc.deleted_at" label="Lihat detail dokumen">
+                                    <button
+                                        @click="router.visit(showDocument.url(doc.id))"
+                                        class="flex h-8 w-8 items-center justify-center rounded-[8px] border border-transparent text-tm-text-muted transition-all hover:border-tm-navy/20 hover:bg-tm-navy-pale hover:text-tm-navy dark:hover:bg-secondary dark:hover:text-foreground"
+                                    >
+                                        <Eye class="h-4 w-4" />
+                                    </button>
+                                </ActionTooltip>
                                 <!-- Upload new version -->
-                                <button
-                                    v-if="!doc.deleted_at"
-                                    @click="openEdit(doc)"
-                                    class="flex h-8 w-8 items-center justify-center rounded-[8px] border border-transparent text-tm-text-muted transition-all hover:border-tm-green/20 hover:bg-tm-green-pale hover:text-[#1E8A54] dark:hover:bg-emerald-950/30 dark:hover:text-emerald-400"
-                                    title="Upload versi baru"
-                                >
-                                    <Upload class="h-4 w-4" />
-                                </button>
+                                <ActionTooltip v-if="!doc.deleted_at" label="Upload versi baru">
+                                    <button
+                                        @click="openEdit(doc)"
+                                        class="flex h-8 w-8 items-center justify-center rounded-[8px] border border-transparent text-tm-text-muted transition-all hover:border-tm-green/20 hover:bg-tm-green-pale hover:text-[#1E8A54] dark:hover:bg-emerald-950/30 dark:hover:text-emerald-400"
+                                    >
+                                        <Upload class="h-4 w-4" />
+                                    </button>
+                                </ActionTooltip>
                                 <!-- Download -->
-                                <a
-                                    v-if="doc.file_path && !doc.deleted_at"
-                                    :href="`/storage/${doc.file_path}`"
-                                    target="_blank"
-                                    download
-                                    class="flex h-8 w-8 items-center justify-center rounded-[8px] border border-transparent text-tm-text-muted transition-all hover:border-tm-navy/20 hover:bg-tm-navy-pale hover:text-tm-navy dark:hover:bg-secondary dark:hover:text-foreground"
-                                    title="Download"
-                                >
-                                    <Download class="h-4 w-4" />
-                                </a>
+                                <ActionTooltip v-if="doc.file_path && !doc.deleted_at" label="Download dokumen">
+                                    <a
+                                        :href="`/storage/${doc.file_path}`"
+                                        target="_blank"
+                                        download
+                                        class="flex h-8 w-8 items-center justify-center rounded-[8px] border border-transparent text-tm-text-muted transition-all hover:border-tm-navy/20 hover:bg-tm-navy-pale hover:text-tm-navy dark:hover:bg-secondary dark:hover:text-foreground"
+                                    >
+                                        <Download class="h-4 w-4" />
+                                    </a>
+                                </ActionTooltip>
                                 <!-- Delete -->
-                                <button
-                                    v-if="!doc.deleted_at"
-                                    @click="deleteDocument(doc.id, doc.title)"
-                                    class="flex h-8 w-8 items-center justify-center rounded-[8px] border border-transparent text-tm-text-muted transition-all hover:border-tm-danger/20 hover:bg-tm-danger-pale hover:text-tm-danger dark:hover:bg-red-950/30 dark:hover:text-red-400"
-                                    title="Hapus dokumen"
-                                >
-                                    <Trash2 class="h-4 w-4" />
-                                </button>
+                                <ActionTooltip v-if="!doc.deleted_at" label="Hapus dokumen">
+                                    <button
+                                        @click="deleteDocument(doc.id, doc.title)"
+                                        class="flex h-8 w-8 items-center justify-center rounded-[8px] border border-transparent text-tm-text-muted transition-all hover:border-tm-danger/20 hover:bg-tm-danger-pale hover:text-tm-danger dark:hover:bg-red-950/30 dark:hover:text-red-400"
+                                    >
+                                        <Trash2 class="h-4 w-4" />
+                                    </button>
+                                </ActionTooltip>
                             </div>
                         </td>
                     </tr>
@@ -535,15 +536,15 @@ function getTypeColor(type: string): string {
                                         @change="handleFileChange"
                                         class="block w-full rounded-[10px] border-2 border-dashed border-tm-border bg-tm-navy-pale/30 px-3 py-3 pr-12 text-sm text-tm-text-secondary transition-all file:mr-3 file:rounded-[8px] file:border-2 file:border-black file:bg-white file:px-3 file:py-1.5 file:text-xs file:font-bold file:text-tm-navy file:shadow-[1px_1px_0px_0px_rgba(0,0,0,0.8)] hover:border-tm-green/50 hover:bg-tm-green-pale/20 dark:border-border dark:bg-secondary/30 dark:text-muted-foreground dark:file:bg-card dark:file:text-foreground dark:file:border-border"
                                     />
-                                    <button
-                                        v-if="form.file"
-                                        type="button"
-                                        @click="clearSelectedFile"
-                                        class="absolute right-3 top-3 flex h-7 w-7 items-center justify-center rounded-[8px] border-2 border-black bg-white text-tm-danger shadow-[1px_1px_0px_0px_rgba(0,0,0,0.8)] transition-all hover:bg-tm-danger-pale dark:border-border dark:bg-card dark:shadow-none"
-                                        title="Batalkan file yang dipilih"
-                                    >
-                                        <X class="h-3.5 w-3.5" />
-                                    </button>
+                                    <ActionTooltip v-if="form.file" label="Batalkan file yang dipilih">
+                                        <button
+                                            type="button"
+                                            @click="clearSelectedFile"
+                                            class="absolute right-3 top-3 flex h-7 w-7 items-center justify-center rounded-[8px] border-2 border-black bg-white text-tm-danger shadow-[1px_1px_0px_0px_rgba(0,0,0,0.8)] transition-all hover:bg-tm-danger-pale dark:border-border dark:bg-card dark:shadow-none"
+                                        >
+                                            <X class="h-3.5 w-3.5" />
+                                        </button>
+                                    </ActionTooltip>
                                     <p class="mt-1 text-[11px] font-medium text-tm-text-muted dark:text-muted-foreground">{{ documentFileHint }}</p>
                                 </div>
                                 <p v-if="form.errors.file" class="mt-1 text-xs font-medium text-tm-danger">{{ form.errors.file }}</p>

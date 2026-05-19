@@ -7,6 +7,7 @@ import {
     X,
 } from 'lucide-vue-next';
 import { Button } from '@/components/ui/button';
+import ActionTooltip from '@/components/ActionTooltip.vue';
 import ConfirmDialog from '@/components/ConfirmDialog.vue';
 import { dashboard } from '@/routes';
 import {
@@ -396,20 +397,22 @@ function deleteDocument(doc: DocumentItem) {
                         <!-- Aksi -->
                         <td class="px-4 py-4">
                             <div class="flex items-center justify-end gap-1">
-                                <button
-                                    @click="openUploadModal(doc)"
-                                    class="flex h-8 w-8 items-center justify-center rounded-[8px] border border-transparent text-tm-text-muted transition-all hover:border-tm-navy/20 hover:bg-tm-navy-pale hover:text-tm-navy dark:hover:bg-secondary dark:hover:text-foreground"
-                                    title="Edit Dokumen"
-                                >
-                                    <Edit class="h-4 w-4" />
-                                </button>
-                                <button
-                                    @click="deleteDocument(doc)"
-                                    class="flex h-8 w-8 items-center justify-center rounded-[8px] border border-transparent text-tm-text-muted transition-all hover:border-tm-danger/20 hover:bg-tm-danger-pale hover:text-tm-danger dark:hover:bg-red-950/30 dark:hover:text-red-400"
-                                    title="Hapus Dokumen"
-                                >
-                                    <Trash2 class="h-4 w-4" />
-                                </button>
+                                <ActionTooltip label="Edit dokumen">
+                                    <button
+                                        @click="openUploadModal(doc)"
+                                        class="flex h-8 w-8 items-center justify-center rounded-[8px] border border-transparent text-tm-text-muted transition-all hover:border-tm-navy/20 hover:bg-tm-navy-pale hover:text-tm-navy dark:hover:bg-secondary dark:hover:text-foreground"
+                                    >
+                                        <Edit class="h-4 w-4" />
+                                    </button>
+                                </ActionTooltip>
+                                <ActionTooltip label="Hapus dokumen">
+                                    <button
+                                        @click="deleteDocument(doc)"
+                                        class="flex h-8 w-8 items-center justify-center rounded-[8px] border border-transparent text-tm-text-muted transition-all hover:border-tm-danger/20 hover:bg-tm-danger-pale hover:text-tm-danger dark:hover:bg-red-950/30 dark:hover:text-red-400"
+                                    >
+                                        <Trash2 class="h-4 w-4" />
+                                    </button>
+                                </ActionTooltip>
                             </div>
                         </td>
                     </tr>
@@ -455,15 +458,15 @@ function deleteDocument(doc: DocumentItem) {
                         <div class="relative">
                             <input ref="newDocFileInput" type="file" :accept="documentFileAccept" @change="handleNewFileChange"
                                 class="block w-full rounded-[10px] border-2 border-dashed border-tm-border bg-tm-navy-pale/30 px-3 py-3 pr-12 text-sm text-tm-text-secondary transition-all file:mr-3 file:rounded-[8px] file:border-2 file:border-black file:bg-white file:px-3 file:py-1.5 file:text-xs file:font-bold file:text-tm-navy file:shadow-[1px_1px_0px_0px_rgba(0,0,0,0.8)] hover:border-tm-green/50 dark:border-border dark:bg-secondary/30 dark:file:bg-card dark:file:text-foreground dark:file:border-border" />
-                            <button
-                                v-if="newDocForm.file"
-                                type="button"
-                                @click="clearNewDocFile"
-                                class="absolute right-3 top-3 flex h-7 w-7 items-center justify-center rounded-[8px] border-2 border-black bg-white text-tm-danger shadow-[1px_1px_0px_0px_rgba(0,0,0,0.8)] transition-all hover:bg-tm-danger-pale dark:border-border dark:bg-card dark:shadow-none"
-                                title="Batalkan file yang dipilih"
-                            >
-                                <X class="h-3.5 w-3.5" />
-                            </button>
+                            <ActionTooltip v-if="newDocForm.file" label="Batalkan file yang dipilih">
+                                <button
+                                    type="button"
+                                    @click="clearNewDocFile"
+                                    class="absolute right-3 top-3 flex h-7 w-7 items-center justify-center rounded-[8px] border-2 border-black bg-white text-tm-danger shadow-[1px_1px_0px_0px_rgba(0,0,0,0.8)] transition-all hover:bg-tm-danger-pale dark:border-border dark:bg-card dark:shadow-none"
+                                >
+                                    <X class="h-3.5 w-3.5" />
+                                </button>
+                            </ActionTooltip>
                         </div>
                         <p class="text-[11px] font-medium text-tm-text-muted dark:text-muted-foreground">{{ documentFileHint }}</p>
                         <p v-if="newDocForm.errors.file" class="text-xs font-medium text-tm-danger">{{ newDocForm.errors.file }}</p>
@@ -522,15 +525,15 @@ function deleteDocument(doc: DocumentItem) {
                         <div class="relative">
                             <input ref="uploadFileInput" type="file" :accept="documentFileAccept" @change="handleFileChange"
                                 class="block w-full rounded-[10px] border-2 border-dashed border-tm-border bg-tm-navy-pale/30 px-3 py-3 pr-12 text-sm text-tm-text-secondary transition-all file:mr-3 file:rounded-[8px] file:border-2 file:border-black file:bg-white file:px-3 file:py-1.5 file:text-xs file:font-bold file:text-tm-navy file:shadow-[1px_1px_0px_0px_rgba(0,0,0,0.8)] hover:border-tm-green/50 dark:border-border dark:bg-secondary/30 dark:file:bg-card dark:file:text-foreground dark:file:border-border" />
-                            <button
-                                v-if="uploadForm.file"
-                                type="button"
-                                @click="clearUploadFile"
-                                class="absolute right-3 top-3 flex h-7 w-7 items-center justify-center rounded-[8px] border-2 border-black bg-white text-tm-danger shadow-[1px_1px_0px_0px_rgba(0,0,0,0.8)] transition-all hover:bg-tm-danger-pale dark:border-border dark:bg-card dark:shadow-none"
-                                title="Batalkan file yang dipilih"
-                            >
-                                <X class="h-3.5 w-3.5" />
-                            </button>
+                            <ActionTooltip v-if="uploadForm.file" label="Batalkan file yang dipilih">
+                                <button
+                                    type="button"
+                                    @click="clearUploadFile"
+                                    class="absolute right-3 top-3 flex h-7 w-7 items-center justify-center rounded-[8px] border-2 border-black bg-white text-tm-danger shadow-[1px_1px_0px_0px_rgba(0,0,0,0.8)] transition-all hover:bg-tm-danger-pale dark:border-border dark:bg-card dark:shadow-none"
+                                >
+                                    <X class="h-3.5 w-3.5" />
+                                </button>
+                            </ActionTooltip>
                         </div>
                         <p v-if="uploadForm.errors.file" class="text-xs font-medium text-tm-danger">{{ uploadForm.errors.file }}</p>
                         <p class="text-[11px] font-medium text-tm-text-muted dark:text-muted-foreground">{{ documentFileHint }}</p>

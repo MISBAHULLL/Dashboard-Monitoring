@@ -11,6 +11,7 @@ import {
 
 // Import komponen UI
 import { Button } from '@/components/ui/button';
+import ActionTooltip from '@/components/ActionTooltip.vue';
 import ConfirmDialog from '@/components/ConfirmDialog.vue';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -217,12 +218,16 @@ const deleteUser = (id: number, name: string) => {
                             </td>
                             <td class="px-4 py-3.5 text-right">
                                 <div class="flex items-center justify-end gap-1">
-                                    <button @click="openEditModal(user)" title="Edit" class="inline-flex h-8 w-8 items-center justify-center rounded-[8px] border border-tm-border text-tm-navy-medium transition-all hover:border-tm-navy hover:bg-tm-navy-pale dark:border-border dark:text-foreground dark:hover:bg-secondary">
-                                        <Edit class="h-4 w-4" />
-                                    </button>
-                                    <button @click="deleteUser(user.id, user.name)" title="Hapus" class="inline-flex h-8 w-8 items-center justify-center rounded-[8px] border border-tm-border text-tm-danger transition-all hover:border-tm-danger hover:bg-tm-danger-pale dark:border-border dark:hover:bg-tm-danger/10">
-                                        <Trash2 class="h-4 w-4" />
-                                    </button>
+                                    <ActionTooltip label="Edit user">
+                                        <button @click="openEditModal(user)" class="inline-flex h-8 w-8 items-center justify-center rounded-[8px] border border-tm-border text-tm-navy-medium transition-all hover:border-tm-navy hover:bg-tm-navy-pale dark:border-border dark:text-foreground dark:hover:bg-secondary">
+                                            <Edit class="h-4 w-4" />
+                                        </button>
+                                    </ActionTooltip>
+                                    <ActionTooltip label="Hapus user">
+                                        <button @click="deleteUser(user.id, user.name)" class="inline-flex h-8 w-8 items-center justify-center rounded-[8px] border border-tm-border text-tm-danger transition-all hover:border-tm-danger hover:bg-tm-danger-pale dark:border-border dark:hover:bg-tm-danger/10">
+                                            <Trash2 class="h-4 w-4" />
+                                        </button>
+                                    </ActionTooltip>
                                 </div>
                             </td>
                         </tr>

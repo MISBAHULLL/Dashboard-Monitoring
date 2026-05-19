@@ -14,6 +14,7 @@ import {
 
 // Import komponen UI
 import { Button } from '@/components/ui/button';
+import ActionTooltip from '@/components/ActionTooltip.vue';
 import ConfirmDialog from '@/components/ConfirmDialog.vue';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -317,15 +318,21 @@ const bulkRestoreTeams = (restoreAll = false) => {
                             </td>
                             <td class="px-4 py-3.5 text-right">
                                 <div class="flex items-center justify-end gap-1">
-                                    <button v-if="team.deleted_at" @click="restoreTeam(team.id, team.name)" title="Pulihkan" class="inline-flex h-8 w-8 items-center justify-center rounded-[8px] border border-tm-border text-tm-green transition-all hover:border-tm-green hover:bg-tm-green-pale dark:border-border dark:hover:bg-tm-green/10">
-                                        <RotateCcw class="h-4 w-4" />
-                                    </button>
-                                    <button v-if="!team.deleted_at" @click="openEditModal(team)" title="Edit" class="inline-flex h-8 w-8 items-center justify-center rounded-[8px] border border-tm-border text-tm-navy-medium transition-all hover:border-tm-navy hover:bg-tm-navy-pale dark:border-border dark:text-foreground dark:hover:bg-secondary">
-                                        <Edit class="h-4 w-4" />
-                                    </button>
-                                    <button v-if="!team.deleted_at" @click="deleteTeam(team.id, team.name)" title="Hapus" class="inline-flex h-8 w-8 items-center justify-center rounded-[8px] border border-tm-border text-tm-danger transition-all hover:border-tm-danger hover:bg-tm-danger-pale dark:border-border dark:hover:bg-tm-danger/10">
-                                        <Trash2 class="h-4 w-4" />
-                                    </button>
+                                    <ActionTooltip v-if="team.deleted_at" label="Pulihkan team">
+                                        <button @click="restoreTeam(team.id, team.name)" class="inline-flex h-8 w-8 items-center justify-center rounded-[8px] border border-tm-border text-tm-green transition-all hover:border-tm-green hover:bg-tm-green-pale dark:border-border dark:hover:bg-tm-green/10">
+                                            <RotateCcw class="h-4 w-4" />
+                                        </button>
+                                    </ActionTooltip>
+                                    <ActionTooltip v-if="!team.deleted_at" label="Edit team">
+                                        <button @click="openEditModal(team)" class="inline-flex h-8 w-8 items-center justify-center rounded-[8px] border border-tm-border text-tm-navy-medium transition-all hover:border-tm-navy hover:bg-tm-navy-pale dark:border-border dark:text-foreground dark:hover:bg-secondary">
+                                            <Edit class="h-4 w-4" />
+                                        </button>
+                                    </ActionTooltip>
+                                    <ActionTooltip v-if="!team.deleted_at" label="Hapus team">
+                                        <button @click="deleteTeam(team.id, team.name)" class="inline-flex h-8 w-8 items-center justify-center rounded-[8px] border border-tm-border text-tm-danger transition-all hover:border-tm-danger hover:bg-tm-danger-pale dark:border-border dark:hover:bg-tm-danger/10">
+                                            <Trash2 class="h-4 w-4" />
+                                        </button>
+                                    </ActionTooltip>
                                 </div>
                             </td>
                         </tr>

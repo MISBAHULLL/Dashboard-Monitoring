@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import ActionTooltip from '@/components/ActionTooltip.vue';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import ConfirmDialog from '@/components/ConfirmDialog.vue';
 import { destroy as taskTemplatesDestroy, store as taskTemplatesStore } from '@/routes/task-templates';
@@ -152,9 +153,11 @@ const confirmAction = ref({
                         {{ template.name }}
                     </button>
                     <div class="mx-2 h-3 w-px bg-slate-300"></div>
-                    <button type="button" @click="deleteTemplate(template.id)" class="rounded-full p-1 text-slate-400 transition-colors hover:bg-red-50 hover:text-red-500" title="Hapus template">
-                        <X class="h-3.5 w-3.5" />
-                    </button>
+                    <ActionTooltip label="Hapus template">
+                        <button type="button" @click="deleteTemplate(template.id)" class="rounded-full p-1 text-slate-400 transition-colors hover:bg-red-50 hover:text-red-500">
+                            <X class="h-3.5 w-3.5" />
+                        </button>
+                    </ActionTooltip>
                 </div>
             </div>
         </div>

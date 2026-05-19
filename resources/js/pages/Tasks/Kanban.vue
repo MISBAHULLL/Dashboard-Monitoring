@@ -28,6 +28,7 @@ import {
 // UI Components
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import ActionTooltip from '@/components/ActionTooltip.vue';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -550,15 +551,17 @@ const onDrop = (e: DragEvent, newStatus: TaskStatus) => {
                                 </div>
 
                                 <div class="flex items-center gap-1">
-                                    <Link v-if="task.can_edit" :href="tasksEdit.url(task.id)" class="hidden sm:block">
-                                        <Button variant="ghost" size="sm" class="h-7 rounded-lg px-2.5 text-[11px] font-bold text-[#1B3A6B] opacity-0 transition-all group-hover:opacity-100 hover:bg-[#E8EEF8] dark:text-white dark:hover:bg-slate-800">
-                                            Edit
-                                        </Button>
-                                    </Link>
+                                    <ActionTooltip v-if="task.can_edit" label="Edit task">
+                                        <Link :href="tasksEdit.url(task.id)" class="hidden sm:block">
+                                            <Button variant="ghost" size="sm" class="h-7 rounded-lg px-2.5 text-[11px] font-bold text-[#1B3A6B] opacity-0 transition-all group-hover:opacity-100 hover:bg-[#E8EEF8] dark:text-white dark:hover:bg-slate-800">
+                                                Edit
+                                            </Button>
+                                        </Link>
+                                    </ActionTooltip>
 
                                     <DropdownMenu>
                                         <DropdownMenuTrigger as-child>
-                                            <Button variant="ghost" size="icon" class="h-7 w-7 rounded-lg text-[#5C6B7A] opacity-60 transition-all group-hover:opacity-100 hover:bg-[#F0F3F7] hover:text-[#1B3A6B] dark:hover:bg-slate-800">
+                                            <Button variant="ghost" size="icon" title="Ubah status task" class="h-7 w-7 rounded-lg text-[#5C6B7A] opacity-60 transition-all group-hover:opacity-100 hover:bg-[#F0F3F7] hover:text-[#1B3A6B] dark:hover:bg-slate-800">
                                                 <MoreHorizontal class="h-4 w-4" />
                                             </Button>
                                         </DropdownMenuTrigger>

@@ -15,6 +15,7 @@ import { index as documentsIndex, store as storeDocument } from '@/routes/docume
 
 // Import komponen UI dari shadcn-vue
 import { Button } from '@/components/ui/button';
+import ActionTooltip from '@/components/ActionTooltip.vue';
 import ConfirmDialog from '@/components/ConfirmDialog.vue';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -454,12 +455,16 @@ const submitDoc = () => {
                             <td class="px-4 py-3.5">
                                 <div class="flex items-center gap-1.5">
                                     <span class="text-sm font-semibold text-tm-navy dark:text-foreground">{{ client.documents_count }}</span>
-                                    <button v-if="!client.deleted_at" @click="router.visit(documentsIndex.url({ query: { client_id: client.id } }))" title="Lihat Dokumen" class="inline-flex h-6 w-6 items-center justify-center rounded-[6px] text-tm-navy-medium transition-colors hover:bg-tm-navy-pale dark:text-foreground dark:hover:bg-secondary">
-                                        <Eye class="h-3.5 w-3.5" />
-                                    </button>
-                                    <button v-if="!client.deleted_at" @click="openDocModal(client)" title="Tambah Dokumen" class="inline-flex h-6 w-6 items-center justify-center rounded-[6px] text-tm-green transition-colors hover:bg-tm-green-pale dark:hover:bg-tm-green/10">
-                                        <FilePlus class="h-3.5 w-3.5" />
-                                    </button>
+                                    <ActionTooltip v-if="!client.deleted_at" label="Lihat dokumen faskes">
+                                        <button @click="router.visit(documentsIndex.url({ query: { client_id: client.id } }))" class="inline-flex h-6 w-6 items-center justify-center rounded-[6px] text-tm-navy-medium transition-colors hover:bg-tm-navy-pale dark:text-foreground dark:hover:bg-secondary">
+                                            <Eye class="h-3.5 w-3.5" />
+                                        </button>
+                                    </ActionTooltip>
+                                    <ActionTooltip v-if="!client.deleted_at" label="Tambah dokumen faskes">
+                                        <button @click="openDocModal(client)" class="inline-flex h-6 w-6 items-center justify-center rounded-[6px] text-tm-green transition-colors hover:bg-tm-green-pale dark:hover:bg-tm-green/10">
+                                            <FilePlus class="h-3.5 w-3.5" />
+                                        </button>
+                                    </ActionTooltip>
                                 </div>
                             </td>
                             <td class="px-4 py-3.5">
@@ -474,15 +479,21 @@ const submitDoc = () => {
                             </td>
                             <td class="px-4 py-3.5 text-right">
                                 <div class="flex items-center justify-end gap-1">
-                                    <button v-if="client.deleted_at" @click="restoreClient(client.id, client.name)" title="Pulihkan" class="inline-flex h-8 w-8 items-center justify-center rounded-[8px] border border-tm-border text-tm-green transition-all hover:border-tm-green hover:bg-tm-green-pale dark:border-border dark:hover:bg-tm-green/10">
-                                        <RotateCcw class="h-4 w-4" />
-                                    </button>
-                                    <button v-if="!client.deleted_at" @click="openEditModal(client)" title="Edit" class="inline-flex h-8 w-8 items-center justify-center rounded-[8px] border border-tm-border text-tm-navy-medium transition-all hover:border-tm-navy hover:bg-tm-navy-pale dark:border-border dark:text-foreground dark:hover:bg-secondary">
-                                        <Edit class="h-4 w-4" />
-                                    </button>
-                                    <button v-if="!client.deleted_at" @click="deleteClient(client.id, client.name)" title="Hapus" class="inline-flex h-8 w-8 items-center justify-center rounded-[8px] border border-tm-border text-tm-danger transition-all hover:border-tm-danger hover:bg-tm-danger-pale dark:border-border dark:hover:bg-tm-danger/10">
-                                        <Trash2 class="h-4 w-4" />
-                                    </button>
+                                    <ActionTooltip v-if="client.deleted_at" label="Pulihkan faskes">
+                                        <button @click="restoreClient(client.id, client.name)" class="inline-flex h-8 w-8 items-center justify-center rounded-[8px] border border-tm-border text-tm-green transition-all hover:border-tm-green hover:bg-tm-green-pale dark:border-border dark:hover:bg-tm-green/10">
+                                            <RotateCcw class="h-4 w-4" />
+                                        </button>
+                                    </ActionTooltip>
+                                    <ActionTooltip v-if="!client.deleted_at" label="Edit faskes">
+                                        <button @click="openEditModal(client)" class="inline-flex h-8 w-8 items-center justify-center rounded-[8px] border border-tm-border text-tm-navy-medium transition-all hover:border-tm-navy hover:bg-tm-navy-pale dark:border-border dark:text-foreground dark:hover:bg-secondary">
+                                            <Edit class="h-4 w-4" />
+                                        </button>
+                                    </ActionTooltip>
+                                    <ActionTooltip v-if="!client.deleted_at" label="Hapus faskes">
+                                        <button @click="deleteClient(client.id, client.name)" class="inline-flex h-8 w-8 items-center justify-center rounded-[8px] border border-tm-border text-tm-danger transition-all hover:border-tm-danger hover:bg-tm-danger-pale dark:border-border dark:hover:bg-tm-danger/10">
+                                            <Trash2 class="h-4 w-4" />
+                                        </button>
+                                    </ActionTooltip>
                                 </div>
                             </td>
                         </tr>

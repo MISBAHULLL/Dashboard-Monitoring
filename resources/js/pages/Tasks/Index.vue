@@ -27,6 +27,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import ActionTooltip from '@/components/ActionTooltip.vue';
 import ConfirmDialog from '@/components/ConfirmDialog.vue';
 
 const props = defineProps<{
@@ -706,16 +707,20 @@ const submitImport = () => {
                                     <Lock class="h-3 w-3 mr-1" /> URL KOSONG
                                 </div>
                                 <div v-else class="mx-auto flex w-fit items-center justify-center rounded-lg border border-tm-border bg-slate-100/80 p-0.5 shadow-inner dark:border-slate-700 dark:bg-slate-950/35">
-                                    <button @click="toggleCekStatus(task, 'revision')"
-                                            class="flex items-center gap-1 px-2.5 py-1 rounded-md text-[10px] font-bold transition-all duration-200"
-                                            :class="task.status === 'revision' ? 'bg-white text-tm-warning shadow-sm border border-tm-warning/30 ring-1 ring-tm-warning/20 dark:bg-amber-400/10 dark:text-amber-200 dark:border-amber-300/35' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-200/80 dark:text-slate-400 dark:hover:text-slate-200 dark:hover:bg-slate-800'">
-                                        <AlertCircle class="h-3 w-3" :class="task.status === 'revision' ? 'text-tm-warning' : 'text-slate-400'" /> Rev
-                                    </button>
-                                    <button @click="toggleCekStatus(task, 'completed')"
-                                            class="flex items-center gap-1 px-2.5 py-1 rounded-md text-[10px] font-bold transition-all duration-200"
-                                            :class="task.status === 'completed' ? 'bg-white text-tm-green shadow-sm border border-tm-green/30 ring-1 ring-tm-green/20 dark:bg-emerald-400/10 dark:text-emerald-200 dark:border-emerald-300/35' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-200/80 dark:text-slate-400 dark:hover:text-slate-200 dark:hover:bg-slate-800'">
-                                        <CheckCircle2 class="h-3 w-3" :class="task.status === 'completed' ? 'text-tm-green' : 'text-slate-400'" /> OK
-                                    </button>
+                                    <ActionTooltip label="Tandai task perlu revisi">
+                                        <button @click="toggleCekStatus(task, 'revision')"
+                                                class="flex items-center gap-1 px-2.5 py-1 rounded-md text-[10px] font-bold transition-all duration-200"
+                                                :class="task.status === 'revision' ? 'bg-white text-tm-warning shadow-sm border border-tm-warning/30 ring-1 ring-tm-warning/20 dark:bg-amber-400/10 dark:text-amber-200 dark:border-amber-300/35' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-200/80 dark:text-slate-400 dark:hover:text-slate-200 dark:hover:bg-slate-800'">
+                                            <AlertCircle class="h-3 w-3" :class="task.status === 'revision' ? 'text-tm-warning' : 'text-slate-400'" /> Rev
+                                        </button>
+                                    </ActionTooltip>
+                                    <ActionTooltip label="Tandai task selesai">
+                                        <button @click="toggleCekStatus(task, 'completed')"
+                                                class="flex items-center gap-1 px-2.5 py-1 rounded-md text-[10px] font-bold transition-all duration-200"
+                                                :class="task.status === 'completed' ? 'bg-white text-tm-green shadow-sm border border-tm-green/30 ring-1 ring-tm-green/20 dark:bg-emerald-400/10 dark:text-emerald-200 dark:border-emerald-300/35' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-200/80 dark:text-slate-400 dark:hover:text-slate-200 dark:hover:bg-slate-800'">
+                                            <CheckCircle2 class="h-3 w-3" :class="task.status === 'completed' ? 'text-tm-green' : 'text-slate-400'" /> OK
+                                        </button>
+                                    </ActionTooltip>
                                 </div>
                             </td>
                             
@@ -745,20 +750,28 @@ const submitImport = () => {
                             <!-- 11. AKSI -->
                             <td class="py-2 px-3 text-center">
                                 <div class="flex items-center justify-center gap-1 opacity-50 group-hover:opacity-100 transition-opacity duration-200">
-                                    <Link v-if="task.can_edit" :href="editTask.url(task.id)">
-                                        <Button variant="ghost" size="icon" class="h-6 w-6 rounded-lg text-tm-navy-medium transition-colors hover:bg-tm-navy-pale hover:text-tm-navy dark:text-sky-300 dark:hover:bg-sky-400/10 dark:hover:text-sky-100">
-                                            <Edit class="h-3.5 w-3.5" />
+                                    <ActionTooltip v-if="task.can_edit" label="Edit task">
+                                        <Link :href="editTask.url(task.id)">
+                                            <Button variant="ghost" size="icon" class="h-6 w-6 rounded-lg text-tm-navy-medium transition-colors hover:bg-tm-navy-pale hover:text-tm-navy dark:text-sky-300 dark:hover:bg-sky-400/10 dark:hover:text-sky-100">
+                                                <Edit class="h-3.5 w-3.5" />
+                                            </Button>
+                                        </Link>
+                                    </ActionTooltip>
+                                    <ActionTooltip v-if="task.can_delete" label="Hapus task">
+                                        <Button variant="ghost" size="icon" @click="deleteTask(task.id, task.title)" class="h-6 w-6 rounded-lg text-tm-danger transition-colors hover:bg-tm-danger-pale hover:text-red-700 dark:text-red-300 dark:hover:bg-red-400/10 dark:hover:text-red-200">
+                                            <Trash2 class="h-3.5 w-3.5" />
                                         </Button>
-                                    </Link>
-                                    <Button v-if="task.can_delete" variant="ghost" size="icon" @click="deleteTask(task.id, task.title)" class="h-6 w-6 rounded-lg text-tm-danger transition-colors hover:bg-tm-danger-pale hover:text-red-700 dark:text-red-300 dark:hover:bg-red-400/10 dark:hover:text-red-200">
-                                        <Trash2 class="h-3.5 w-3.5" />
-                                    </Button>
-                                    <Button v-if="task.can_restore" variant="ghost" size="icon" @click="restoreTask(task.id, task.title)" class="h-6 w-6 rounded-lg text-tm-green transition-colors hover:bg-tm-green-pale hover:text-tm-green-dark dark:text-emerald-300 dark:hover:bg-emerald-400/10 dark:hover:text-emerald-200">
-                                        <RotateCcw class="h-3.5 w-3.5" />
-                                    </Button>
-                                    <Button v-if="task.can_force_delete" variant="ghost" size="icon" @click="forceDeleteTask(task.id, task.title)" class="h-6 w-6 rounded-lg text-tm-danger transition-colors hover:bg-tm-danger-pale hover:text-red-700 dark:text-red-300 dark:hover:bg-red-400/10 dark:hover:text-red-200">
-                                        <Trash2 class="h-3.5 w-3.5" />
-                                    </Button>
+                                    </ActionTooltip>
+                                    <ActionTooltip v-if="task.can_restore" label="Pulihkan task">
+                                        <Button variant="ghost" size="icon" @click="restoreTask(task.id, task.title)" class="h-6 w-6 rounded-lg text-tm-green transition-colors hover:bg-tm-green-pale hover:text-tm-green-dark dark:text-emerald-300 dark:hover:bg-emerald-400/10 dark:hover:text-emerald-200">
+                                            <RotateCcw class="h-3.5 w-3.5" />
+                                        </Button>
+                                    </ActionTooltip>
+                                    <ActionTooltip v-if="task.can_force_delete" label="Hapus permanen">
+                                        <Button variant="ghost" size="icon" @click="forceDeleteTask(task.id, task.title)" class="h-6 w-6 rounded-lg text-tm-danger transition-colors hover:bg-tm-danger-pale hover:text-red-700 dark:text-red-300 dark:hover:bg-red-400/10 dark:hover:text-red-200">
+                                            <Trash2 class="h-3.5 w-3.5" />
+                                        </Button>
+                                    </ActionTooltip>
                                 </div>
                             </td>
                         </tr>

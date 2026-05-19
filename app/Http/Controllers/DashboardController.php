@@ -18,17 +18,44 @@ class DashboardController extends Controller
 
         // 2. Jika user adalah admin, tampilkan AdminDashboard
         if ($user->isAdmin()) {
-            $activeTasks = Task::count();
-            $trashedTasks = Task::onlyTrashed()->count();
+            $period = $request->string('period')->toString();
+            $periodOptions = [
+                ['value' => '7d', 'label' => '7 Hari'],
+                ['value' => '30d', 'label' => '30 Hari'],
+                ['value' => 'month', 'label' => 'Bulan Ini'],
+                ['value' => 'all', 'label' => 'Semua'],
+            ];
+
+            if (! in_array($period, array_column($periodOptions, 'value'), true)) {
+                $period = '30d';
+            }
+
+            $now = Carbon::now();
+            $periodStart = match ($period) {
+                '7d' => $now->copy()->subDays(6)->startOfDay(),
+                '30d' => $now->copy()->subDays(29)->startOfDay(),
+                'month' => $now->copy()->startOfMonth(),
+                default => null,
+            };
+            $periodLabel = collect($periodOptions)->firstWhere('value', $period)['label'] ?? '30 Hari';
+
+            $periodTaskQuery = Task::query()
+                ->when($periodStart, fn ($query) => $query->where('created_at', '>=', $periodStart));
+
+            $periodTaskWithTrashedQuery = Task::withTrashed()
+                ->when($periodStart, fn ($query) => $query->where('created_at', '>=', $periodStart));
+
+            $activeTasks = (clone $periodTaskQuery)->count();
+            $trashedTasks = (clone $periodTaskWithTrashedQuery)->onlyTrashed()->count();
 
             $stats = [
                 'total_tasks' => $activeTasks,
                 'active_tasks' => $activeTasks,
                 'trashed_tasks' => $trashedTasks,
-                'total_tasks_with_trashed' => Task::withTrashed()->count(),
-                'open_tasks' => Task::where('status', 'open')->count(),
-                'in_progress_tasks' => Task::where('status', 'in_progress')->count(),
-                'completed_tasks' => Task::where('status', 'completed')->count(),
+                'total_tasks_with_trashed' => (clone $periodTaskWithTrashedQuery)->count(),
+                'open_tasks' => (clone $periodTaskQuery)->where('status', 'open')->count(),
+                'in_progress_tasks' => (clone $periodTaskQuery)->where('status', 'in_progress')->count(),
+                'completed_tasks' => (clone $periodTaskQuery)->where('status', 'completed')->count(),
                 'total_clients' => Client::count(),
                 'total_teams' => Team::count(),
             ];
@@ -54,46 +81,60 @@ class DashboardController extends Controller
                 'clients' => $clientsTrend,
             ];
 
-            $today = Carbon::today();
+            $today = $now->copy()->startOfDay();
 
             // Data untuk Donut Chart (Status)
             $chartDonut = [
                 $stats['open_tasks'],
                 $stats['in_progress_tasks'],
-                Task::where('status', 'revision')->count(),
+                (clone $periodTaskQuery)->where('status', 'revision')->count(),
                 $stats['completed_tasks']
             ];
 
-            // Data untuk Chart — Tren 7 hari (Week)
-            $weekTrendData = Task::selectRaw('DATE(created_at) as date, COUNT(*) as count')
-                ->where('created_at', '>=', now()->subDays(6)->startOfDay())
-                ->groupBy('date')
-                ->orderBy('date')
-                ->pluck('count', 'date');
-
+            // Data untuk chart tren task sesuai periode aktif.
             $chartArea = ['categories' => [], 'data' => []];
-            for ($i = 6; $i >= 0; $i--) {
-                $dateStr = now()->subDays($i)->format('Y-m-d');
-                $chartArea['categories'][] = now()->subDays($i)->format('d M');
-                $chartArea['data'][] = (int) $weekTrendData->get($dateStr, 0);
+
+            if ($period === 'all') {
+                $firstTaskCreatedAt = Task::min('created_at');
+                $chartStart = $firstTaskCreatedAt
+                    ? Carbon::parse($firstTaskCreatedAt)->startOfMonth()
+                    : $now->copy()->startOfMonth();
+
+                $trendData = Task::selectRaw("DATE_FORMAT(created_at, '%Y-%m') as period_key, COUNT(*) as count")
+                    ->groupBy('period_key')
+                    ->orderBy('period_key')
+                    ->pluck('count', 'period_key');
+
+                $cursor = $chartStart->copy();
+                while ($cursor->lessThanOrEqualTo($now)) {
+                    $periodKey = $cursor->format('Y-m');
+                    $chartArea['categories'][] = $cursor->format('M Y');
+                    $chartArea['data'][] = (int) $trendData->get($periodKey, 0);
+                    $cursor->addMonth();
+                }
+            } else {
+                $trendData = Task::selectRaw('DATE(created_at) as date, COUNT(*) as count')
+                    ->where('created_at', '>=', $periodStart)
+                    ->groupBy('date')
+                    ->orderBy('date')
+                    ->pluck('count', 'date');
+
+                $cursor = $periodStart->copy();
+                while ($cursor->lessThanOrEqualTo($now)) {
+                    $dateStr = $cursor->format('Y-m-d');
+                    $chartArea['categories'][] = $cursor->format('d M');
+                    $chartArea['data'][] = (int) $trendData->get($dateStr, 0);
+                    $cursor->addDay();
+                }
             }
+            $chartMonth = $chartArea;
 
-            // Data untuk Chart — Tren 30 hari (Month): per-minggu agar tidak terlalu padat
-            $monthTrendData = Task::selectRaw('DATE(created_at) as date, COUNT(*) as count')
-                ->where('created_at', '>=', now()->subDays(29)->startOfDay())
-                ->groupBy('date')
-                ->orderBy('date')
-                ->pluck('count', 'date');
-
-            $chartMonth = ['categories' => [], 'data' => []];
-            for ($i = 29; $i >= 0; $i--) {
-                $dateStr = now()->subDays($i)->format('Y-m-d');
-                $chartMonth['categories'][] = now()->subDays($i)->format('d M');
-                $chartMonth['data'][] = (int) $monthTrendData->get($dateStr, 0);
-            }
-
-            $overdueBaseQuery = Task::query()->whereSlaOverdue();
-            $dueSoonBaseQuery = Task::query()->whereSlaDueSoon();
+            $overdueBaseQuery = Task::query()
+                ->whereSlaOverdue()
+                ->when($periodStart, fn ($query) => $query->where('tasks.created_at', '>=', $periodStart));
+            $dueSoonBaseQuery = Task::query()
+                ->whereSlaDueSoon()
+                ->when($periodStart, fn ($query) => $query->where('tasks.created_at', '>=', $periodStart));
 
             $overdueTasks = (clone $overdueBaseQuery)
                 ->with(['client:id,name', 'product:id,name', 'assignee:id,name'])
@@ -119,6 +160,12 @@ class DashboardController extends Controller
                 ->leftJoin('tasks', function (\Illuminate\Database\Query\JoinClause $join) {
                     $join->on('tasks.product_id', '=', 'teams.id')
                         ->whereNull('tasks.deleted_at');
+                })
+                ->when($periodStart, function ($query) use ($periodStart) {
+                    $query->where(function ($query) use ($periodStart) {
+                        $query->whereNull('tasks.id')
+                            ->orWhere('tasks.created_at', '>=', $periodStart);
+                    });
                 })
                 ->leftJoin('sla_configs', 'sla_configs.category', '=', 'tasks.category')
                 ->groupBy('teams.id', 'teams.name', 'teams.type')
@@ -165,9 +212,13 @@ class DashboardController extends Controller
                 'due_soon_tasks' => $dueSoonTasks,
                 'team_performance' => $teamPerformance,
                 'recent_tasks' => Task::with(['client', 'product', 'assignee'])
+                                    ->when($periodStart, fn ($query) => $query->where('created_at', '>=', $periodStart))
                                     ->latest()
                                     ->take(5)
                                     ->get(),
+                'dashboard_period' => $period,
+                'dashboard_period_label' => $periodLabel,
+                'dashboard_period_options' => $periodOptions,
             ]);
         }
 

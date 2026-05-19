@@ -23,22 +23,28 @@ interface Props {
     monthlyCategories?: string[];
     monthlyData?: number[];
     loading?: boolean;
+    title?: string;
+    periodLabel?: string;
+    showModeToggle?: boolean;
 }
 
 const props = withDefaults(defineProps<Props>(), {
     monthlyCategories: undefined,
     monthlyData: undefined,
     loading: false,
+    title: 'Tren Task 7 Days',
+    periodLabel: undefined,
+    showModeToggle: true,
 });
 
 const activeMode = ref<'week' | 'month'>('week');
 
 const activeData = computed(() =>
-    activeMode.value === 'week' ? props.data : (props.monthlyData ?? props.data),
+    !props.showModeToggle || activeMode.value === 'week' ? props.data : (props.monthlyData ?? props.data),
 );
 
 const activeCategories = computed(() =>
-    activeMode.value === 'week' ? props.categories : (props.monthlyCategories ?? props.categories),
+    !props.showModeToggle || activeMode.value === 'week' ? props.categories : (props.monthlyCategories ?? props.categories),
 );
 
 const totalTasks = computed(() =>
@@ -56,34 +62,56 @@ const trendValue = computed(() => {
 const isTrendUp = computed(() => trendValue.value >= 0);
 
 const maxValue = computed(() => Math.max(...activeData.value, 1));
+const peakLabel = computed(() => {
+    const peak = Math.max(...activeData.value, 0);
+    const index = activeData.value.indexOf(peak);
 
-const xaxisTickAmount = computed(() => (activeMode.value === 'month' ? 6 : undefined));
+    return {
+        value: peak,
+        label: index >= 0 ? activeCategories.value[index] : '-',
+    };
+});
+
+const xaxisTickAmount = computed(() => (activeCategories.value.length > 12 ? 6 : undefined));
 
 const chartOptions = computed<ApexOptions>(() => ({
     chart: {
-        type: 'line',
+        type: 'area',
         fontFamily: 'Plus Jakarta Sans, sans-serif',
         toolbar: { show: false },
         zoom: { enabled: false },
+        sparkline: { enabled: false },
         animations: {
             enabled: true,
-            easing: 'linear',
-            speed: 500,
-            dynamicAnimation: { enabled: true, speed: 300 },
+            easing: 'easeinout',
+            speed: 650,
+            dynamicAnimation: { enabled: true, speed: 350 },
         },
     },
-    colors: [isDark.value ? '#7AA2F7' : '#3D5A99'],
+    colors: [isDark.value ? '#7AA2F7' : '#1B3A6B'],
     stroke: {
-        curve: 'straight',
-        width: 2,
+        curve: 'smooth',
+        width: 3,
+        lineCap: 'round',
+    },
+    fill: {
+        type: 'gradient',
+        gradient: {
+            shade: isDark.value ? 'dark' : 'light',
+            type: 'vertical',
+            shadeIntensity: 0.25,
+            opacityFrom: isDark.value ? 0.38 : 0.32,
+            opacityTo: 0.04,
+            stops: [0, 72, 100],
+        },
     },
     grid: {
         show: true,
-        borderColor: isDark.value ? 'rgba(148,163,184,0.18)' : '#e5e7eb',
-        strokeDashArray: 0,
+        borderColor: isDark.value ? 'rgba(148,163,184,0.16)' : '#e4eaf1',
+        strokeDashArray: 4,
         xaxis: { lines: { show: false } },
         yaxis: { lines: { show: true } },
-        padding: { left: 4, right: 10, top: 4, bottom: 0 },
+        padding: { left: 6, right: 14, top: 8, bottom: 0 },
     },
     xaxis: {
         categories: activeCategories.value,
@@ -126,7 +154,23 @@ const chartOptions = computed<ApexOptions>(() => ({
         },
     },
     dataLabels: { enabled: false },
-    markers: { size: 0 },
+    markers: {
+        size: 0,
+        strokeWidth: 3,
+        strokeColors: isDark.value ? '#111c2e' : '#ffffff',
+        hover: {
+            size: 6,
+            sizeOffset: 2,
+        },
+    },
+    states: {
+        hover: {
+            filter: { type: 'none' },
+        },
+        active: {
+            filter: { type: 'none' },
+        },
+    },
     tooltip: {
         enabled: true,
         shared: true,
@@ -180,10 +224,10 @@ const chartOptions = computed<ApexOptions>(() => ({
     },
 }));
 
-const chartSeries = computed(() => [{ name: 'Tasks', data: activeData.value }]);
+const chartSeries = computed(() => [{ name: 'Task Dibuat', data: activeData.value }]);
 
 const chartKey = ref(0);
-watch([activeMode, isDark], () => {
+watch([activeMode, isDark, activeData, activeCategories], () => {
     chartKey.value++;
 });
 </script>
@@ -212,16 +256,38 @@ watch([activeMode, isDark], () => {
     <article
         v-else
         class="task-trend-card relative flex h-full flex-col overflow-hidden rounded-[18px] border-[2.5px] border-black bg-white px-5 pt-4 pb-2 transition-all duration-300 ease-out hover:-translate-y-1 cursor-default dark:border-slate-700/80 dark:bg-[#111c2e]"
-        aria-label="Tren Task 7 Days"
+        :aria-label="periodLabel ? `${title} ${periodLabel}` : title"
     >
         <!-- Header -->
-        <div class="flex items-center justify-between mb-1">
-            <h2 class="whitespace-nowrap font-['Plus_Jakarta_Sans',sans-serif] font-bold text-[20px] sm:text-[22px] lg:text-[24px] leading-tight text-black dark:text-slate-100">
-                Tren Task 7 Days
-            </h2>
+        <div class="mb-2 flex items-start justify-between gap-4">
+            <div class="min-w-0">
+                <h2 class="truncate font-['Plus_Jakarta_Sans',sans-serif] font-bold text-[20px] sm:text-[22px] lg:text-[24px] leading-tight text-black dark:text-slate-100">
+                    {{ title }}
+                </h2>
+                <p v-if="periodLabel" class="text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400">
+                    {{ periodLabel }}
+                </p>
+            </div>
+
+            <div
+                v-if="!showModeToggle"
+                class="hidden rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-right sm:block dark:border-slate-700 dark:bg-slate-900/60"
+                aria-label="Puncak task pada periode ini"
+            >
+                <p class="text-[10px] font-bold uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400">
+                    Puncak
+                </p>
+                <p class="text-sm font-extrabold leading-tight text-[#1B3A6B] dark:text-[#7AA2F7]">
+                    {{ peakLabel.value }}
+                    <span class="text-[11px] font-semibold text-slate-500 dark:text-slate-400">task</span>
+                </p>
+                <p class="text-[11px] font-medium text-slate-500 dark:text-slate-400">
+                    {{ peakLabel.label }}
+                </p>
+            </div>
 
             <!-- Week / Month toggle -->
-            <div class="flex items-center gap-0.5">
+            <div v-if="showModeToggle" class="flex items-center gap-0.5">
                 <button
                     :class="[
                         'rounded-[4px] border border-black px-3 py-1 text-[12px] font-medium transition-all duration-150 dark:border-slate-600',
@@ -248,14 +314,16 @@ watch([activeMode, isDark], () => {
         </div>
 
         <!-- Total + Trend badge -->
-        <div class="flex items-center gap-3 mb-0">
-            <span class="font-['Plus_Jakarta_Sans',sans-serif] font-bold text-[36px] leading-none text-black dark:text-slate-100">
+        <div class="mb-1 flex items-center gap-3">
+            <span class="font-['Plus_Jakarta_Sans',sans-serif] font-extrabold text-[36px] leading-none text-black dark:text-slate-100">
                 {{ totalTasks }}
             </span>
             <span
                 :class="[
-                    'inline-flex items-center gap-0.5 rounded-md px-2 py-0.5 text-[13px] font-semibold',
-                    isTrendUp ? 'bg-[#80bd51]/80 text-black font-bold' : 'bg-red-400/80 text-black font-bold',
+                    'inline-flex items-center gap-1 rounded-full border px-2 py-1 text-[12px] font-extrabold shadow-sm',
+                    isTrendUp
+                        ? 'border-[#80bd51] bg-[#80bd51]/20 text-[#1f5f2a] dark:text-[#9de47e]'
+                        : 'border-red-300 bg-red-100 text-red-700 dark:border-red-500/50 dark:bg-red-500/15 dark:text-red-300',
                 ]"
             >
                 <svg class="h-3 w-3" :class="{ 'rotate-180': !isTrendUp }" viewBox="0 0 12 12" fill="none" aria-hidden="true">
@@ -266,11 +334,11 @@ watch([activeMode, isDark], () => {
         </div>
 
         <!-- Chart — fills remaining height -->
-        <div class="flex-1 min-h-0 -mx-2">
+        <div class="min-h-0 flex-1 -mx-2">
             <ClientOnly>
                 <VueApexCharts
                     :key="chartKey"
-                    type="line"
+                    type="area"
                     height="100%"
                     :options="chartOptions"
                     :series="chartSeries"

@@ -130,6 +130,13 @@ export interface DashboardTrends {
   clients: number;
 }
 
+export type DashboardPeriod = '7d' | '30d' | 'month' | 'all';
+
+export interface DashboardPeriodOption {
+  value: DashboardPeriod;
+  label: string;
+}
+
 // ============================================================================
 // Team Performance Types
 // ============================================================================
@@ -169,6 +176,9 @@ export interface AdminDashboardProps {
   due_soon_tasks: DeadlineTask[];
   team_performance: TeamPerformance[];
   recent_tasks: Task[];
+  dashboard_period: DashboardPeriod;
+  dashboard_period_label: string;
+  dashboard_period_options: DashboardPeriodOption[];
 }
 
 /**

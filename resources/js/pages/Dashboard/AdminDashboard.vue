@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Head, usePage } from '@inertiajs/vue3';
+import { Head, router, usePage } from '@inertiajs/vue3';
 import { computed } from 'vue';
 import ActionsCard from '@/components/dashboard/ActionsCard.vue';
 import GridTaskCard from '@/components/dashboard/GridTaskCard.vue';
@@ -12,18 +12,30 @@ import TaskTrendCard from '@/components/dashboard/TaskTrendCard.vue';
 import TeamPerformanceCard from '@/components/dashboard/TeamPerformanceCard.vue';
 import { dashboard } from '@/routes';
 import { index as tasksIndex } from '@/routes/tasks';
-import type { AdminDashboardProps } from '@/types/dashboard';
+import type { AdminDashboardProps, DashboardPeriod } from '@/types/dashboard';
 
 /** Build /tasks?status=due_soon - filter deadline efektif dari TaskController */
 const dueSoonViewAllUrl = computed(() => {
     return tasksIndex({ query: { status: 'due_soon' } }).url;
 });
 
-defineProps<AdminDashboardProps>();
+const props = defineProps<AdminDashboardProps>();
 
 // Ambil nama user yang sedang login dari Inertia shared props
 const page = usePage();
 const authUserName = computed(() => (page.props.auth as any)?.user?.name ?? 'User');
+
+function setDashboardPeriod(period: DashboardPeriod) {
+    if (period === props.dashboard_period) {
+        return;
+    }
+
+    router.visit(dashboard({ query: { period } }).url, {
+        preserveScroll: true,
+        preserveState: true,
+        replace: true,
+    });
+}
 
 defineOptions({
     layout: {
@@ -41,6 +53,38 @@ defineOptions({
         role="main"
         aria-label="Dashboard Admin"
     >
+        <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+                <p class="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400">
+                    Periode Dashboard
+                </p>
+                <p class="text-sm font-medium text-slate-700 dark:text-slate-200">
+                    Data ringkasan mengikuti {{ dashboard_period_label }}
+                </p>
+            </div>
+
+            <div
+                class="inline-flex w-full items-center gap-1 rounded-lg border border-slate-300 bg-white p-1 shadow-sm sm:w-auto dark:border-slate-700 dark:bg-slate-900"
+                role="group"
+                aria-label="Filter periode dashboard"
+            >
+                <button
+                    v-for="option in dashboard_period_options"
+                    :key="option.value"
+                    type="button"
+                    :class="[
+                        'min-h-9 rounded-md px-3 text-sm font-semibold transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1B3A6B] dark:focus-visible:outline-[#7AA2F7]',
+                        option.value === dashboard_period
+                            ? 'bg-[#1B3A6B] text-white shadow-sm dark:bg-[#7AA2F7] dark:text-slate-950'
+                            : 'text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800',
+                    ]"
+                    :aria-pressed="option.value === dashboard_period"
+                    @click="setDashboardPeriod(option.value)"
+                >
+                    {{ option.label }}
+                </button>
+            </div>
+        </div>
         <!-- Bento Grid — kolom diatur via .dashboard-grid di app.css -->
         <div class="dashboard-grid grid gap-3 auto-rows-[120px]">
 
@@ -104,6 +148,9 @@ defineOptions({
                     :data="chart_area.data"
                     :monthly-categories="chart_month.categories"
                     :monthly-data="chart_month.data"
+                    :period-label="dashboard_period_label"
+                    :show-mode-toggle="false"
+                    title="Tren Task"
                 />
             </div>
 

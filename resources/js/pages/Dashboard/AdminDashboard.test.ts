@@ -28,10 +28,17 @@ vi.mock('@inertiajs/vue3', () => ({
       },
     },
   }),
+  router: {
+    visit: vi.fn(),
+  },
 }))
 
 vi.mock('@/routes', () => ({
-  dashboard: () => '/dashboard',
+  dashboard: (params?: { query?: Record<string, string> }) => ({
+    url: params?.query
+      ? `/dashboard?${new URLSearchParams(params.query).toString()}`
+      : '/dashboard',
+  }),
 }))
 
 vi.mock('@/routes/tasks', () => ({
@@ -116,6 +123,14 @@ function createTestProps(overrides: Partial<AdminDashboardProps> = {}): AdminDas
         created_at: '2024-01-20',
       },
     ],
+    dashboard_period: '30d',
+    dashboard_period_label: '30 Hari',
+    dashboard_period_options: [
+      { value: '7d', label: '7 Hari' },
+      { value: '30d', label: '30 Hari' },
+      { value: 'month', label: 'Bulan Ini' },
+      { value: 'all', label: 'Semua' },
+    ],
     ...overrides,
   }
 }
@@ -177,6 +192,9 @@ describe('AdminDashboard', () => {
       data: props.chart_area.data,
       monthlyCategories: props.chart_month.categories,
       monthlyData: props.chart_month.data,
+      periodLabel: props.dashboard_period_label,
+      showModeToggle: false,
+      title: 'Tren Task',
     })
   })
 

@@ -3,6 +3,15 @@ import { ref, computed, onMounted, watch } from 'vue';
 import { Head, useForm, router } from '@inertiajs/vue3';
 import { Building2, Plus, Edit, Trash2, Search, ChevronLeft, ChevronRight, Eye, FilePlus, FileText, RotateCcw } from 'lucide-vue-next';
 import { dashboard } from '@/routes';
+import {
+    bulkRestore as bulkRestoreClientsRoute,
+    destroy as destroyClient,
+    index as clientsIndex,
+    restore as restoreClientRoute,
+    store as storeClient,
+    update as updateClient,
+} from '@/routes/clients';
+import { index as documentsIndex, store as storeDocument } from '@/routes/documents';
 
 // Import komponen UI dari shadcn-vue
 import { Button } from '@/components/ui/button';
@@ -174,15 +183,19 @@ const openEditModal = (client: any) => {
 // Fungsi Submit (Simpan / Update)
 const submitForm = () => {
     if (isEditing.value) {
+        if (editingId.value === null) {
+            return;
+        }
+
         // Jika sedang edit, gunakan method PUT
-        form.put(`/clients/${editingId.value}`, {
+        form.put(updateClient.url(editingId.value), {
             onSuccess: () => {
                 isModalOpen.value = false;
             },
         });
     } else {
         // Jika tambah baru, gunakan method POST
-        form.post('/clients', {
+        form.post(storeClient.url(), {
             onSuccess: () => {
                 isModalOpen.value = false;
             },
@@ -199,7 +212,7 @@ const deleteClient = (id: number, name: string) => {
         confirmLabel: 'Hapus Faskes',
         variant: 'danger',
         onConfirm: () => {
-            useForm({}).delete(`/clients/${id}`, {
+            useForm({}).delete(destroyClient.url(id), {
                 preserveScroll: true,
                 onSuccess: () => {
                     confirmAction.value.open = false;
@@ -217,7 +230,7 @@ const restoreClient = (id: number, name: string) => {
         confirmLabel: 'Pulihkan',
         variant: 'success',
         onConfirm: () => {
-            router.patch(`/clients/${id}/restore`, {}, {
+            router.patch(restoreClientRoute.url(id), {}, {
                 preserveScroll: true,
                 onSuccess: () => {
                     confirmAction.value.open = false;
@@ -238,7 +251,7 @@ const bulkRestoreClients = (restoreAll = false) => {
         confirmLabel: 'Pulihkan',
         variant: 'success',
         onConfirm: () => {
-            router.patch('/clients/bulk-restore', {
+            router.patch(bulkRestoreClientsRoute.url(), {
                 ids: restoreAll ? [] : selectedClients.value,
                 restore_all: restoreAll,
             }, {
@@ -278,7 +291,7 @@ const handleFileChange = (event: Event) => {
 };
 
 const submitDoc = () => {
-    docForm.post('/documents', {
+    docForm.post(storeDocument.url(), {
         forceFormData: true,
         onSuccess: () => { isDocModalOpen.value = false; },
     });
@@ -303,7 +316,7 @@ const submitDoc = () => {
             </div>
             <div class="flex flex-wrap items-center gap-2">
                 <button
-                    @click="router.visit(activeTrashed ? '/clients' : '/clients?trashed=only')"
+                    @click="router.visit(activeTrashed ? clientsIndex.url() : clientsIndex.url({ query: { trashed: 'only' } }))"
                     class="inline-flex items-center gap-2 rounded-[10px] border-2 border-black bg-white px-4 py-2.5 text-sm font-bold text-tm-navy shadow-[2px_2px_0px_0px_rgba(0,0,0,0.8)] transition-all hover:-translate-y-0.5 hover:bg-tm-navy-pale hover:shadow-[3px_4px_0px_0px_rgba(0,0,0,0.8)] active:translate-y-0 active:shadow-[1px_1px_0px_0px_rgba(0,0,0,0.8)] dark:border-border dark:bg-card dark:text-foreground dark:shadow-none"
                 >
                     <RotateCcw class="h-4 w-4" /> {{ activeTrashed ? 'Lihat Aktif' : 'Lihat Terhapus' }}
@@ -441,7 +454,7 @@ const submitDoc = () => {
                             <td class="px-4 py-3.5">
                                 <div class="flex items-center gap-1.5">
                                     <span class="text-sm font-semibold text-tm-navy dark:text-foreground">{{ client.documents_count }}</span>
-                                    <button v-if="!client.deleted_at" @click="router.visit(`/documents?client_id=${client.id}`)" title="Lihat Dokumen" class="inline-flex h-6 w-6 items-center justify-center rounded-[6px] text-tm-navy-medium transition-colors hover:bg-tm-navy-pale dark:text-foreground dark:hover:bg-secondary">
+                                    <button v-if="!client.deleted_at" @click="router.visit(documentsIndex.url({ query: { client_id: client.id } }))" title="Lihat Dokumen" class="inline-flex h-6 w-6 items-center justify-center rounded-[6px] text-tm-navy-medium transition-colors hover:bg-tm-navy-pale dark:text-foreground dark:hover:bg-secondary">
                                         <Eye class="h-3.5 w-3.5" />
                                     </button>
                                     <button v-if="!client.deleted_at" @click="openDocModal(client)" title="Tambah Dokumen" class="inline-flex h-6 w-6 items-center justify-center rounded-[6px] text-tm-green transition-colors hover:bg-tm-green-pale dark:hover:bg-tm-green/10">

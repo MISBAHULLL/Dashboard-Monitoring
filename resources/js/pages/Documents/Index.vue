@@ -4,6 +4,15 @@ import { FileText, Plus, Download, Trash2, Eye, Upload, X, File, FolderOpen, Rot
 import { Button } from '@/components/ui/button';
 import ConfirmDialog from '@/components/ConfirmDialog.vue';
 import { dashboard } from '@/routes';
+import {
+    bulkRestore as bulkRestoreDocumentsRoute,
+    destroy as destroyDocument,
+    index as documentsIndex,
+    restore as restoreDocumentRoute,
+    show as showDocument,
+    store as storeDocument,
+    update as updateDocument,
+} from '@/routes/documents';
 import { computed, ref, watch } from 'vue';
 
 defineOptions({
@@ -110,17 +119,17 @@ function submit() {
         if (form.file) {
             form
                 .transform((data) => ({ ...data, _method: 'put' }))
-                .post(`/documents/${editingDocument.value.id}`, {
+                .post(updateDocument.url(editingDocument.value.id), {
                     forceFormData: true,
                     onSuccess: () => closeModal(),
                 });
         } else {
-            form.put(`/documents/${editingDocument.value.id}`, {
+            form.put(updateDocument.url(editingDocument.value.id), {
                 onSuccess: () => closeModal(),
             });
         }
     } else {
-        form.post('/documents', {
+        form.post(storeDocument.url(), {
             forceFormData: !!form.file,
             onSuccess: () => closeModal(),
         });
@@ -135,7 +144,7 @@ function deleteDocument(id: number, title: string) {
         confirmLabel: 'Hapus Dokumen',
         variant: 'danger',
         onConfirm: () => {
-            router.delete(`/documents/${id}`, {
+            router.delete(destroyDocument.url(id), {
                 preserveScroll: true,
                 onSuccess: () => {
                     confirmAction.value.open = false;
@@ -153,7 +162,7 @@ function restoreDocument(id: number, title: string) {
         confirmLabel: 'Pulihkan',
         variant: 'success',
         onConfirm: () => {
-            router.patch(`/documents/${id}/restore`, {}, {
+            router.patch(restoreDocumentRoute.url(id), {}, {
                 preserveScroll: true,
                 onSuccess: () => {
                     confirmAction.value.open = false;
@@ -174,7 +183,7 @@ function bulkRestoreDocuments(restoreAll = false) {
         confirmLabel: 'Pulihkan',
         variant: 'success',
         onConfirm: () => {
-            router.patch('/documents/bulk-restore', {
+            router.patch(bulkRestoreDocumentsRoute.url(), {
                 ids: restoreAll ? [] : selectedDocuments.value,
                 restore_all: restoreAll,
             }, {
@@ -232,7 +241,7 @@ function getTypeColor(type: string): string {
             </div>
             <div class="flex flex-wrap items-center gap-2">
                 <button
-                    @click="router.visit(activeTrashed ? '/documents' : '/documents?trashed=only')"
+                    @click="router.visit(activeTrashed ? documentsIndex.url() : documentsIndex.url({ query: { trashed: 'only' } }))"
                     class="inline-flex items-center gap-2 rounded-[10px] border-2 border-black bg-white px-4 py-2.5 text-sm font-bold text-tm-navy shadow-[2px_2px_0px_0px_rgba(0,0,0,0.8)] transition-all hover:-translate-y-0.5 hover:bg-tm-navy-pale hover:shadow-[3px_4px_0px_0px_rgba(0,0,0,0.8)] active:translate-y-0 active:shadow-[1px_1px_0px_0px_rgba(0,0,0,0.8)] dark:border-border dark:bg-card dark:text-foreground dark:shadow-none"
                 >
                     <RotateCcw class="h-4 w-4" />
@@ -344,7 +353,7 @@ function getTypeColor(type: string): string {
                                 </button>
                                 <button
                                     v-if="!doc.deleted_at"
-                                    @click="router.visit(`/documents/${doc.id}`)"
+                                    @click="router.visit(showDocument.url(doc.id))"
                                     class="flex h-8 w-8 items-center justify-center rounded-[8px] border border-transparent text-tm-text-muted transition-all hover:border-tm-navy/20 hover:bg-tm-navy-pale hover:text-tm-navy dark:hover:bg-secondary dark:hover:text-foreground"
                                     title="Lihat detail"
                                 >

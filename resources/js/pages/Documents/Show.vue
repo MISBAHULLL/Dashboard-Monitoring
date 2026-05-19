@@ -14,6 +14,13 @@ import {
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
+import {
+    destroy as destroyDocument,
+    index as documentsIndex,
+    store as storeDocument,
+    syncTasks,
+    update as updateDocument,
+} from '@/routes/documents';
 
 // ── Interfaces ───────────────────────────────────────────────
 interface Task {
@@ -59,7 +66,7 @@ defineOptions({
     layout: {
         breadcrumbs: [
             { title: 'Dashboard', href: dashboard() },
-            { title: 'Dokumen', href: '/documents' },
+            { title: 'Dokumen', href: documentsIndex.url() },
             { title: 'Detail', href: '#' },
         ],
     },
@@ -99,7 +106,7 @@ function handleNewFileChange(e: Event) {
     if (t.files?.[0]) newDocForm.file = t.files[0];
 }
 function submitNewDoc() {
-    newDocForm.post('/documents', {
+    newDocForm.post(storeDocument.url(), {
         forceFormData: true,
         onSuccess: () => { isNewDocOpen.value = false; router.reload(); },
     });
@@ -131,12 +138,12 @@ function submitUpload() {
     if (uploadForm.file) {
         uploadForm
             .transform((data) => ({ ...data, _method: 'put' }))
-            .post(`/documents/${editingDoc.value!.id}`, {
+            .post(updateDocument.url(editingDoc.value!.id), {
                 forceFormData: true,
                 onSuccess: () => { isUploadOpen.value = false; },
             });
     } else {
-        uploadForm.put(`/documents/${editingDoc.value!.id}`, {
+        uploadForm.put(updateDocument.url(editingDoc.value!.id), {
             onSuccess: () => { isUploadOpen.value = false; },
         });
     }
@@ -189,7 +196,7 @@ function submitSync() {
         id: Number(id),
         status,
     }));
-    syncForm.post(`/documents/${activeDoc.value!.id}/sync-tasks`, {
+    syncForm.post(syncTasks.url(activeDoc.value!.id), {
         onSuccess: () => { isTaskModalOpen.value = false; },
     });
 }
@@ -203,11 +210,11 @@ function deleteDocument(doc: DocumentItem) {
         confirmLabel: 'Hapus Dokumen',
         variant: 'danger',
         onConfirm: () => {
-            router.delete(`/documents/${doc.id}`, {
+            router.delete(destroyDocument.url(doc.id), {
                 preserveScroll: true,
                 onSuccess: () => {
                     confirmAction.value.open = false;
-                    if (doc.id === props.document.id) router.visit('/documents');
+                    if (doc.id === props.document.id) router.visit(documentsIndex.url());
                     else router.reload();
                 },
             });
@@ -241,7 +248,7 @@ function deleteDocument(doc: DocumentItem) {
             </div>
             <div class="flex items-center gap-2.5">
                 <button
-                    @click="router.visit('/documents')"
+                    @click="router.visit(documentsIndex.url())"
                     class="inline-flex items-center gap-1.5 rounded-[10px] border-2 border-black bg-white px-3.5 py-2 text-sm font-bold text-tm-navy shadow-[2px_2px_0px_0px_rgba(0,0,0,0.8)] transition-all hover:-translate-y-0.5 hover:shadow-[3px_3px_0px_0px_rgba(0,0,0,0.8)] active:translate-y-0 active:shadow-[1px_1px_0px_0px_rgba(0,0,0,0.8)] dark:bg-card dark:border-border dark:text-foreground dark:shadow-none"
                 >
                     <ChevronLeft class="h-4 w-4" /> Kembali

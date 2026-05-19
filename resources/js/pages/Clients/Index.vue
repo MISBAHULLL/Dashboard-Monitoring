@@ -98,6 +98,8 @@ const filteredClients = computed(() => {
 });
 
 const totalPages = computed(() => Math.ceil(filteredClients.value.length / perPage));
+const visibleStart = computed(() => filteredClients.value.length === 0 ? 0 : (currentPage.value - 1) * perPage + 1);
+const visibleEnd = computed(() => Math.min(currentPage.value * perPage, filteredClients.value.length));
 
 const paginatedClients = computed(() => {
     const start = (currentPage.value - 1) * perPage;
@@ -286,10 +288,10 @@ const submitDoc = () => {
 <template>
     <Head title="Master Faskes" />
 
-    <div class="flex h-full flex-1 flex-col gap-6 overflow-x-auto p-4 md:p-8">
+    <div class="flex h-full flex-1 flex-col gap-3 overflow-x-auto p-4 md:px-6 md:py-5">
         
         <!-- Header -->
-        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
                 <h1 class="text-2xl font-extrabold tracking-tight text-tm-navy flex items-center gap-3 dark:text-foreground">
                     <div class="flex h-10 w-10 items-center justify-center rounded-[12px] border-2 border-black bg-tm-navy-pale shadow-[2px_2px_0px_0px_rgba(0,0,0,0.8)] dark:bg-tm-navy dark:border-border">
@@ -330,11 +332,11 @@ const submitDoc = () => {
             </Button>
         </div>
         <!-- Filter Bar -->
-        <div class="rounded-[14px] border-2 border-black bg-white p-4 shadow-[2px_3px_0px_0px_rgba(0,0,0,0.8)] dark:bg-card dark:border-border dark:shadow-none">
-            <div class="flex flex-wrap items-center gap-3">
+        <div class="rounded-[14px] border-2 border-black bg-white p-3 shadow-[2px_3px_0px_0px_rgba(0,0,0,0.8)] dark:bg-card dark:border-border dark:shadow-none">
+            <div class="flex flex-wrap items-center gap-2.5">
                 <!-- Filter Kota -->
                 <Select v-model="filterCity" @update:modelValue="applyFilter">
-                    <SelectTrigger class="h-9 w-[140px] text-sm rounded-[8px] border-2 border-tm-border font-medium dark:border-border">
+                    <SelectTrigger class="h-8 w-[140px] text-sm rounded-[8px] border-2 border-tm-border font-medium dark:border-border">
                         <SelectValue placeholder="Semua Kota" />
                     </SelectTrigger>
                     <SelectContent>
@@ -345,7 +347,7 @@ const submitDoc = () => {
 
                 <!-- Filter Tipe -->
                 <Select v-model="filterType" @update:modelValue="applyFilter">
-                    <SelectTrigger class="h-9 w-[140px] text-sm rounded-[8px] border-2 border-tm-border font-medium dark:border-border">
+                    <SelectTrigger class="h-8 w-[140px] text-sm rounded-[8px] border-2 border-tm-border font-medium dark:border-border">
                         <SelectValue placeholder="Semua Tipe" />
                     </SelectTrigger>
                     <SelectContent>
@@ -359,7 +361,7 @@ const submitDoc = () => {
 
                 <!-- Filter PIC -->
                 <Select v-model="filterPic" @update:modelValue="applyFilter">
-                    <SelectTrigger class="h-9 w-[140px] text-sm rounded-[8px] border-2 border-tm-border font-medium dark:border-border">
+                    <SelectTrigger class="h-8 w-[140px] text-sm rounded-[8px] border-2 border-tm-border font-medium dark:border-border">
                         <SelectValue placeholder="Semua PIC" />
                     </SelectTrigger>
                     <SelectContent>
@@ -370,7 +372,7 @@ const submitDoc = () => {
 
                 <!-- Filter Status -->
                 <Select v-model="filterStatus" @update:modelValue="applyFilter">
-                    <SelectTrigger class="h-9 w-[140px] text-sm rounded-[8px] border-2 border-tm-border font-medium dark:border-border">
+                    <SelectTrigger class="h-8 w-[140px] text-sm rounded-[8px] border-2 border-tm-border font-medium dark:border-border">
                         <SelectValue placeholder="Semua Status" />
                     </SelectTrigger>
                     <SelectContent>
@@ -381,38 +383,38 @@ const submitDoc = () => {
                 </Select>
 
                 <!-- Reset Filter -->
-                <Button v-if="filterCity !== 'all' || filterType !== 'all' || filterPic !== 'all' || filterStatus !== 'all'" variant="ghost" size="sm" @click="resetFilters" class="h-9 text-xs font-semibold text-tm-text-secondary hover:text-tm-navy dark:text-muted-foreground dark:hover:text-foreground">
+                <Button v-if="filterCity !== 'all' || filterType !== 'all' || filterPic !== 'all' || filterStatus !== 'all'" variant="ghost" size="sm" @click="resetFilters" class="h-8 text-xs font-semibold text-tm-text-secondary hover:text-tm-navy dark:text-muted-foreground dark:hover:text-foreground">
                     Reset Filter
                 </Button>
             </div>
 
             <!-- Info hasil filter -->
-            <p class="text-xs text-tm-text-secondary mt-2.5 dark:text-muted-foreground">
-                Menampilkan <span class="font-bold text-tm-navy dark:text-foreground">{{ filteredClients.length }}</span> dari <span class="font-bold text-tm-navy dark:text-foreground">{{ clients.length }}</span> data
+            <p class="mt-2 text-xs text-tm-text-secondary dark:text-muted-foreground">
+                Menampilkan <span class="font-bold text-tm-navy dark:text-foreground">{{ visibleStart }}</span> - <span class="font-bold text-tm-navy dark:text-foreground">{{ visibleEnd }}</span> dari <span class="font-bold text-tm-navy dark:text-foreground">{{ filteredClients.length }}</span> data
             </p>
         </div>
 
         <!-- Tabel Data -->
         <div class="rounded-[14px] border-2 border-black bg-white shadow-[2px_3px_0px_0px_rgba(0,0,0,0.8)] overflow-hidden dark:bg-card dark:border-border dark:shadow-none">
             <div class="overflow-x-auto">
-                <table class="w-full text-sm">
+                <table class="clients-index-table w-full text-sm">
                     <thead>
                         <tr class="border-b-2 border-black bg-tm-navy-pale dark:bg-secondary dark:border-border">
-                            <th class="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-tm-navy dark:text-foreground">
+                            <th class="px-4 py-2.5 text-left text-xs font-bold uppercase tracking-wider text-tm-navy dark:text-foreground">
                                 <span class="flex items-center gap-2">
                                     <input v-if="activeTrashed" type="checkbox" v-model="selectAllClients" class="h-4 w-4 cursor-pointer rounded border-slate-300 text-tm-navy focus:ring-tm-navy" />
                                     No
                                 </span>
                             </th>
-                            <th class="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-tm-navy dark:text-foreground">Nama Faskes</th>
-                            <th class="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-tm-navy dark:text-foreground">Kota</th>
-                            <th class="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-tm-navy dark:text-foreground">Tipe</th>
-                            <th class="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-tm-navy dark:text-foreground">PIC</th>
-                            <th class="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-tm-navy dark:text-foreground">Telp PIC</th>
-                            <th class="px-4 py-3.5 text-center text-xs font-bold uppercase tracking-wider text-tm-navy dark:text-foreground">Tasks</th>
-                            <th class="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-tm-navy dark:text-foreground">Dokumen</th>
-                            <th class="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-tm-navy dark:text-foreground">Status</th>
-                            <th class="px-4 py-3.5 text-right text-xs font-bold uppercase tracking-wider text-tm-navy dark:text-foreground">Aksi</th>
+                            <th class="px-4 py-2.5 text-left text-xs font-bold uppercase tracking-wider text-tm-navy dark:text-foreground">Nama Faskes</th>
+                            <th class="px-4 py-2.5 text-left text-xs font-bold uppercase tracking-wider text-tm-navy dark:text-foreground">Kota</th>
+                            <th class="px-4 py-2.5 text-left text-xs font-bold uppercase tracking-wider text-tm-navy dark:text-foreground">Tipe</th>
+                            <th class="px-4 py-2.5 text-left text-xs font-bold uppercase tracking-wider text-tm-navy dark:text-foreground">PIC</th>
+                            <th class="px-4 py-2.5 text-left text-xs font-bold uppercase tracking-wider text-tm-navy dark:text-foreground">Telp PIC</th>
+                            <th class="px-4 py-2.5 text-center text-xs font-bold uppercase tracking-wider text-tm-navy dark:text-foreground">Tasks</th>
+                            <th class="px-4 py-2.5 text-left text-xs font-bold uppercase tracking-wider text-tm-navy dark:text-foreground">Dokumen</th>
+                            <th class="px-4 py-2.5 text-left text-xs font-bold uppercase tracking-wider text-tm-navy dark:text-foreground">Status</th>
+                            <th class="px-4 py-2.5 text-right text-xs font-bold uppercase tracking-wider text-tm-navy dark:text-foreground">Aksi</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -484,19 +486,19 @@ const submitDoc = () => {
             </div>
 
             <!-- Pagination -->
-            <div v-if="totalPages > 1" class="flex items-center justify-between border-t-2 border-black px-4 py-3 dark:border-border">
+            <div v-if="totalPages > 1" class="flex items-center justify-between border-t-2 border-black px-4 py-2 dark:border-border">
                 <p class="text-xs font-medium text-tm-text-secondary dark:text-muted-foreground">
                     Halaman {{ currentPage }} dari {{ totalPages }}
                 </p>
                 <div class="flex items-center gap-1">
-                    <button :disabled="currentPage === 1" @click="currentPage--" class="inline-flex h-8 w-8 items-center justify-center rounded-[8px] border-2 border-tm-border text-tm-navy transition-colors hover:bg-tm-navy-pale disabled:opacity-40 disabled:cursor-not-allowed dark:border-border dark:text-foreground dark:hover:bg-secondary">
+                    <button :disabled="currentPage === 1" @click="currentPage--" class="inline-flex h-7 w-7 items-center justify-center rounded-[8px] border-2 border-tm-border text-tm-navy transition-colors hover:bg-tm-navy-pale disabled:opacity-40 disabled:cursor-not-allowed dark:border-border dark:text-foreground dark:hover:bg-secondary">
                         <ChevronLeft class="h-4 w-4" />
                     </button>
                     <template v-for="page in totalPages" :key="page">
                         <button
                             v-if="page === 1 || page === totalPages || Math.abs(page - currentPage) <= 1"
                             @click="currentPage = page"
-                            class="inline-flex h-8 w-8 items-center justify-center rounded-[8px] border-2 text-xs font-bold transition-colors"
+                            class="inline-flex h-7 w-7 items-center justify-center rounded-[8px] border-2 text-xs font-bold transition-colors"
                             :class="page === currentPage
                                 ? 'border-black bg-tm-green text-white shadow-[2px_2px_0px_0px_rgba(0,0,0,0.8)] dark:border-tm-green dark:shadow-none'
                                 : 'border-tm-border text-tm-navy hover:bg-tm-navy-pale dark:border-border dark:text-foreground dark:hover:bg-secondary'"
@@ -505,7 +507,7 @@ const submitDoc = () => {
                         </button>
                         <span v-else-if="page === currentPage - 2 || page === currentPage + 2" class="px-1 text-tm-text-muted text-sm">…</span>
                     </template>
-                    <button :disabled="currentPage === totalPages" @click="currentPage++" class="inline-flex h-8 w-8 items-center justify-center rounded-[8px] border-2 border-tm-border text-tm-navy transition-colors hover:bg-tm-navy-pale disabled:opacity-40 disabled:cursor-not-allowed dark:border-border dark:text-foreground dark:hover:bg-secondary">
+                    <button :disabled="currentPage === totalPages" @click="currentPage++" class="inline-flex h-7 w-7 items-center justify-center rounded-[8px] border-2 border-tm-border text-tm-navy transition-colors hover:bg-tm-navy-pale disabled:opacity-40 disabled:cursor-not-allowed dark:border-border dark:text-foreground dark:hover:bg-secondary">
                         <ChevronRight class="h-4 w-4" />
                     </button>
                 </div>
@@ -658,3 +660,24 @@ const submitDoc = () => {
         @cancel="confirmAction.open = false"
     />
 </template>
+
+<style scoped>
+.clients-index-table :deep(th),
+.clients-index-table :deep(td) {
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+    line-height: 1.2;
+}
+
+.clients-index-table :deep(tbody tr) {
+    height: 3.35rem;
+}
+
+.clients-index-table :deep(.h-8) {
+    height: 1.75rem;
+}
+
+.clients-index-table :deep(.w-8) {
+    width: 1.75rem;
+}
+</style>

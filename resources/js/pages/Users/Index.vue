@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { Head, useForm } from '@inertiajs/vue3';
-import { UserCog, Plus, Edit, Trash2 } from 'lucide-vue-next';
+import { UserCog, Plus, Edit, Trash2, ChevronLeft, ChevronRight } from 'lucide-vue-next';
 import { dashboard } from '@/routes';
 
 // Import komponen UI
@@ -38,6 +38,8 @@ defineOptions({
 const isModalOpen = ref(false);
 const isEditing = ref(false);
 const editingId = ref<number | null>(null);
+const currentPage = ref(1);
+const perPage = 10;
 const confirmAction = ref({
     open: false,
     title: '',
@@ -45,6 +47,25 @@ const confirmAction = ref({
     confirmLabel: 'Hapus',
     variant: 'danger' as 'danger' | 'warning' | 'success' | 'default',
     onConfirm: () => {},
+});
+
+const totalPages = computed(() => Math.ceil(props.users.length / perPage));
+const visibleStart = computed(() => props.users.length === 0 ? 0 : (currentPage.value - 1) * perPage + 1);
+const visibleEnd = computed(() => Math.min(currentPage.value * perPage, props.users.length));
+
+const paginatedUsers = computed(() => {
+    const start = (currentPage.value - 1) * perPage;
+    return props.users.slice(start, start + perPage);
+});
+
+watch(() => props.users, () => {
+    currentPage.value = 1;
+});
+
+watch(totalPages, (pages) => {
+    if (pages > 0 && currentPage.value > pages) {
+        currentPage.value = pages;
+    }
 });
 
 // 4. Inertia Form
@@ -116,10 +137,10 @@ const deleteUser = (id: number, name: string) => {
 <template>
     <Head title="Master User" />
 
-    <div class="flex h-full flex-1 flex-col gap-6 overflow-x-auto p-4 md:p-8">
+    <div class="flex h-full flex-1 flex-col gap-4 overflow-x-auto p-4 md:px-6 md:py-5">
         
         <!-- Header -->
-        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
                 <h1 class="text-2xl font-extrabold tracking-tight text-tm-navy flex items-center gap-3 dark:text-foreground">
                     <div class="flex h-10 w-10 items-center justify-center rounded-[12px] border-2 border-black bg-tm-navy-pale shadow-[2px_2px_0px_0px_rgba(0,0,0,0.8)] dark:bg-tm-navy dark:border-border">
@@ -137,23 +158,29 @@ const deleteUser = (id: number, name: string) => {
             </button>
         </div>
 
+        <div class="rounded-[14px] border-2 border-black bg-white px-4 py-3 shadow-[2px_3px_0px_0px_rgba(0,0,0,0.8)] dark:border-border dark:bg-card dark:shadow-none">
+            <p class="text-xs text-tm-text-secondary dark:text-muted-foreground">
+                Menampilkan <span class="font-bold text-tm-navy dark:text-foreground">{{ visibleStart }}</span> - <span class="font-bold text-tm-navy dark:text-foreground">{{ visibleEnd }}</span> dari <span class="font-bold text-tm-navy dark:text-foreground">{{ users.length }}</span> data user
+            </p>
+        </div>
+
         <!-- Tabel Data -->
         <div class="rounded-[14px] border-2 border-black bg-white shadow-[2px_3px_0px_0px_rgba(0,0,0,0.8)] overflow-hidden dark:bg-card dark:border-border dark:shadow-none">
             <div class="overflow-x-auto">
-                <table class="w-full text-sm">
+                <table class="users-index-table w-full text-sm">
                     <thead>
                         <tr class="border-b-2 border-black bg-tm-navy-pale dark:bg-secondary dark:border-border">
-                            <th class="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-tm-navy dark:text-foreground">No</th>
-                            <th class="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-tm-navy dark:text-foreground">Nama & Email</th>
-                            <th class="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-tm-navy dark:text-foreground">Role</th>
-                            <th class="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-tm-navy dark:text-foreground">Divisi Tim</th>
-                            <th class="px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-tm-navy dark:text-foreground">Status</th>
-                            <th class="px-4 py-3.5 text-right text-xs font-bold uppercase tracking-wider text-tm-navy dark:text-foreground">Aksi</th>
+                            <th class="px-4 py-2.5 text-left text-xs font-bold uppercase tracking-wider text-tm-navy dark:text-foreground">No</th>
+                            <th class="px-4 py-2.5 text-left text-xs font-bold uppercase tracking-wider text-tm-navy dark:text-foreground">Nama & Email</th>
+                            <th class="px-4 py-2.5 text-left text-xs font-bold uppercase tracking-wider text-tm-navy dark:text-foreground">Role</th>
+                            <th class="px-4 py-2.5 text-left text-xs font-bold uppercase tracking-wider text-tm-navy dark:text-foreground">Divisi Tim</th>
+                            <th class="px-4 py-2.5 text-left text-xs font-bold uppercase tracking-wider text-tm-navy dark:text-foreground">Status</th>
+                            <th class="px-4 py-2.5 text-right text-xs font-bold uppercase tracking-wider text-tm-navy dark:text-foreground">Aksi</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <tr v-for="(user, index) in users" :key="user.id" class="border-b border-tm-border transition-colors hover:bg-tm-navy-pale/40 dark:border-border dark:hover:bg-secondary/50">
-                            <td class="px-4 py-3.5 text-tm-text-secondary dark:text-muted-foreground">{{ index + 1 }}</td>
+                        <tr v-for="(user, index) in paginatedUsers" :key="user.id" class="border-b border-tm-border transition-colors hover:bg-tm-navy-pale/40 dark:border-border dark:hover:bg-secondary/50">
+                            <td class="px-4 py-3.5 text-tm-text-secondary dark:text-muted-foreground">{{ (currentPage - 1) * perPage + index + 1 }}</td>
                             <td class="px-4 py-3.5">
                                 <div class="font-bold text-tm-navy dark:text-foreground">{{ user.name }}</div>
                                 <div class="text-xs text-tm-text-muted dark:text-muted-foreground">{{ user.email }}</div>
@@ -200,6 +227,33 @@ const deleteUser = (id: number, name: string) => {
                         </tr>
                     </tbody>
                 </table>
+            </div>
+
+            <div v-if="totalPages > 1" class="flex items-center justify-between border-t-2 border-black px-4 py-2 dark:border-border">
+                <p class="text-xs font-medium text-tm-text-secondary dark:text-muted-foreground">
+                    Halaman {{ currentPage }} dari {{ totalPages }}
+                </p>
+                <div class="flex items-center gap-1">
+                    <button :disabled="currentPage === 1" @click="currentPage--" class="inline-flex h-7 w-7 items-center justify-center rounded-[8px] border-2 border-tm-border text-tm-navy transition-colors hover:bg-tm-navy-pale disabled:cursor-not-allowed disabled:opacity-40 dark:border-border dark:text-foreground dark:hover:bg-secondary">
+                        <ChevronLeft class="h-4 w-4" />
+                    </button>
+                    <template v-for="page in totalPages" :key="page">
+                        <button
+                            v-if="page === 1 || page === totalPages || Math.abs(page - currentPage) <= 1"
+                            @click="currentPage = page"
+                            class="inline-flex h-7 w-7 items-center justify-center rounded-[8px] border-2 text-xs font-bold transition-colors"
+                            :class="page === currentPage
+                                ? 'border-black bg-tm-green text-white shadow-[2px_2px_0px_0px_rgba(0,0,0,0.8)] dark:border-tm-green dark:shadow-none'
+                                : 'border-tm-border text-tm-navy hover:bg-tm-navy-pale dark:border-border dark:text-foreground dark:hover:bg-secondary'"
+                        >
+                            {{ page }}
+                        </button>
+                        <span v-else-if="page === currentPage - 2 || page === currentPage + 2" class="px-1 text-sm text-tm-text-muted">...</span>
+                    </template>
+                    <button :disabled="currentPage === totalPages" @click="currentPage++" class="inline-flex h-7 w-7 items-center justify-center rounded-[8px] border-2 border-tm-border text-tm-navy transition-colors hover:bg-tm-navy-pale disabled:cursor-not-allowed disabled:opacity-40 dark:border-border dark:text-foreground dark:hover:bg-secondary">
+                        <ChevronRight class="h-4 w-4" />
+                    </button>
+                </div>
             </div>
         </div>
 
@@ -280,3 +334,24 @@ const deleteUser = (id: number, name: string) => {
         @cancel="confirmAction.open = false"
     />
 </template>
+
+<style scoped>
+.users-index-table :deep(th),
+.users-index-table :deep(td) {
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+    line-height: 1.2;
+}
+
+.users-index-table :deep(tbody tr) {
+    height: 3.25rem;
+}
+
+.users-index-table :deep(.h-8) {
+    height: 1.75rem;
+}
+
+.users-index-table :deep(.w-8) {
+    width: 1.75rem;
+}
+</style>

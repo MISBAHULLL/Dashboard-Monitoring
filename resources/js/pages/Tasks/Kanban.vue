@@ -8,13 +8,11 @@ import {
     Circle,
     CircleAlert,
     Columns3,
-    GripVertical,
     ListTodo,
     LoaderCircle,
     MoreHorizontal,
     Plus,
     Zap,
-    Clock,
     RotateCcw,
     Trophy,
 } from 'lucide-vue-next';
@@ -260,9 +258,29 @@ const onDragEnd = () => {
     hoveredColumnId.value = null;
 };
 
+const scrollColumnWhileDragging = (e: DragEvent) => {
+    const column = e.currentTarget as HTMLElement | null;
+    const scroller = column?.querySelector<HTMLElement>('.kanban-column-scroll');
+    if (!scroller) return;
+
+    const rect = scroller.getBoundingClientRect();
+    const distanceFromTop = e.clientY - rect.top;
+    const distanceFromBottom = rect.bottom - e.clientY;
+    const edgeSize = 96;
+
+    if (distanceFromTop < edgeSize) {
+        scroller.scrollBy({ top: -14, behavior: 'auto' });
+    } else if (distanceFromBottom < edgeSize) {
+        scroller.scrollBy({ top: 14, behavior: 'auto' });
+    }
+};
+
 const onDragOver = (e: DragEvent, columnId: TaskStatus) => {
     e.preventDefault();
-    if (draggedTaskId.value !== null) hoveredColumnId.value = columnId;
+    if (draggedTaskId.value !== null) {
+        hoveredColumnId.value = columnId;
+        scrollColumnWhileDragging(e);
+    }
 };
 
 const onDrop = (e: DragEvent, newStatus: TaskStatus) => {
@@ -278,7 +296,7 @@ const onDrop = (e: DragEvent, newStatus: TaskStatus) => {
 <template>
     <Head title="Kanban Board" />
 
-    <div class="flex h-full flex-1 flex-col gap-6 bg-tm-page px-4 py-5 dark:bg-[#081422] md:px-6 md:py-7 xl:px-7">
+    <div class="flex h-full min-h-0 flex-1 flex-col gap-6 overflow-hidden bg-tm-page px-4 py-5 dark:bg-[#081422] md:px-6 md:py-7 xl:px-7">
         <!-- Sync Message Toast -->
         <div
             v-if="syncMessage"
@@ -299,7 +317,7 @@ const onDrop = (e: DragEvent, newStatus: TaskStatus) => {
         </div>
 
         <!-- Page Header — Neo-brutalist -->
-        <div class="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
+        <div class="flex shrink-0 flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
             <div>
                 <h1 class="flex items-center gap-3 text-2xl font-extrabold tracking-tight text-[#1B3A6B] dark:text-white md:text-3xl">
                     <div class="flex h-10 w-10 items-center justify-center rounded-xl border-[2px] border-black bg-[#E8EEF8] shadow-[2px_2px_0px_0px_rgba(27,58,107,0.2)] dark:border-slate-600 dark:bg-[#111c2e] dark:shadow-[0_10px_24px_rgba(0,0,0,0.35)]">
@@ -330,7 +348,7 @@ const onDrop = (e: DragEvent, newStatus: TaskStatus) => {
         </div>
 
         <!-- Stat Cards — Neo-brutalist style -->
-        <div class="grid w-full gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <div class="grid w-full shrink-0 gap-4 sm:grid-cols-2 xl:grid-cols-4">
             <!-- Task Aktif -->
             <div class="relative overflow-hidden rounded-[16px] border-[2px] border-black bg-white p-5 shadow-[3px_4px_0px_0px_rgba(27,58,107,0.12)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[4px_5px_0px_0px_rgba(27,58,107,0.16)] dark:border-slate-700/80 dark:bg-[#111c2e] dark:shadow-[0_14px_32px_rgba(0,0,0,0.42),0_0_0_1px_rgba(148,163,184,0.08)]">
                 <div class="mb-3 h-[3px] w-10 rounded-full bg-[#1B3A6B]"></div>
@@ -362,23 +380,28 @@ const onDrop = (e: DragEvent, newStatus: TaskStatus) => {
         </div>
 
         <!-- Kanban Columns -->
-        <div class="-mx-1 flex-1 overflow-x-auto overflow-y-hidden px-1 pb-4">
-            <div class="grid min-h-full min-w-[76rem] grid-cols-4 items-start gap-4 xl:min-w-0 xl:gap-5">
+        <div class="-mx-1 min-h-0 flex-1 overflow-x-auto overflow-y-hidden px-1 pb-4">
+            <div class="grid h-full min-h-0 min-w-[76rem] grid-cols-4 items-stretch gap-4 xl:min-w-0 xl:gap-5">
                 <div
                     v-for="column in columns"
                     :key="column.id"
-                    class="flex max-h-full min-w-0 flex-col rounded-[18px] transition-all duration-200"
+                    class="relative flex max-h-full min-h-0 min-w-0 flex-col rounded-[18px] transition-all duration-200"
                     :class="[
                         column.panelClass,
                         column.shadowColor,
-                        hoveredColumnId === column.id ? `${column.ringClass} ring-2 ring-offset-2 ring-offset-transparent scale-[1.01]` : '',
+                        hoveredColumnId === column.id ? `${column.ringClass} scale-[1.01] ring-2 ring-offset-2 ring-offset-transparent` : '',
                     ]"
                     @dragover="(e) => onDragOver(e, column.id)"
                     @drop="(e) => onDrop(e, column.id)"
                 >
+                    <div
+                        v-if="hoveredColumnId === column.id && draggedTaskId"
+                        class="pointer-events-none absolute inset-1 z-20 rounded-[15px] border-[2px] border-dashed border-[#1B3A6B]/35 bg-white/20 dark:border-sky-200/35 dark:bg-sky-300/5"
+                    />
+
                     <!-- Column Header -->
                     <div
-                        class="relative shrink-0 overflow-hidden rounded-t-[16px] border-b-[2.5px] p-4"
+                        class="relative z-10 shrink-0 overflow-hidden rounded-t-[16px] border-b-[2.5px] p-4 shadow-[0_1px_0_0_rgba(15,23,42,0.04)]"
                         :class="column.headerClass"
                         :style="{ borderBottomColor: column.accentColor }"
                     >
@@ -409,7 +432,7 @@ const onDrop = (e: DragEvent, newStatus: TaskStatus) => {
                     </div>
 
                     <!-- Task Cards Container -->
-                    <div class="flex min-h-[18rem] flex-1 flex-col gap-3 overflow-y-auto p-3">
+                    <div class="kanban-column-scroll flex min-h-0 flex-1 scroll-pb-6 flex-col gap-3 overflow-y-auto overscroll-contain p-3 pr-2 pb-6">
                         <div
                             v-for="task in groupedTasks[column.id]"
                             :key="task.id"
@@ -567,3 +590,41 @@ const onDrop = (e: DragEvent, newStatus: TaskStatus) => {
         </div>
     </div>
 </template>
+
+<style scoped>
+.kanban-column-scroll {
+    scrollbar-width: thin;
+    scrollbar-color: rgb(27 58 107 / 0.22) transparent;
+}
+
+.kanban-column-scroll::-webkit-scrollbar {
+    width: 8px;
+}
+
+.kanban-column-scroll::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.kanban-column-scroll::-webkit-scrollbar-thumb {
+    border: 2px solid transparent;
+    border-radius: 999px;
+    background-clip: content-box;
+    background-color: rgb(27 58 107 / 0.22);
+}
+
+.kanban-column-scroll:hover::-webkit-scrollbar-thumb {
+    background-color: rgb(27 58 107 / 0.38);
+}
+
+:global(.dark) .kanban-column-scroll {
+    scrollbar-color: rgb(148 163 184 / 0.26) transparent;
+}
+
+:global(.dark) .kanban-column-scroll::-webkit-scrollbar-thumb {
+    background-color: rgb(148 163 184 / 0.26);
+}
+
+:global(.dark) .kanban-column-scroll:hover::-webkit-scrollbar-thumb {
+    background-color: rgb(148 163 184 / 0.42);
+}
+</style>

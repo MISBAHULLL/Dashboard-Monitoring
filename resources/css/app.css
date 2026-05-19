@@ -398,7 +398,7 @@
     }
 
     .sidebar-lucide-navy {
-        --sidebar-lucide-top-gap: 0.9rem;
+        --sidebar-lucide-top-gap: 0.5rem;
         --sidebar-lucide-bottom-gap: 0.5rem;
         --sidebar-width-icon: 4rem;        /* fallback icon width tanpa mengubah lebar expanded */
         --sidebar-lucide-bg: #093b70;      /* navy brand */
@@ -410,6 +410,7 @@
            inset-y-0`, kita re-assert di sini supaya tidak ada utility lain
            yang bisa mengubahnya jadi static/relative. */
         position: fixed !important;
+        inset-block: unset !important;
         top: var(--sidebar-lucide-top-gap) !important;
         bottom: var(--sidebar-lucide-bottom-gap) !important;
         height: auto !important;
@@ -570,4 +571,53 @@
     .dashboard-grid {
         grid-template-columns: 2fr 1fr 1fr 1fr !important;
     }
+}
+
+/* Task index density guard.
+   Force the task list to use natural height and prevent stale page CSS from
+   reintroducing a vertical scroll area inside the table card. */
+html body .task-table-scroll {
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+}
+
+html body .task-table-card,
+html body .task-index-table {
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+}
+
+html body .task-table-card {
+    padding-bottom: 0.25rem !important;
+}
+
+html body .task-filter-card label {
+    font-size: 0.66rem !important;
+    line-height: 1 !important;
+}
+
+html body .task-filter-card [data-slot="select-trigger"],
+html body .task-filter-card input {
+    min-height: 1.75rem !important;
+    height: 1.75rem !important;
+    font-size: 0.75rem !important;
+}
+
+html body .task-index-table thead {
+    height: 2rem !important;
+}
+
+html body .task-index-table th,
+html body .task-index-table td {
+    padding-top: 0.24rem !important;
+    padding-bottom: 0.24rem !important;
+    line-height: 1.15 !important;
+}
+
+html body .task-index-table tbody tr {
+    height: 3.68rem !important;
 }

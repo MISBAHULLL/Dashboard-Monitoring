@@ -3,6 +3,7 @@ import { ref, watch } from 'vue';
 import { Head, router } from '@inertiajs/vue3';
 import { Activity, Filter, RotateCcw, Clock, ArrowDownLeft, Plus, Pencil, Trash2, AlertCircle, LogIn, Search } from 'lucide-vue-next';
 import { dashboard } from '@/routes';
+import { index as activityLogsIndex } from '@/routes/activity-logs';
 import { Input } from '@/components/ui/input';
 
 const props = defineProps<{
@@ -49,7 +50,7 @@ const filterForm = ref({
 });
 
 watch(filterForm, (newVal) => {
-    router.get('/activity-logs', newVal, {
+    router.get(activityLogsIndex.url(), newVal, {
         preserveState: true,
         preserveScroll: true,
         replace: true,

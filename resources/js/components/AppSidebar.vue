@@ -27,7 +27,7 @@ import { index as activityLogsIndex } from '@/routes/activity-logs';
 import { index as clientsIndex } from '@/routes/clients';
 import { index as documentsIndex } from '@/routes/documents';
 import { edit as profileEdit } from '@/routes/profile';
-import { index as tasksIndex } from '@/routes/tasks';
+import { index as tasksIndex, kanban as tasksKanban } from '@/routes/tasks';
 import { index as teamsIndex } from '@/routes/teams';
 import { index as usersIndex } from '@/routes/users';
 
@@ -52,7 +52,7 @@ const mainNavItems = computed<NavItemLucide[]>(() => {
         },
         {
             title: 'Kanban Board',
-            href: '/tasks-kanban',
+            href: tasksKanban.url(),
             icon: KanbanSquare,
         },
         {

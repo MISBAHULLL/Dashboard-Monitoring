@@ -11,6 +11,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import ConfirmDialog from '@/components/ConfirmDialog.vue';
 import { destroy as taskTemplatesDestroy, store as taskTemplatesStore } from '@/routes/task-templates';
+import { index as tasksIndex, store as storeTask } from '@/routes/tasks';
 
 const props = defineProps<{
     clients: Array<{ id: number; name: string }>;
@@ -41,7 +42,7 @@ const form = useForm({
 const duplicateError = computed(() => (form.errors as Record<string, string | undefined>).duplicate);
 
 const submitForm = () => {
-    form.post('/tasks');
+    form.post(storeTask.url());
 };
 
 const applyTemplate = (templateId: number) => {
@@ -124,7 +125,7 @@ const confirmAction = ref({
         <!-- Header -->
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div class="flex items-center gap-4">
-                <Link href="/tasks">
+                <Link :href="tasksIndex.url()">
                     <Button variant="outline" size="icon" class="h-10 w-10 shrink-0 rounded-full border-[1.5px] border-black bg-white shadow-[2px_2px_0_0_rgba(0,0,0,0.1)] transition-all hover:-translate-y-0.5 hover:shadow-[3px_3px_0_0_rgba(0,0,0,0.15)] dark:border-slate-600 dark:bg-[#111c2e] dark:shadow-[0_10px_24px_rgba(0,0,0,0.35)] dark:hover:bg-slate-800/70">
                         <ArrowLeft class="h-5 w-5 text-tm-navy dark:text-slate-100" />
                     </Button>
@@ -299,7 +300,7 @@ const confirmAction = ref({
                 </div>
 
                 <div class="flex justify-center gap-4 pt-2">
-                    <Link href="/tasks">
+                    <Link :href="tasksIndex.url()">
                         <Button type="button" variant="outline" class="h-11 rounded-xl border-[1.5px] border-black/70 px-8 font-medium text-slate-600 shadow-[1px_2px_0_0_rgba(0,0,0,0.06)] transition-all hover:-translate-y-0.5 hover:shadow-[2px_3px_0_0_rgba(0,0,0,0.1)] dark:border-slate-600 dark:bg-slate-950/25 dark:text-slate-200 dark:hover:bg-slate-800">Batal</Button>
                     </Link>
                     <Button type="submit" :disabled="form.processing" class="flex h-11 items-center gap-2 rounded-xl border-[1.5px] border-black bg-tm-navy px-8 font-medium tracking-wide text-white shadow-[2px_2px_0_0_rgba(0,0,0,0.2)] transition-all hover:-translate-y-0.5 hover:bg-tm-navy-medium hover:shadow-[3px_3px_0_0_rgba(0,0,0,0.25)] dark:border-sky-300/35 dark:shadow-[0_12px_28px_rgba(59,130,246,0.18)]">

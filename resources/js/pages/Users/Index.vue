@@ -3,6 +3,11 @@ import { computed, ref, watch } from 'vue';
 import { Head, useForm } from '@inertiajs/vue3';
 import { UserCog, Plus, Edit, Trash2, ChevronLeft, ChevronRight } from 'lucide-vue-next';
 import { dashboard } from '@/routes';
+import {
+    destroy as destroyUser,
+    store as storeUser,
+    update as updateUser,
+} from '@/routes/users';
 
 // Import komponen UI
 import { Button } from '@/components/ui/button';
@@ -104,11 +109,15 @@ const openEditModal = (user: any) => {
 // Submit Data
 const submitForm = () => {
     if (isEditing.value) {
-        form.put(`/users/${editingId.value}`, {
+        if (editingId.value === null) {
+            return;
+        }
+
+        form.put(updateUser.url(editingId.value), {
             onSuccess: () => { isModalOpen.value = false; },
         });
     } else {
-        form.post('/users', {
+        form.post(storeUser.url(), {
             onSuccess: () => { isModalOpen.value = false; },
         });
     }
@@ -123,7 +132,7 @@ const deleteUser = (id: number, name: string) => {
         confirmLabel: 'Hapus User',
         variant: 'danger',
         onConfirm: () => {
-            useForm({}).delete(`/users/${id}`, {
+            useForm({}).delete(destroyUser.url(id), {
                 preserveScroll: true,
                 onSuccess: () => {
                     confirmAction.value.open = false;

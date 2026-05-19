@@ -76,7 +76,7 @@ const formatDate = (date?: string): string => {
     <article
         v-if="isEmpty && !loading"
         class="due-soon-card relative flex h-full flex-col overflow-hidden rounded-[18px] border-[2.5px] border-black bg-white transition-all duration-300 ease-out hover:-translate-y-1 cursor-default dark:border-slate-700/80 dark:bg-[#111c2e]"
-        :aria-label="`Task Due Soon H-7: 0 tasks`"
+        :aria-label="`SLA Warning: 0 tasks`"
     >
         <!-- Header -->
         <div class="flex items-center justify-between px-6 pt-5 pb-2">
@@ -89,7 +89,7 @@ const formatDate = (date?: string): string => {
                 <h2
                     class="whitespace-nowrap text-[#0b2a6b] dark:text-tm-navy-pale font-['Solway',serif] font-bold text-[20px] sm:text-[24px] lg:text-[26px] leading-tight"
                 >
-                    Task Due Soon (H-7)
+                    SLA Warning
                 </h2>
             </div>
 
@@ -143,7 +143,7 @@ const formatDate = (date?: string): string => {
     <article
         v-else
         class="due-soon-card relative flex h-full flex-col overflow-hidden rounded-2xl border-[2.5px] border-black bg-white px-[18px] pt-4 pb-3.5 transition-all duration-300 ease-out hover:-translate-y-1 cursor-default dark:border-slate-700/80 dark:bg-[#111c2e]"
-        :aria-label="`Task Due Soon H-7: ${count} tasks`"
+        :aria-label="`SLA Warning: ${count} tasks`"
     >
         <!-- Header -->
         <div class="flex items-center justify-between mb-3">
@@ -157,7 +157,7 @@ const formatDate = (date?: string): string => {
                 <h2
                     class="whitespace-nowrap text-[#0a2463] dark:text-tm-navy-pale font-extrabold tracking-[-0.3px] leading-tight text-[20px] sm:text-[22px] lg:text-[24px]"
                 >
-                    Task Due Soon (H-7)
+                    SLA Warning
                 </h2>
             </div>
 
@@ -188,7 +188,7 @@ const formatDate = (date?: string): string => {
                 <span
                     class="absolute right-2.5 top-[7px] text-[11.5px] font-normal text-gray-500 tracking-[0.1px] dark:text-slate-400"
                 >
-                    {{ formatDate(task.release_date) }}
+                    {{ formatDate(task.sla_due_date ?? task.release_date) }}
                 </span>
 
                 <!-- Title -->
@@ -203,7 +203,7 @@ const formatDate = (date?: string): string => {
                 <p
                     class="m-0 mt-px text-[11.5px] font-normal leading-[1.4] text-gray-500 dark:text-slate-400"
                 >
-                    {{ dueLabel(task.release_date) }}
+                    {{ dueLabel(task.sla_due_date ?? task.release_date) }}
                 </p>
             </div>
         </div>

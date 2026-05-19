@@ -62,13 +62,15 @@ export interface Task {
   product?: Product;
   assignee?: User;
   release_date?: string;
+  sla_due_date?: string;
+  sla_warning_date?: string;
   created_at: string;
 }
 
 /**
  * Task data for deadline alert cards (overdue/due soon)
  */
-export type DeadlineTask = Pick<Task, 'id' | 'title' | 'client' | 'release_date'>;
+export type DeadlineTask = Pick<Task, 'id' | 'title' | 'client' | 'release_date' | 'sla_due_date'>;
 
 // ============================================================================
 // Statistics Types

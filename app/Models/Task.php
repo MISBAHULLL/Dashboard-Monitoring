@@ -1,5 +1,8 @@
 <?php
 namespace App\Models;
+
+use Carbon\CarbonInterface;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -9,6 +12,9 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 class Task extends Model
 {
     use HasFactory, SoftDeletes;
+
+    public const DEFAULT_WARNING_DAYS = 3;
+
     protected $fillable = [
         'product_id',
         'client_id',
@@ -33,10 +39,10 @@ class Task extends Model
 
     /**
      * Accessor yang selalu ikut saat task di-serialize ke array/JSON.
-     * Diperlukan agar frontend (Tasks/Index.vue) dapat mengakses task.sla_status
+     * Diperlukan agar frontend dapat mengakses SLA tanpa error saat serialize.
      * tanpa error SSR "Cannot read properties of undefined (reading 'replace')".
      */
-    protected $appends = ['sla_status'];
+    protected $appends = ['sla_status', 'sla_due_date', 'sla_warning_date'];
     // --- RELATIONS ---
     public function product(): BelongsTo
     {
@@ -75,33 +81,76 @@ class Task extends Model
     {
         return $this->belongsToMany(Tag::class, 'task_tags');
     }
-    // --- SLA STATUS (cached lookup, bukan relasi) ---
+    // --- SLA DEADLINE (release_date override, fallback ke config SLA kategori) ---
+    public static function effectiveDeadlineExpression(): string
+    {
+        return 'COALESCE(tasks.release_date, DATE(DATE_ADD(tasks.created_at, INTERVAL sla_configs.max_days DAY)))';
+    }
+
+    public static function warningDeadlineExpression(int $fallbackWarningDays = self::DEFAULT_WARNING_DAYS): string
+    {
+        return 'DATE_SUB('.self::effectiveDeadlineExpression().', INTERVAL COALESCE(sla_configs.warning_days, '.$fallbackWarningDays.') DAY)';
+    }
+
+    public function scopeWithSlaConfig(Builder $query): Builder
+    {
+        return $query->leftJoin('sla_configs', 'sla_configs.category', '=', 'tasks.category');
+    }
+
+    public function scopeWhereSlaOverdue(Builder $query): Builder
+    {
+        return $query
+            ->withSlaConfig()
+            ->where('tasks.status', '!=', 'completed')
+            ->whereRaw(self::effectiveDeadlineExpression().' IS NOT NULL')
+            ->whereRaw(self::effectiveDeadlineExpression().' < ?', [now()->toDateString()]);
+    }
+
+    public function scopeWhereSlaDueSoon(Builder $query, int $daysAhead = 7): Builder
+    {
+        $today = now()->toDateString();
+
+        return $query
+            ->withSlaConfig()
+            ->where('tasks.status', '!=', 'completed')
+            ->whereRaw(self::effectiveDeadlineExpression().' IS NOT NULL')
+            ->whereRaw(self::effectiveDeadlineExpression().' >= ?', [$today])
+            ->whereRaw(self::warningDeadlineExpression($daysAhead).' <= ?', [$today]);
+    }
+
+    public function getSlaDueDateAttribute(): ?string
+    {
+        return $this->effectiveDeadline()?->toDateString();
+    }
+
+    public function getSlaWarningDateAttribute(): ?string
+    {
+        $deadline = $this->effectiveDeadline();
+        $sla = $this->slaConfigForCategory();
+
+        if (!$deadline) {
+            return null;
+        }
+
+        return $deadline->copy()->subDays($sla['warning_days'] ?? self::DEFAULT_WARNING_DAYS)->toDateString();
+    }
+
     public function getSlaStatusAttribute(): string
     {
-        if (!$this->category || !$this->created_at) {
+        $dueDate = $this->effectiveDeadline();
+
+        if (!$dueDate) {
             return 'unknown';
         }
 
-        // Cache SLA configs selama 1 jam sebagai array primitive (hindari menyimpan
-        // Eloquent Collection di cache -> bisa berujung "incomplete object" saat unserialize).
-        $slaConfigs = cache()->remember('sla_configs', 3600, function () {
-            return SlaConfig::query()
-                ->get(['category', 'max_days', 'warning_days'])
-                ->keyBy('category')
-                ->map(fn ($sla) => [
-                    'max_days' => (int) $sla->max_days,
-                    'warning_days' => (int) $sla->warning_days,
-                ])
-                ->toArray();
-        });
-
-        $sla = $slaConfigs[$this->category] ?? null;
-        if (!$sla) {
+        $sla = $this->slaConfigForCategory();
+        if (!$sla && !$this->release_date) {
             return 'unknown';
         }
 
-        $dueDate = $this->created_at->copy()->addDays($sla['max_days']);
-        $warningDate = $dueDate->copy()->subDays($sla['warning_days']);
+        $warningDate = $sla
+            ? $dueDate->copy()->subDays($sla['warning_days'])->startOfDay()
+            : $dueDate->copy()->subDays(self::DEFAULT_WARNING_DAYS)->startOfDay();
 
         if ($this->status === 'completed') {
             return ($this->completed_at && $this->completed_at <= $dueDate)
@@ -118,5 +167,43 @@ class Task extends Model
         }
 
         return 'on_track';
+    }
+
+    public function effectiveDeadline(): ?CarbonInterface
+    {
+        if ($this->release_date) {
+            return $this->release_date->copy()->endOfDay();
+        }
+
+        if (!$this->category || !$this->created_at) {
+            return null;
+        }
+
+        $sla = $this->slaConfigForCategory();
+        if (!$sla) {
+            return null;
+        }
+
+        return $this->created_at->copy()->addDays($sla['max_days'])->endOfDay();
+    }
+
+    protected function slaConfigForCategory(): ?array
+    {
+        if (!$this->category) {
+            return null;
+        }
+
+        $slaConfigs = cache()->remember('sla_configs', 3600, function () {
+            return SlaConfig::query()
+                ->get(['category', 'max_days', 'warning_days'])
+                ->keyBy('category')
+                ->map(fn ($sla) => [
+                    'max_days' => (int) $sla->max_days,
+                    'warning_days' => (int) $sla->warning_days,
+                ])
+                ->toArray();
+        });
+
+        return $slaConfigs[$this->category] ?? null;
     }
 }

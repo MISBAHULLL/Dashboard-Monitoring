@@ -54,6 +54,8 @@ class SlaConfigController extends Controller
             );
         }
 
+        cache()->forget('sla_configs');
+
         return back()->with('success', 'Konfigurasi SLA berhasil disimpan.');
     }
 }

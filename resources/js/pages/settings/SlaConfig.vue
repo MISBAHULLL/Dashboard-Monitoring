@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { dashboard } from '@/routes';
+import { index as slaConfigIndex, upsert as upsertSlaConfig } from '@/routes/sla-config';
 
 interface SlaItem {
     id: number | null;
@@ -23,7 +24,7 @@ defineOptions({
         breadcrumbs: [
             { title: 'Dashboard', href: dashboard() },
             { title: 'Settings', href: '#' },
-            { title: 'Konfigurasi SLA', href: '/settings/sla-config' },
+            { title: 'Konfigurasi SLA', href: slaConfigIndex.url() },
         ],
     },
 });
@@ -48,7 +49,7 @@ const form = useForm({
 });
 
 function submit() {
-    form.post('/settings/sla-config', { preserveScroll: true });
+    form.post(upsertSlaConfig.url(), { preserveScroll: true });
 }
 </script>
 

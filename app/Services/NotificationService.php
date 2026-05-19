@@ -132,15 +132,12 @@ class NotificationService
     public function sendDueSoonNotifications(int $daysAhead = self::DUE_SOON_DAYS): int
     {
         $today = CarbonImmutable::today();
-        $endDate = $today->addDays($daysAhead);
 
         $tasks = Task::query()
             ->with(['client:id,name'])
             ->whereNotNull('assigned_to')
-            ->whereNotNull('release_date')
-            ->where('status', '!=', 'completed')
-            ->whereDate('release_date', '>=', $today)
-            ->whereDate('release_date', '<=', $endDate)
+            ->whereSlaDueSoon($daysAhead)
+            ->select('tasks.*')
             ->get();
 
         return $tasks->reduce(function ($count, Task $task) use ($today) {
@@ -148,8 +145,8 @@ class NotificationService
                 return $count;
             }
 
-            $releaseDate = CarbonImmutable::parse($task->release_date);
-            $daysLeft = $today->diffInDays($releaseDate, false);
+            $deadline = CarbonImmutable::parse($task->sla_due_date);
+            $daysLeft = $today->diffInDays($deadline, false);
 
             Notification::create([
                 'user_id' => $task->assigned_to,
@@ -159,7 +156,7 @@ class NotificationService
                     'Task "%s" untuk %s jatuh tempo pada %s (%d hari lagi).',
                     $task->title,
                     $task->client?->name ?? 'client terkait',
-                    $releaseDate->translatedFormat('d F Y'),
+                    $deadline->translatedFormat('d F Y'),
                     $daysLeft
                 ),
                 'link' => route('tasks.show', $task),
@@ -179,9 +176,8 @@ class NotificationService
 
         $tasks = Task::query()
             ->with(['client:id,name'])
-            ->whereNotNull('release_date')
-            ->where('status', '!=', 'completed')
-            ->whereDate('release_date', '<', $today)
+            ->whereSlaOverdue()
+            ->select('tasks.*')
             ->get();
 
         $adminIds = User::query()
@@ -200,8 +196,8 @@ class NotificationService
                 return $count;
             }
 
-            $releaseDate = CarbonImmutable::parse($task->release_date);
-            $daysLate = $releaseDate->diffInDays($today);
+            $deadline = CarbonImmutable::parse($task->sla_due_date);
+            $daysLate = $deadline->diffInDays($today);
             $created = 0;
 
             foreach ($recipientIds as $userId) {
@@ -217,7 +213,7 @@ class NotificationService
                         'Task "%s" untuk %s sudah lewat deadline %s (%d hari terlambat).',
                         $task->title,
                         $task->client?->name ?? 'client terkait',
-                        $releaseDate->translatedFormat('d F Y'),
+                        $deadline->translatedFormat('d F Y'),
                         $daysLate
                     ),
                     'link' => route('tasks.show', $task),

@@ -10,6 +10,7 @@ import { edit as editAppearance } from '@/routes/appearance';
 import { index as backupIndex } from '@/routes/backup';
 import { edit as editProfile } from '@/routes/profile';
 import { edit as editSecurity } from '@/routes/security';
+import { index as slaConfigIndex } from '@/routes/sla-config';
 import type { NavItem } from '@/types';
 import type { Auth } from '@/types';
 
@@ -24,7 +25,12 @@ const baseNavItems: NavItem[] = [
 
 const sidebarNavItems = computed<NavItem[]>(() => [
     ...baseNavItems,
-    ...(isAdmin.value ? [{ title: 'Backup & Restore', href: backupIndex() }] : []),
+    ...(isAdmin.value
+        ? [
+              { title: 'Backup & Restore', href: backupIndex() },
+              { title: 'Konfigurasi SLA', href: slaConfigIndex() },
+          ]
+        : []),
 ]);
 
 const { isCurrentOrParentUrl } = useCurrentUrl();

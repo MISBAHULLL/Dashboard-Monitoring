@@ -49,8 +49,7 @@ class DashboardController extends Controller
             ];
 
             $today = Carbon::today();
-            $dueSoonEndDate = Carbon::today()->addDays(7);
-            
+
             // Data untuk Donut Chart (Status)
             $chartDonut = [
                 $stats['open_tasks'],
@@ -87,28 +86,20 @@ class DashboardController extends Controller
                 $chartMonth['data'][] = (int) $monthTrendData->get($dateStr, 0);
             }
 
-            $overdueBaseQuery = Task::query()
-                ->whereNotNull('release_date')
-                ->whereDate('release_date', '<', $today)
-                ->where('status', '!=', 'completed');
-
-            $dueSoonBaseQuery = Task::query()
-                ->whereNotNull('release_date')
-                ->whereDate('release_date', '>=', $today)
-                ->whereDate('release_date', '<=', $dueSoonEndDate)
-                ->where('status', '!=', 'completed');
+            $overdueBaseQuery = Task::query()->whereSlaOverdue();
+            $dueSoonBaseQuery = Task::query()->whereSlaDueSoon();
 
             $overdueTasks = (clone $overdueBaseQuery)
                 ->with(['client:id,name', 'product:id,name', 'assignee:id,name'])
-                ->select(['id', 'title', 'client_id', 'product_id', 'assigned_to', 'status', 'release_date'])
-                ->orderBy('release_date')
+                ->select(['tasks.id', 'tasks.title', 'tasks.client_id', 'tasks.product_id', 'tasks.assigned_to', 'tasks.status', 'tasks.release_date', 'tasks.category', 'tasks.created_at', 'tasks.completed_at'])
+                ->orderByRaw(Task::effectiveDeadlineExpression())
                 ->limit(10)
                 ->get();
 
             $dueSoonTasks = (clone $dueSoonBaseQuery)
                 ->with(['client:id,name', 'product:id,name', 'assignee:id,name'])
-                ->select(['id', 'title', 'client_id', 'product_id', 'assigned_to', 'status', 'release_date'])
-                ->orderBy('release_date')
+                ->select(['tasks.id', 'tasks.title', 'tasks.client_id', 'tasks.product_id', 'tasks.assigned_to', 'tasks.status', 'tasks.release_date', 'tasks.category', 'tasks.created_at', 'tasks.completed_at'])
+                ->orderByRaw(Task::effectiveDeadlineExpression())
                 ->limit(10)
                 ->get();
 
@@ -123,6 +114,7 @@ class DashboardController extends Controller
                     $join->on('tasks.product_id', '=', 'teams.id')
                         ->whereNull('tasks.deleted_at');
                 })
+                ->leftJoin('sla_configs', 'sla_configs.category', '=', 'tasks.category')
                 ->groupBy('teams.id', 'teams.name', 'teams.type')
                 ->selectRaw('COUNT(tasks.id) as total_tasks')
                 ->selectRaw("SUM(CASE WHEN tasks.status = 'completed' THEN 1 ELSE 0 END) as completed_tasks")
@@ -130,7 +122,7 @@ class DashboardController extends Controller
                 ->selectRaw("SUM(CASE WHEN tasks.status = 'in_progress' THEN 1 ELSE 0 END) as in_progress_tasks")
                 ->selectRaw("SUM(CASE WHEN tasks.status = 'revision' THEN 1 ELSE 0 END) as revision_tasks")
                 ->selectRaw(
-                    "SUM(CASE WHEN tasks.status != 'completed' AND tasks.release_date IS NOT NULL AND tasks.release_date < ? THEN 1 ELSE 0 END) as overdue_tasks",
+                    "SUM(CASE WHEN tasks.status != 'completed' AND ".Task::effectiveDeadlineExpression()." IS NOT NULL AND ".Task::effectiveDeadlineExpression()." < ? THEN 1 ELSE 0 END) as overdue_tasks",
                     [$today->toDateString()]
                 )
                 ->orderByDesc('total_tasks')

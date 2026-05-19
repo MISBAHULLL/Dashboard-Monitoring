@@ -14,15 +14,9 @@ import { dashboard } from '@/routes';
 import { index as tasksIndex } from '@/routes/tasks';
 import type { AdminDashboardProps } from '@/types/dashboard';
 
-/** Build /tasks?date_from=today&date_to=7days — filter yang dikenali TaskController */
+/** Build /tasks?status=due_soon - filter deadline efektif dari TaskController */
 const dueSoonViewAllUrl = computed(() => {
-    const today = new Date();
-    const in7Days = new Date();
-    in7Days.setDate(today.getDate() + 7);
-    const fmt = (d: Date) =>
-        `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-
-    return tasksIndex({ query: { date_from: fmt(today), date_to: fmt(in7Days) } }).url;
+    return tasksIndex({ query: { status: 'due_soon' } }).url;
 });
 
 defineProps<AdminDashboardProps>();

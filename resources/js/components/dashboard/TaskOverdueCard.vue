@@ -186,7 +186,7 @@ const formatDate = (date?: string): string => {
                 <span
                     class="absolute right-2.5 top-[7px] text-[11.5px] font-normal text-gray-600 tracking-[0.1px] dark:text-slate-400"
                 >
-                    {{ formatDate(task.release_date) }}
+                    {{ formatDate(task.sla_due_date ?? task.release_date) }}
                 </span>
 
                 <!-- Title -->

@@ -44,6 +44,8 @@ type TaskItem = {
     priority: 'urgent' | 'high' | 'medium' | 'low';
     status: TaskStatus;
     release_date: string | null;
+    sla_due_date?: string | null;
+    sla_warning_date?: string | null;
     completed_at?: string | null;
     client?: { name?: string | null } | null;
     product?: { name?: string | null } | null;
@@ -178,6 +180,8 @@ const parseDateValue = (value: string | null | undefined) => {
     return new Date(value).getTime();
 };
 
+const taskDeadline = (task: TaskItem) => task.sla_due_date ?? task.release_date;
+
 const formatDate = (value: string | null | undefined) => {
     if (!value) return 'Belum dijadwalkan';
     return new Date(value).toLocaleDateString('id-ID', {
@@ -188,15 +192,16 @@ const formatDate = (value: string | null | undefined) => {
 };
 
 const isOverdue = (task: TaskItem) => {
-    if (!task.release_date || task.status === 'completed') return false;
-    return parseDateValue(task.release_date) < new Date().setHours(0, 0, 0, 0);
+    if (task.status === 'completed') return false;
+    if (task.sla_status) return task.sla_status === 'overdue';
+    return parseDateValue(taskDeadline(task)) < new Date().setHours(0, 0, 0, 0);
 };
 
 const compareTasks = (left: TaskItem, right: TaskItem) => {
     if (left.status === 'completed' && right.status === 'completed') {
         return parseDateValue(right.completed_at) - parseDateValue(left.completed_at);
     }
-    const dueDateSort = parseDateValue(left.release_date) - parseDateValue(right.release_date);
+    const dueDateSort = parseDateValue(taskDeadline(left)) - parseDateValue(taskDeadline(right));
     if (dueDateSort !== 0) return dueDateSort;
     return left.id - right.id;
 };

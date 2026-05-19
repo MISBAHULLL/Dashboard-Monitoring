@@ -51,10 +51,9 @@ class TaskController extends Controller
         }
         if ($request->filled('status')) {
             if ($request->status === 'overdue') {
-                // Overdue = release_date sudah lewat dan status belum completed
-                $query->whereNotNull('release_date')
-                    ->whereDate('release_date', '<', now()->toDateString())
-                    ->where('status', '!=', 'completed');
+                $query->whereSlaOverdue()->select('tasks.*');
+            } elseif ($request->status === 'due_soon') {
+                $query->whereSlaDueSoon()->select('tasks.*');
             } else {
                 $query->where('status', $request->status);
             }
@@ -92,7 +91,7 @@ class TaskController extends Controller
             $query->whereIn('id', array_map('intval', $ids));
         }
 
-        $tasks = $query->latest()->paginate(10)->withQueryString();
+        $tasks = $query->latest('tasks.created_at')->paginate(10)->withQueryString();
         $tasks->through(function (Task $task) use ($user) {
             return [
                 ...$task->toArray(),
@@ -607,9 +606,9 @@ class TaskController extends Controller
         }
         if ($request->filled('status')) {
             if ($request->status === 'overdue') {
-                $query->whereNotNull('release_date')
-                    ->whereDate('release_date', '<', now()->toDateString())
-                    ->where('status', '!=', 'completed');
+                $query->whereSlaOverdue()->select('tasks.*');
+            } elseif ($request->status === 'due_soon') {
+                $query->whereSlaDueSoon()->select('tasks.*');
             } else {
                 $query->where('status', $request->status);
             }
@@ -641,7 +640,7 @@ class TaskController extends Controller
             });
         }
 
-        $tasks = $query->latest()->get();
+        $tasks = $query->latest('tasks.created_at')->get();
 
         ActivityLogger::log('exported', 'task', null, 'Daftar Task', 'Mengunduh laporan excel daftar task');
 
@@ -668,6 +667,7 @@ class TaskController extends Controller
                 'Prioritas' => $task->priority,
                 'Status' => $task->status,
                 'SLA Status' => strtoupper(str_replace('_', ' ', $task->sla_status)),
+                'Tanggal Deadline Efektif' => $task->sla_due_date ? Carbon::parse($task->sla_due_date)->format('d M Y') : '-',
                 'Engineer' => $task->engineer?->name ?? '-',
                 'Assignee' => $task->assignee?->name ?? '-',
                 'Tanggal Release' => $task->release_date ? Carbon::parse($task->release_date)->format('d M Y') : '-',

@@ -479,6 +479,7 @@ const submitImport = () => {
                                 <SelectItem value="in_progress">In Progress</SelectItem>
                                 <SelectItem value="revision">Revisi</SelectItem>
                                 <SelectItem value="completed">Selesai</SelectItem>
+                                <SelectItem value="due_soon">Due Soon</SelectItem>
                                 <SelectItem value="overdue">Overdue</SelectItem>
                             </SelectContent>
                         </Select>
@@ -684,7 +685,7 @@ const submitImport = () => {
                                         'bg-tm-warning-pale text-orange-700 border border-tm-warning/30 dark:bg-orange-400/10 dark:text-orange-200 dark:border-orange-300/35': task.sla_status === 'warning',
                                         'bg-tm-danger-pale text-tm-danger border border-tm-danger/30 dark:bg-red-400/10 dark:text-red-200 dark:border-red-300/35': task.sla_status === 'overdue',
                                         'bg-slate-100 text-slate-500 border border-slate-200 dark:bg-slate-800/60 dark:text-slate-400 dark:border-slate-700': task.sla_status === 'unknown',
-                                    }" :title="'Batas waktu SLA: ' + (task.sla ? task.sla.max_days + ' hari' : 'tidak ada config')">
+                                    }" :title="'Deadline efektif: ' + (task.sla_due_date || '-')">
                                     {{ (task.sla_status || 'unknown').replace(/_/g, ' ').toUpperCase() }}
                                 </span>
                             </td>

@@ -4,7 +4,23 @@ import { Head, Link, useForm, router } from '@inertiajs/vue3';
 import { ListTodo, Plus, Edit, Trash2, Filter, RotateCcw, ExternalLink, Lock, CheckCircle2, AlertCircle, Download, Upload } from 'lucide-vue-next';
 import { toast } from 'vue-sonner';
 import { dashboard } from '@/routes';
-import { show as showTask, bulkDestroy, bulkUpdateStatus, bulkAssign } from '@/routes/tasks';
+import {
+    bulkAssign,
+    bulkDestroy,
+    bulkForceDestroy,
+    bulkRestore,
+    bulkUpdateStatus,
+    create as createTask,
+    destroy,
+    edit as editTask,
+    exportMethod,
+    forceDestroy,
+    importMethod,
+    index as tasksIndex,
+    restore,
+    show as showTask,
+    updateStatus,
+} from '@/routes/tasks';
 
 // UI Components
 import { Button } from '@/components/ui/button';
@@ -59,7 +75,7 @@ watch(filterForm, (newVal) => {
     for (const [key, value] of Object.entries(newVal)) {
         params[key] = value === 'all' || (key === 'trashed' && value === 'active') ? '' : value;
     }
-    router.get('/tasks', params, {
+    router.get(tasksIndex.url(), params, {
         preserveState: true,
         preserveScroll: true,
         replace: true,
@@ -162,7 +178,7 @@ const toggleCekStatus = (task: any, newStatus: string) => {
         finalStatus = 'open';
     }
 
-    router.patch(`/tasks/${task.id}/status`, { status: finalStatus }, {
+    router.patch(updateStatus.url(task.id), { status: finalStatus }, {
         preserveScroll: true,
         preserveState: true
     });
@@ -180,7 +196,7 @@ const exportUrl = computed(() => {
     if (selectedTasks.value.length > 0) {
         params.append('ids', selectedTasks.value.join(','));
     }
-    return `/tasks/export?${params.toString()}`;
+    return exportMethod.url({ query: Object.fromEntries(params) });
 });
 
 const deleteTask = (id: number, title: string) => {
@@ -191,7 +207,7 @@ const deleteTask = (id: number, title: string) => {
         confirmLabel: 'Hapus Task',
         variant: 'danger',
         onConfirm: () => {
-            useForm({}).delete(`/tasks/${id}`, {
+            useForm({}).delete(destroy.url(id), {
                 onSuccess: () => {
                     confirmAction.value.open = false;
                 },
@@ -208,7 +224,7 @@ const restoreTask = (id: number, title: string) => {
         confirmLabel: 'Pulihkan',
         variant: 'success',
         onConfirm: () => {
-            useForm({}).patch(`/tasks/${id}/restore`, {
+            useForm({}).patch(restore.url(id), {
                 preserveScroll: true,
                 onSuccess: () => {
                     confirmAction.value.open = false;
@@ -226,7 +242,7 @@ const forceDeleteTask = (id: number, title: string) => {
         confirmLabel: 'Hapus Permanen',
         variant: 'danger',
         onConfirm: () => {
-            useForm({}).delete(`/tasks/${id}/force`, {
+            useForm({}).delete(forceDestroy.url(id), {
                 preserveScroll: true,
                 onSuccess: () => {
                     confirmAction.value.open = false;
@@ -250,7 +266,7 @@ const bulkRestoreTasks = (restoreAll = false) => {
             useForm({
                 ids: restoreAll ? [] : selectedTasks.value,
                 restore_all: restoreAll,
-            }).patch('/tasks/bulk-restore', {
+            }).patch(bulkRestore.url(), {
                 preserveScroll: true,
                 onSuccess: () => {
                     selectedTasks.value = [];
@@ -275,7 +291,7 @@ const bulkForceDeleteTasks = (deleteAll = false) => {
             useForm({
                 ids: deleteAll ? [] : selectedTasks.value,
                 delete_all: deleteAll,
-            }).delete('/tasks/bulk-force-delete', {
+            }).delete(bulkForceDestroy.url(), {
                 preserveScroll: true,
                 onSuccess: () => {
                     selectedTasks.value = [];
@@ -319,7 +335,7 @@ const onImportFileSelected = (event: Event) => {
 };
 const submitImport = () => {
     if (!importForm.file) return;
-    importForm.post('/tasks/import', {
+    importForm.post(importMethod.url(), {
         forceFormData: true,
         onSuccess: (page) => {
             showImportModal.value = false;
@@ -365,7 +381,7 @@ const submitImport = () => {
                 <button v-if="permissions.can_create && filterForm.trashed !== 'only'" @click="showImportModal = true" class="flex h-8 items-center gap-1.5 rounded-lg border-[1.5px] border-black bg-white px-3 text-slate-700 shadow-[2px_2px_0_0_rgba(0,0,0,0.1)] transition-all hover:-translate-y-1 hover:bg-slate-50 hover:shadow-[3px_4px_0_0_rgba(0,0,0,0.15)] dark:border-slate-600 dark:bg-[#111c2e] dark:text-slate-100 dark:shadow-[0_10px_24px_rgba(0,0,0,0.35)] dark:hover:bg-slate-800/70">
                     <Upload class="h-3.5 w-3.5 text-tm-navy-medium" /> <span class="text-xs font-medium tracking-wide">Import</span>
                 </button>
-                <Link v-if="permissions.can_create && filterForm.trashed !== 'only'" href="/tasks/create">
+                <Link v-if="permissions.can_create && filterForm.trashed !== 'only'" :href="createTask.url()">
                     <Button class="flex h-8 items-center gap-1.5 rounded-lg border-[1.5px] border-black bg-tm-green px-3 text-white shadow-[2px_2px_0_0_rgba(0,0,0,0.2)] transition-all hover:-translate-y-1 hover:bg-tm-green-dark hover:shadow-[3px_4px_0_0_rgba(0,0,0,0.25)] dark:border-emerald-300/40 dark:shadow-[0_12px_28px_rgba(16,185,129,0.2)]">
                         <Plus class="h-3.5 w-3.5" /> <span class="text-xs font-medium tracking-wide">Task Baru</span>
                     </Button>
@@ -723,7 +739,7 @@ const submitImport = () => {
                             <!-- 11. AKSI -->
                             <td class="py-2 px-3 text-center">
                                 <div class="flex items-center justify-center gap-1 opacity-50 group-hover:opacity-100 transition-opacity duration-200">
-                                    <Link v-if="task.can_edit" :href="`/tasks/${task.id}/edit`">
+                                    <Link v-if="task.can_edit" :href="editTask.url(task.id)">
                                         <Button variant="ghost" size="icon" class="h-6 w-6 rounded-lg text-tm-navy-medium transition-colors hover:bg-tm-navy-pale hover:text-tm-navy dark:text-sky-300 dark:hover:bg-sky-400/10 dark:hover:text-sky-100">
                                             <Edit class="h-3.5 w-3.5" />
                                         </Button>

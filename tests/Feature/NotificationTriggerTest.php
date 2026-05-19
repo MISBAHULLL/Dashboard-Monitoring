@@ -5,9 +5,9 @@ use App\Models\Task;
 use App\Models\User;
 use App\Services\NotificationService;
 
-// ──────────────────────────────────────────────────────────────
+// -----------------------------------------------------------------------------
 // STATUS CHANGE NOTIFICATIONS
-// ──────────────────────────────────────────────────────────────
+// -----------------------------------------------------------------------------
 
 test('admin changing status notifies assignee', function () {
     $admin = User::factory()->admin()->create();
@@ -68,9 +68,9 @@ test('admin does not get self-notification for status change', function () {
     ]);
 });
 
-// ──────────────────────────────────────────────────────────────
+// -----------------------------------------------------------------------------
 // BULK STATUS CHANGE NOTIFICATIONS
-// ──────────────────────────────────────────────────────────────
+// -----------------------------------------------------------------------------
 
 test('task notifications are dismissed when task is completed', function () {
     $admin = User::factory()->admin()->create();
@@ -196,9 +196,9 @@ test('bulk status change sends notifications', function () {
     expect(Notification::where('user_id', $member->id)->where('type', 'status_changed')->count())->toBe(2);
 });
 
-// ──────────────────────────────────────────────────────────────
+// -----------------------------------------------------------------------------
 // ASSIGNMENT NOTIFICATIONS
-// ──────────────────────────────────────────────────────────────
+// -----------------------------------------------------------------------------
 
 test('assigning task sends notification to assignee', function () {
     $admin = User::factory()->admin()->create();
@@ -246,9 +246,9 @@ test('reassigning to same user does not create duplicate notification', function
     ]);
 });
 
-// ──────────────────────────────────────────────────────────────
+// -----------------------------------------------------------------------------
 // COMMENT NOTIFICATIONS
-// ──────────────────────────────────────────────────────────────
+// -----------------------------------------------------------------------------
 
 test('commenting on task notifies the assignee', function () {
     $admin = User::factory()->admin()->create();
@@ -298,9 +298,9 @@ test('commenting on unassigned task creates no notification', function () {
     ]);
 });
 
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// -----------------------------------------------------------------------------
 // DEADLINE NOTIFICATIONS
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// -----------------------------------------------------------------------------
 
 test('due soon notification is sent to task assignee once per day', function () {
     $member = User::factory()->member()->create();

@@ -4,6 +4,7 @@ import { Head, router, useForm } from '@inertiajs/vue3';
 import {
     Building2, MapPin, FileText, Upload, Edit, Trash2,
     Download, ExternalLink, Link2, CheckCircle2, Circle, ChevronLeft,
+    X,
 } from 'lucide-vue-next';
 import { Button } from '@/components/ui/button';
 import ConfirmDialog from '@/components/ConfirmDialog.vue';
@@ -53,6 +54,9 @@ const props = defineProps<{
     documentTypes: string[];
 }>();
 
+const documentFileAccept = '.pdf,.doc,.docx,.xls,.xlsx,.csv,.jpg,.jpeg,.png';
+const documentFileHint = 'Format: PDF, Word, Excel, CSV, JPG, PNG. Maks. 10 MB.';
+
 const confirmAction = ref({
     open: false,
     title: '',
@@ -97,6 +101,7 @@ const typeClass: Record<string, string> = {
 
 // ── Modal Upload Dokumen Baru ────────────────────────────────
 const isNewDocOpen = ref(false);
+const newDocFileInput = ref<HTMLInputElement | null>(null);
 const newDocForm = useForm({
     client_id: String(props.document.client?.id ?? ''),
     title: '', type: '', doc_url: '', file: null as File | null, notes: '',
@@ -105,16 +110,35 @@ function handleNewFileChange(e: Event) {
     const t = e.target as HTMLInputElement;
     if (t.files?.[0]) newDocForm.file = t.files[0];
 }
+function clearNewDocFile() {
+    newDocForm.file = null;
+    newDocForm.clearErrors('file');
+    if (newDocFileInput.value) {
+        newDocFileInput.value.value = '';
+    }
+}
+function closeNewDocModal() {
+    clearNewDocFile();
+    isNewDocOpen.value = false;
+}
+function handleNewDocOpenChange(open: boolean) {
+    if (open) {
+        isNewDocOpen.value = true;
+    } else {
+        closeNewDocModal();
+    }
+}
 function submitNewDoc() {
     newDocForm.post(storeDocument.url(), {
         forceFormData: true,
-        onSuccess: () => { isNewDocOpen.value = false; router.reload(); },
+        onSuccess: () => { closeNewDocModal(); router.reload(); },
     });
 }
 
 // ── Modal Edit Dokumen ───────────────────────────────────────
 const isUploadOpen = ref(false);
 const editingDoc   = ref<DocumentItem | null>(null);
+const uploadFileInput = ref<HTMLInputElement | null>(null);
 const uploadForm   = useForm({
     client_id: '', title: '', type: '', doc_url: '',
     file: null as File | null, notes: '',
@@ -125,7 +149,7 @@ function openUploadModal(doc: DocumentItem) {
     uploadForm.title       = doc.title;
     uploadForm.type        = doc.type;
     uploadForm.doc_url     = doc.doc_url ?? '';
-    uploadForm.file        = null;
+    clearUploadFile();
     uploadForm.notes       = '';
     uploadForm.clearErrors();
     isUploadOpen.value     = true;
@@ -134,17 +158,35 @@ function handleFileChange(e: Event) {
     const t = e.target as HTMLInputElement;
     if (t.files?.[0]) uploadForm.file = t.files[0];
 }
+function clearUploadFile() {
+    uploadForm.file = null;
+    uploadForm.clearErrors('file');
+    if (uploadFileInput.value) {
+        uploadFileInput.value.value = '';
+    }
+}
+function closeUploadModal() {
+    clearUploadFile();
+    isUploadOpen.value = false;
+}
+function handleUploadOpenChange(open: boolean) {
+    if (open) {
+        isUploadOpen.value = true;
+    } else {
+        closeUploadModal();
+    }
+}
 function submitUpload() {
     if (uploadForm.file) {
         uploadForm
             .transform((data) => ({ ...data, _method: 'put' }))
             .post(updateDocument.url(editingDoc.value!.id), {
                 forceFormData: true,
-                onSuccess: () => { isUploadOpen.value = false; },
+                onSuccess: () => { closeUploadModal(); },
             });
     } else {
         uploadForm.put(updateDocument.url(editingDoc.value!.id), {
-            onSuccess: () => { isUploadOpen.value = false; },
+            onSuccess: () => { closeUploadModal(); },
         });
     }
 }
@@ -376,7 +418,7 @@ function deleteDocument(doc: DocumentItem) {
         </div>
 
         <!-- ── MODAL UPLOAD DOKUMEN BARU ── -->
-        <Dialog :open="isNewDocOpen" @update:open="isNewDocOpen = $event">
+        <Dialog :open="isNewDocOpen" @update:open="handleNewDocOpenChange">
             <DialogContent class="sm:max-w-[500px] rounded-[18px] border-2 border-black shadow-[4px_6px_0px_0px_rgba(0,0,0,0.8)] dark:border-border dark:shadow-none">
                 <DialogHeader class="border-b-2 border-black bg-tm-navy-pale -mx-6 -mt-6 px-6 py-4 rounded-t-[16px] dark:bg-secondary dark:border-border">
                     <DialogTitle class="flex items-center gap-2 text-tm-navy font-extrabold dark:text-foreground">
@@ -410,15 +452,28 @@ function deleteDocument(doc: DocumentItem) {
                     </div>
                     <div class="space-y-2">
                         <Label class="text-xs font-bold uppercase tracking-wide text-tm-navy dark:text-foreground">Upload File <span class="text-xs font-normal text-tm-text-muted">(opsional)</span></Label>
-                        <input type="file" @change="handleNewFileChange"
-                            class="block w-full rounded-[10px] border-2 border-dashed border-tm-border bg-tm-navy-pale/30 px-3 py-3 text-sm text-tm-text-secondary transition-all file:mr-3 file:rounded-[8px] file:border-2 file:border-black file:bg-white file:px-3 file:py-1.5 file:text-xs file:font-bold file:text-tm-navy file:shadow-[1px_1px_0px_0px_rgba(0,0,0,0.8)] hover:border-tm-green/50 dark:border-border dark:bg-secondary/30 dark:file:bg-card dark:file:text-foreground dark:file:border-border" />
+                        <div class="relative">
+                            <input ref="newDocFileInput" type="file" :accept="documentFileAccept" @change="handleNewFileChange"
+                                class="block w-full rounded-[10px] border-2 border-dashed border-tm-border bg-tm-navy-pale/30 px-3 py-3 pr-12 text-sm text-tm-text-secondary transition-all file:mr-3 file:rounded-[8px] file:border-2 file:border-black file:bg-white file:px-3 file:py-1.5 file:text-xs file:font-bold file:text-tm-navy file:shadow-[1px_1px_0px_0px_rgba(0,0,0,0.8)] hover:border-tm-green/50 dark:border-border dark:bg-secondary/30 dark:file:bg-card dark:file:text-foreground dark:file:border-border" />
+                            <button
+                                v-if="newDocForm.file"
+                                type="button"
+                                @click="clearNewDocFile"
+                                class="absolute right-3 top-3 flex h-7 w-7 items-center justify-center rounded-[8px] border-2 border-black bg-white text-tm-danger shadow-[1px_1px_0px_0px_rgba(0,0,0,0.8)] transition-all hover:bg-tm-danger-pale dark:border-border dark:bg-card dark:shadow-none"
+                                title="Batalkan file yang dipilih"
+                            >
+                                <X class="h-3.5 w-3.5" />
+                            </button>
+                        </div>
+                        <p class="text-[11px] font-medium text-tm-text-muted dark:text-muted-foreground">{{ documentFileHint }}</p>
+                        <p v-if="newDocForm.errors.file" class="text-xs font-medium text-tm-danger">{{ newDocForm.errors.file }}</p>
                     </div>
                     <div class="space-y-2">
                         <Label class="text-xs font-bold uppercase tracking-wide text-tm-navy dark:text-foreground">Catatan</Label>
                         <Input v-model="newDocForm.notes" placeholder="Contoh: Versi awal" class="rounded-[10px] border-2 border-tm-border focus:border-tm-green focus:ring-2 focus:ring-tm-green/20 dark:border-border" />
                     </div>
                     <DialogFooter class="pt-3 gap-3">
-                        <button type="button" @click="isNewDocOpen = false"
+                        <button type="button" @click="closeNewDocModal"
                             class="flex-1 rounded-[10px] border-2 border-black bg-white px-4 py-2.5 text-sm font-bold text-tm-navy shadow-[2px_2px_0px_0px_rgba(0,0,0,0.8)] transition-all hover:-translate-y-0.5 hover:shadow-[3px_3px_0px_0px_rgba(0,0,0,0.8)] active:translate-y-0 active:shadow-[1px_1px_0px_0px_rgba(0,0,0,0.8)] dark:bg-card dark:border-border dark:text-foreground dark:shadow-none">
                             Batal
                         </button>
@@ -432,7 +487,7 @@ function deleteDocument(doc: DocumentItem) {
         </Dialog>
 
         <!-- ── MODAL EDIT DOKUMEN ── -->
-        <Dialog :open="isUploadOpen" @update:open="isUploadOpen = $event">
+        <Dialog :open="isUploadOpen" @update:open="handleUploadOpenChange">
             <DialogContent class="sm:max-w-[500px] rounded-[18px] border-2 border-black shadow-[4px_6px_0px_0px_rgba(0,0,0,0.8)] dark:border-border dark:shadow-none">
                 <DialogHeader class="border-b-2 border-black bg-tm-navy-pale -mx-6 -mt-6 px-6 py-4 rounded-t-[16px] dark:bg-secondary dark:border-border">
                     <DialogTitle class="flex items-center gap-2 text-tm-navy font-extrabold dark:text-foreground">
@@ -464,16 +519,28 @@ function deleteDocument(doc: DocumentItem) {
                     </div>
                     <div class="space-y-2">
                         <Label class="text-xs font-bold uppercase tracking-wide text-tm-navy dark:text-foreground">File <span class="text-xs font-normal text-tm-text-muted">(kosongkan jika tidak ingin ganti)</span></Label>
-                        <input type="file" @change="handleFileChange"
-                            class="block w-full rounded-[10px] border-2 border-dashed border-tm-border bg-tm-navy-pale/30 px-3 py-3 text-sm text-tm-text-secondary transition-all file:mr-3 file:rounded-[8px] file:border-2 file:border-black file:bg-white file:px-3 file:py-1.5 file:text-xs file:font-bold file:text-tm-navy file:shadow-[1px_1px_0px_0px_rgba(0,0,0,0.8)] hover:border-tm-green/50 dark:border-border dark:bg-secondary/30 dark:file:bg-card dark:file:text-foreground dark:file:border-border" />
+                        <div class="relative">
+                            <input ref="uploadFileInput" type="file" :accept="documentFileAccept" @change="handleFileChange"
+                                class="block w-full rounded-[10px] border-2 border-dashed border-tm-border bg-tm-navy-pale/30 px-3 py-3 pr-12 text-sm text-tm-text-secondary transition-all file:mr-3 file:rounded-[8px] file:border-2 file:border-black file:bg-white file:px-3 file:py-1.5 file:text-xs file:font-bold file:text-tm-navy file:shadow-[1px_1px_0px_0px_rgba(0,0,0,0.8)] hover:border-tm-green/50 dark:border-border dark:bg-secondary/30 dark:file:bg-card dark:file:text-foreground dark:file:border-border" />
+                            <button
+                                v-if="uploadForm.file"
+                                type="button"
+                                @click="clearUploadFile"
+                                class="absolute right-3 top-3 flex h-7 w-7 items-center justify-center rounded-[8px] border-2 border-black bg-white text-tm-danger shadow-[1px_1px_0px_0px_rgba(0,0,0,0.8)] transition-all hover:bg-tm-danger-pale dark:border-border dark:bg-card dark:shadow-none"
+                                title="Batalkan file yang dipilih"
+                            >
+                                <X class="h-3.5 w-3.5" />
+                            </button>
+                        </div>
                         <p v-if="uploadForm.errors.file" class="text-xs font-medium text-tm-danger">{{ uploadForm.errors.file }}</p>
+                        <p class="text-[11px] font-medium text-tm-text-muted dark:text-muted-foreground">{{ documentFileHint }}</p>
                     </div>
                     <div class="space-y-2">
                         <Label class="text-xs font-bold uppercase tracking-wide text-tm-navy dark:text-foreground">Catatan Versi</Label>
                         <Input v-model="uploadForm.notes" placeholder="Contoh: Revisi klausul 3" class="rounded-[10px] border-2 border-tm-border focus:border-tm-green focus:ring-2 focus:ring-tm-green/20 dark:border-border" />
                     </div>
                     <DialogFooter class="pt-3 gap-3">
-                        <button type="button" @click="isUploadOpen = false"
+                        <button type="button" @click="closeUploadModal"
                             class="flex-1 rounded-[10px] border-2 border-black bg-white px-4 py-2.5 text-sm font-bold text-tm-navy shadow-[2px_2px_0px_0px_rgba(0,0,0,0.8)] transition-all hover:-translate-y-0.5 hover:shadow-[3px_3px_0px_0px_rgba(0,0,0,0.8)] active:translate-y-0 active:shadow-[1px_1px_0px_0px_rgba(0,0,0,0.8)] dark:bg-card dark:border-border dark:text-foreground dark:shadow-none">
                             Batal
                         </button>

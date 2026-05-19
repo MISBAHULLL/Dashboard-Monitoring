@@ -57,6 +57,7 @@ const props = defineProps<{
 const showModal = ref(false);
 const editingDocument = ref<Document | null>(null);
 const selectedDocuments = ref<number[]>([]);
+const documentFileInput = ref<HTMLInputElement | null>(null);
 const confirmAction = ref({
     open: false,
     title: '',
@@ -85,9 +86,13 @@ const form = useForm({
     notes: '',
 });
 
+const documentFileAccept = '.pdf,.doc,.docx,.xls,.xlsx,.csv,.jpg,.jpeg,.png';
+const documentFileHint = 'Format: PDF, Word, Excel, CSV, JPG, PNG. Maks. 10 MB.';
+
 function openCreate() {
     editingDocument.value = null;
     form.reset();
+    clearSelectedFile();
     showModal.value = true;
 }
 
@@ -96,7 +101,7 @@ function openEdit(doc: Document) {
     form.client_id = String(doc.client?.id ?? '');
     form.title = doc.title;
     form.type = doc.type;
-    form.file = null;
+    clearSelectedFile();
     form.notes = '';
     showModal.value = true;
 }
@@ -104,6 +109,7 @@ function openEdit(doc: Document) {
 function closeModal() {
     showModal.value = false;
     form.reset();
+    clearSelectedFile();
     editingDocument.value = null;
 }
 
@@ -111,6 +117,14 @@ function handleFileChange(event: Event) {
     const target = event.target as HTMLInputElement;
     if (target.files && target.files[0]) {
         form.file = target.files[0];
+    }
+}
+
+function clearSelectedFile() {
+    form.file = null;
+    form.clearErrors('file');
+    if (documentFileInput.value) {
+        documentFileInput.value.value = '';
     }
 }
 
@@ -515,10 +529,22 @@ function getTypeColor(type: string): string {
                                 </label>
                                 <div class="relative">
                                     <input
+                                        ref="documentFileInput"
                                         type="file"
+                                        :accept="documentFileAccept"
                                         @change="handleFileChange"
-                                        class="block w-full rounded-[10px] border-2 border-dashed border-tm-border bg-tm-navy-pale/30 px-3 py-3 text-sm text-tm-text-secondary transition-all file:mr-3 file:rounded-[8px] file:border-2 file:border-black file:bg-white file:px-3 file:py-1.5 file:text-xs file:font-bold file:text-tm-navy file:shadow-[1px_1px_0px_0px_rgba(0,0,0,0.8)] hover:border-tm-green/50 hover:bg-tm-green-pale/20 dark:border-border dark:bg-secondary/30 dark:text-muted-foreground dark:file:bg-card dark:file:text-foreground dark:file:border-border"
+                                        class="block w-full rounded-[10px] border-2 border-dashed border-tm-border bg-tm-navy-pale/30 px-3 py-3 pr-12 text-sm text-tm-text-secondary transition-all file:mr-3 file:rounded-[8px] file:border-2 file:border-black file:bg-white file:px-3 file:py-1.5 file:text-xs file:font-bold file:text-tm-navy file:shadow-[1px_1px_0px_0px_rgba(0,0,0,0.8)] hover:border-tm-green/50 hover:bg-tm-green-pale/20 dark:border-border dark:bg-secondary/30 dark:text-muted-foreground dark:file:bg-card dark:file:text-foreground dark:file:border-border"
                                     />
+                                    <button
+                                        v-if="form.file"
+                                        type="button"
+                                        @click="clearSelectedFile"
+                                        class="absolute right-3 top-3 flex h-7 w-7 items-center justify-center rounded-[8px] border-2 border-black bg-white text-tm-danger shadow-[1px_1px_0px_0px_rgba(0,0,0,0.8)] transition-all hover:bg-tm-danger-pale dark:border-border dark:bg-card dark:shadow-none"
+                                        title="Batalkan file yang dipilih"
+                                    >
+                                        <X class="h-3.5 w-3.5" />
+                                    </button>
+                                    <p class="mt-1 text-[11px] font-medium text-tm-text-muted dark:text-muted-foreground">{{ documentFileHint }}</p>
                                 </div>
                                 <p v-if="form.errors.file" class="mt-1 text-xs font-medium text-tm-danger">{{ form.errors.file }}</p>
                             </div>

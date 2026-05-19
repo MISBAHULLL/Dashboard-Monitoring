@@ -4,6 +4,8 @@ use App\Models\Client;
 use App\Models\Document;
 use App\Models\DocumentVersion;
 use App\Models\User;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 
 test('guests cannot view documents', function () {
     $this->get(route('documents.index'))->assertRedirect(route('login'));
@@ -44,6 +46,52 @@ test('admin can create a document', function () {
         'client_id' => $client->id,
         'doc_url' => 'https://example.com/document.pdf',
         'created_by' => $admin->id,
+    ]);
+});
+
+test('admin can upload an allowed document file', function () {
+    Storage::fake('public');
+
+    $admin = User::factory()->admin()->create();
+    $client = Client::factory()->create();
+    $file = UploadedFile::fake()->create('uat.pdf', 100, 'application/pdf');
+
+    $this->actingAs($admin)
+        ->post(route('documents.store'), [
+            'client_id' => $client->id,
+            'title' => 'Dokumen PDF Test',
+            'type' => 'UAT',
+            'file' => $file,
+        ])
+        ->assertRedirect()
+        ->assertSessionHasNoErrors();
+
+    $document = Document::query()->where('title', 'Dokumen PDF Test')->firstOrFail();
+
+    expect($document->file_name)->toBe('uat.pdf');
+    Storage::disk('public')->assertExists($document->file_path);
+});
+
+test('admin cannot upload a disallowed document file type', function () {
+    Storage::fake('public');
+
+    $admin = User::factory()->admin()->create();
+    $client = Client::factory()->create();
+    $file = UploadedFile::fake()->create('payload.exe', 100, 'application/x-msdownload');
+
+    $this->actingAs($admin)
+        ->from(route('documents.index'))
+        ->post(route('documents.store'), [
+            'client_id' => $client->id,
+            'title' => 'Unsafe Upload',
+            'type' => 'UAT',
+            'file' => $file,
+        ])
+        ->assertRedirect(route('documents.index'))
+        ->assertSessionHasErrors('file');
+
+    $this->assertDatabaseMissing('documents', [
+        'title' => 'Unsafe Upload',
     ]);
 });
 

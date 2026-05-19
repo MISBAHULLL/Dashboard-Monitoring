@@ -16,6 +16,8 @@ use Inertia\Response;
 
 class DocumentController extends Controller
 {
+    private const ALLOWED_FILE_MIMES = 'pdf,doc,docx,xls,xlsx,csv,jpg,jpeg,png';
+
     public function index(): Response
     {
         $this->authorize('viewAny', Document::class);
@@ -53,7 +55,7 @@ class DocumentController extends Controller
             'title' => 'required|string|max:255',
             'type' => 'required|string|max:100',
             'doc_url' => 'nullable|url|max:500',
-            'file' => 'nullable|file|max:10240',
+            'file' => 'nullable|file|max:10240|mimes:'.self::ALLOWED_FILE_MIMES,
             'notes' => 'nullable|string|max:500',
         ]);
 
@@ -107,7 +109,7 @@ class DocumentController extends Controller
             'title' => 'required|string|max:255',
             'type' => 'required|string|max:100',
             'doc_url' => 'nullable|url|max:500',
-            'file' => 'nullable|file|max:10240',
+            'file' => 'nullable|file|max:10240|mimes:'.self::ALLOWED_FILE_MIMES,
             'notes' => 'nullable|string|max:500',
         ]);
 

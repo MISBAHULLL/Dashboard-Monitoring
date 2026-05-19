@@ -155,9 +155,13 @@ defineOptions({
             </div>
 
             <!-- Ringkasan Performa Team + 5 Task Terbaru — 50/50 di semua breakpoint -->
-            <div class="col-span-1 md:col-span-2 lg:col-span-4 row-span-3 grid grid-cols-1 md:grid-cols-2 gap-3">
-                <TeamPerformanceCard :teams="team_performance" />
-                <TaskListCard variant="recent" :tasks="recent_tasks" />
+            <div class="col-span-1 md:col-span-2 lg:col-span-4 row-span-3 flex flex-col gap-3 md:flex-row">
+                <div class="min-w-0 max-w-full md:basis-0 md:flex-1">
+                    <TeamPerformanceCard :teams="team_performance" />
+                </div>
+                <div class="min-w-0 max-w-full md:basis-0 md:flex-1">
+                    <TaskListCard variant="recent" :tasks="recent_tasks" />
+                </div>
             </div>
 
         </div>

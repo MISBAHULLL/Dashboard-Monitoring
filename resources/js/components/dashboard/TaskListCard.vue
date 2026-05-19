@@ -182,7 +182,7 @@ const getPriorityClasses = (priority: TaskPriority): string => {
 
 <template>
   <article
-    class="relative flex h-full flex-col rounded-xl border-[1.5px] border-border bg-card dark:border-slate-700/80 dark:bg-[#111c2e]
+    class="relative flex h-full w-full max-w-full flex-col rounded-xl border-[1.5px] border-border bg-card dark:border-slate-700/80 dark:bg-[#111c2e]
            shadow-[2px_2px_0_0_rgba(0,0,0,0.08)] dark:shadow-[0_14px_32px_rgba(0,0,0,0.42),0_0_0_1px_rgba(148,163,184,0.08)]
            transition-all duration-200 ease-out
            hover:shadow-[4px_4px_0_0_rgba(0,0,0,0.1)] dark:hover:shadow-[0_18px_40px_rgba(0,0,0,0.5),0_0_0_1px_rgba(52,211,153,0.2)]"

@@ -151,7 +151,7 @@ const getRankMeta = (index: number) => {
 
 <template>
     <article
-        class="team-perf-card relative flex h-full flex-col overflow-hidden rounded-[18px] border-[2.5px] border-black bg-white px-5 pt-4 pb-3.5 dark:border-slate-700/80 dark:bg-[#111c2e]"
+        class="team-perf-card relative flex h-full w-full max-w-full flex-col overflow-hidden rounded-[18px] border-[2.5px] border-black bg-white px-5 pt-4 pb-3.5 dark:border-slate-700/80 dark:bg-[#111c2e]"
         aria-label="Ringkasan Performa Tim Product"
     >
         <!-- Header -->

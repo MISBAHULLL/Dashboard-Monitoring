@@ -3,6 +3,14 @@ import { computed, ref, onMounted, watch } from 'vue';
 import { Head, router, useForm } from '@inertiajs/vue3';
 import { UsersRound, Plus, Edit, Trash2, RotateCcw, ChevronLeft, ChevronRight } from 'lucide-vue-next';
 import { dashboard } from '@/routes';
+import {
+    bulkRestore as bulkRestoreTeamsRoute,
+    destroy as destroyTeam,
+    index as teamsIndex,
+    restore as restoreTeamRoute,
+    store as storeTeam,
+    update as updateTeam,
+} from '@/routes/teams';
 
 // Import komponen UI
 import { Button } from '@/components/ui/button';
@@ -130,11 +138,15 @@ const openEditModal = (team: any) => {
 // Submit Data
 const submitForm = () => {
     if (isEditing.value) {
-        form.put(`/teams/${editingId.value}`, {
+        if (editingId.value === null) {
+            return;
+        }
+
+        form.put(updateTeam.url(editingId.value), {
             onSuccess: () => { isModalOpen.value = false; },
         });
     } else {
-        form.post('/teams', {
+        form.post(storeTeam.url(), {
             onSuccess: () => { isModalOpen.value = false; },
         });
     }
@@ -149,7 +161,7 @@ const deleteTeam = (id: number, name: string) => {
         confirmLabel: 'Hapus Tim',
         variant: 'danger',
         onConfirm: () => {
-            useForm({}).delete(`/teams/${id}`, {
+            useForm({}).delete(destroyTeam.url(id), {
                 preserveScroll: true,
                 onSuccess: () => {
                     confirmAction.value.open = false;
@@ -167,7 +179,7 @@ const restoreTeam = (id: number, name: string) => {
         confirmLabel: 'Pulihkan',
         variant: 'success',
         onConfirm: () => {
-            router.patch(`/teams/${id}/restore`, {}, {
+            router.patch(restoreTeamRoute.url(id), {}, {
                 preserveScroll: true,
                 onSuccess: () => {
                     confirmAction.value.open = false;
@@ -188,7 +200,7 @@ const bulkRestoreTeams = (restoreAll = false) => {
         confirmLabel: 'Pulihkan',
         variant: 'success',
         onConfirm: () => {
-            router.patch('/teams/bulk-restore', {
+            router.patch(bulkRestoreTeamsRoute.url(), {
                 ids: restoreAll ? [] : selectedTeams.value,
                 restore_all: restoreAll,
             }, {
@@ -221,7 +233,7 @@ const bulkRestoreTeams = (restoreAll = false) => {
             </div>
             <div class="flex flex-wrap items-center gap-2">
                 <button
-                    @click="router.visit(activeTrashed ? '/teams' : '/teams?trashed=only')"
+                    @click="router.visit(activeTrashed ? teamsIndex.url() : teamsIndex.url({ query: { trashed: 'only' } }))"
                     class="inline-flex items-center gap-2 rounded-[10px] border-2 border-black bg-white px-4 py-2.5 text-sm font-bold text-tm-navy shadow-[2px_2px_0px_0px_rgba(0,0,0,0.8)] transition-all hover:-translate-y-0.5 hover:bg-tm-navy-pale hover:shadow-[3px_4px_0px_0px_rgba(0,0,0,0.8)] active:translate-y-0 active:shadow-[1px_1px_0px_0px_rgba(0,0,0,0.8)] dark:border-border dark:bg-card dark:text-foreground dark:shadow-none"
                 >
                     <RotateCcw class="h-4 w-4" /> {{ activeTrashed ? 'Lihat Aktif' : 'Lihat Terhapus' }}

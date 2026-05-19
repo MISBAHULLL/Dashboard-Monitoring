@@ -24,6 +24,8 @@ import { index as clientsIndex } from '@/routes/clients';
 
 interface Props {
     totalTasks: number;
+    totalTasksWithTrashed?: number;
+    trashedTasks?: number;
     totalTeams: number;
     pendingTasks: number;
     totalClients: number;
@@ -56,15 +58,17 @@ interface StatItem {
     value: number;
     icon: typeof ListTodo;
     href: string;
+    meta?: string;
     trend?: { direction: 'up' | 'down'; value: number };
 }
 
 const statItems = computed<StatItem[]>(() => [
     {
-        label: 'Total Taks',
+        label: 'Task Aktif',
         value: props.totalTasks,
         icon: ListTodo,
         href: tasksIndex.url(),
+        meta: `Total ${props.totalTasksWithTrashed ?? props.totalTasks} | Terhapus ${props.trashedTasks ?? 0}`,
         trend: props.trends ? makeTrend(props.trends.tasks) : undefined,
     },
     {
@@ -119,6 +123,7 @@ const statItems = computed<StatItem[]>(() => [
                     </template>
                     <template v-else>{{ stat.label }}</template>
                 </p>
+                <p v-if="stat.meta" class="grid-task-meta">{{ stat.meta }}</p>
 
                 <!-- Middle: Value+Badge (left) and Icon (right) -->
                 <div class="flex items-start justify-between w-full flex-1 pt-1">
@@ -248,15 +253,27 @@ const statItems = computed<StatItem[]>(() => [
 .grid-task-label {
     font-size: 20px;
     font-weight: 800;
-    line-height: 3;
+    line-height: 2.3;
     color: #111;
     white-space: pre-line;
     -webkit-text-stroke: 0.3px #111;
 }
 
+.grid-task-meta {
+    margin-top: -0.45rem;
+    font-size: 11px;
+    font-weight: 800;
+    line-height: 1.25;
+    color: rgba(17, 17, 17, 0.62);
+}
+
 .dark .grid-task-label {
     color: #f1f5f9;
     -webkit-text-stroke: 0;
+}
+
+.dark .grid-task-meta {
+    color: rgba(203, 213, 225, 0.68);
 }
 
 .grid-task-icon {

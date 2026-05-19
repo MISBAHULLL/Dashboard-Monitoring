@@ -12,6 +12,8 @@ interface Props {
   pendingCount: number;
   overdueCount: number;
   totalTasks: number;
+  totalTasksWithTrashed?: number;
+  trashedTasks?: number;
   loading?: boolean;
 }
 
@@ -121,10 +123,16 @@ const greeting = computed(() => {
         <!-- Left: TOTAL TASKS -->
         <div class="shrink-0">
           <p class="text-[20px] uppercase tracking-[0.15em] text-[#a4a3a3] font-['Solway',serif] dark:text-slate-300">
-            TOTAL TASKS
+            TASK AKTIF
           </p>
           <p class="mt-0.5 text-[50px] leading-none font-normal text-white font-['Solway',serif]">
             {{ totalTasks }}
+          </p>
+          <p
+            v-if="totalTasksWithTrashed !== undefined || trashedTasks !== undefined"
+            class="mt-1 text-[12px] font-semibold tracking-wide text-slate-400 dark:text-slate-400"
+          >
+            Total {{ totalTasksWithTrashed ?? totalTasks }} · Terhapus {{ trashedTasks ?? 0 }}
           </p>
         </div>
 

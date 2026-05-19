@@ -81,6 +81,9 @@ export type DeadlineTask = Pick<Task, 'id' | 'title' | 'client' | 'release_date'
  */
 export interface AdminDashboardStats {
   total_tasks: number;
+  active_tasks: number;
+  trashed_tasks: number;
+  total_tasks_with_trashed: number;
   open_tasks: number;
   in_progress_tasks: number;
   completed_tasks: number;

@@ -58,6 +58,9 @@ function createTestProps(overrides: Partial<AdminDashboardProps> = {}): AdminDas
   return {
     stats: {
       total_tasks: 150,
+      active_tasks: 150,
+      trashed_tasks: 5,
+      total_tasks_with_trashed: 155,
       open_tasks: 42,
       in_progress_tasks: 25,
       completed_tasks: 83,

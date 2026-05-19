@@ -18,8 +18,14 @@ class DashboardController extends Controller
 
         // 2. Jika user adalah admin, tampilkan AdminDashboard
         if ($user->isAdmin()) {
+            $activeTasks = Task::count();
+            $trashedTasks = Task::onlyTrashed()->count();
+
             $stats = [
-                'total_tasks' => Task::count(),
+                'total_tasks' => $activeTasks,
+                'active_tasks' => $activeTasks,
+                'trashed_tasks' => $trashedTasks,
+                'total_tasks_with_trashed' => Task::withTrashed()->count(),
                 'open_tasks' => Task::where('status', 'open')->count(),
                 'in_progress_tasks' => Task::where('status', 'in_progress')->count(),
                 'completed_tasks' => Task::where('status', 'completed')->count(),

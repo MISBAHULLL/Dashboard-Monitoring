@@ -51,6 +51,8 @@ defineOptions({
                     :pending-count="stats.open_tasks"
                     :overdue-count="overdue_count"
                     :total-tasks="stats.total_tasks"
+                    :total-tasks-with-trashed="stats.total_tasks_with_trashed"
+                    :trashed-tasks="stats.trashed_tasks"
                 />
             </div>
 
@@ -77,6 +79,8 @@ defineOptions({
             <div class="col-span-1 md:col-span-2 lg:col-span-2 row-span-3">
                 <GridTaskCard
                     :total-tasks="stats.total_tasks"
+                    :total-tasks-with-trashed="stats.total_tasks_with_trashed"
+                    :trashed-tasks="stats.trashed_tasks"
                     :total-teams="stats.total_teams"
                     :pending-tasks="stats.open_tasks"
                     :total-clients="stats.total_clients"

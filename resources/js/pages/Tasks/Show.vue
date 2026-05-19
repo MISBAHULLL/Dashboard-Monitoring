@@ -43,6 +43,9 @@ type TaskDetail = {
     task_url: string | null;
     modul: string | null;
     release_date: string | null;
+    sla_due_date: string | null;
+    sla_warning_date: string | null;
+    sla_status: string | null;
     created_at: string | null;
     updated_at: string | null;
     client?: { name?: string | null } | null;
@@ -108,6 +111,10 @@ const formatDate = (value: string | null) => {
         minute: '2-digit',
     });
 };
+
+const deadlineSource = computed(() =>
+    props.task.release_date ? 'Manual release' : 'SLA kategori',
+);
 
 const deleteComment = (comment: TaskCommentItem) => {
     if (!confirm('Hapus komentar ini?')) {
@@ -486,6 +493,37 @@ const orderedComments = computed(() =>
                                 class="h-4 w-4 text-tm-text-muted dark:text-slate-500"
                             />
                             {{ formatDate(task.release_date) }}
+                        </p>
+                    </div>
+                    <div
+                        class="rounded-2xl border-[1.5px] border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-950/30"
+                    >
+                        <p
+                            class="text-xs font-bold tracking-[0.16em] text-tm-text-secondary uppercase dark:text-slate-400"
+                        >
+                            Deadline Efektif
+                        </p>
+                        <p
+                            class="mt-2 flex items-center gap-2 text-sm font-bold text-tm-navy dark:text-slate-100"
+                        >
+                            <CalendarDays
+                                class="h-4 w-4 text-tm-text-muted dark:text-slate-500"
+                            />
+                            {{ formatDate(task.sla_due_date) }}
+                        </p>
+                    </div>
+                    <div
+                        class="rounded-2xl border-[1.5px] border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-950/30"
+                    >
+                        <p
+                            class="text-xs font-bold tracking-[0.16em] text-tm-text-secondary uppercase dark:text-slate-400"
+                        >
+                            Sumber Deadline
+                        </p>
+                        <p
+                            class="mt-2 text-sm font-bold break-words text-tm-navy dark:text-slate-100"
+                        >
+                            {{ deadlineSource }}
                         </p>
                     </div>
                     <div

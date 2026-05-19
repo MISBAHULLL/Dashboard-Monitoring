@@ -266,6 +266,9 @@ const confirmAction = ref({
                             <div class="space-y-2">
                                 <Label for="release_date" class="text-[11px] font-bold text-tm-text-secondary uppercase tracking-wider ml-1">Tanggal Release (Target)</Label>
                                 <Input id="release_date" type="date" v-model="form.release_date" class="h-10 border-[1.5px] border-black/70 rounded-lg bg-white hover:bg-slate-50 text-sm text-slate-700 shadow-[1px_2px_0_0_rgba(0,0,0,0.06)] hover:shadow-[2px_3px_0_0_rgba(0,0,0,0.08)] hover:-translate-y-px transition-all focus:border-tm-navy focus:ring-1 focus:ring-tm-navy cursor-pointer" />
+                                <p class="text-[10px] font-medium leading-4 text-slate-500 dark:text-slate-400">
+                                    Opsional. Jika dikosongkan, deadline efektif mengikuti SLA kategori.
+                                </p>
                                 <p v-if="form.errors.release_date" class="text-xs text-red-500 ml-1">{{ form.errors.release_date }}</p>
                             </div>
                             <div class="space-y-2">

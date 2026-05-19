@@ -512,7 +512,10 @@ const onDrop = (e: DragEvent, newStatus: TaskStatus) => {
                                 <div class="flex items-center gap-1.5">
                                     <CalendarDays class="h-3 w-3 shrink-0" />
                                     <span :class="isOverdue(task) ? 'font-bold text-[#E84545] dark:text-red-300' : ''">
-                                        {{ formatDate(task.release_date) }}
+                                        {{ formatDate(taskDeadline(task)) }}
+                                    </span>
+                                    <span class="text-[9px] font-semibold text-[#5C6B7A]/70 dark:text-slate-500">
+                                        {{ task.release_date ? 'Manual' : 'SLA' }}
                                     </span>
                                     <span
                                         v-if="isOverdue(task)"

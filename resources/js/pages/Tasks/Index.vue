@@ -552,7 +552,7 @@ const submitImport = () => {
                             <th class="py-2 px-3 min-w-[180px]">Jenis / Keterangan</th>
                             <th class="py-2 px-3">Engineer</th>
                             <th class="py-2 px-3 text-center">Dokumen</th>
-                            <th class="py-2 px-3 text-center">Tanggal Release</th>
+                            <th class="py-2 px-3 text-center">Deadline Efektif</th>
                             <th class="py-2 px-3 text-center">SLA Status</th>
                             <th class="py-2 px-3 text-center">Cek</th>
                             <th class="py-2 px-3 text-center">Status</th>
@@ -668,11 +668,16 @@ const submitImport = () => {
                                 <span v-else class="rounded-md border border-slate-100 bg-slate-50 px-2 py-1 text-[10px] font-medium text-slate-400 dark:border-slate-700 dark:bg-slate-950/35 dark:text-slate-500">Belum ada</span>
                             </td>
 
-                            <!-- 8. TANGGAL RELEASE -->
+                            <!-- 8. DEADLINE EFEKTIF -->
                             <td class="py-2 px-3 text-center">
-                                <span class="text-xs font-semibold text-slate-600 dark:text-slate-300">
-                                    {{ task.release_date ? new Date(task.release_date).toLocaleDateString('id-ID', {day:'2-digit', month:'short', year:'numeric'}) : '-' }}
-                                </span>
+                                <div class="flex flex-col items-center gap-0.5 leading-tight">
+                                    <span class="text-xs font-bold text-slate-700 dark:text-slate-200">
+                                        {{ task.sla_due_date ? new Date(task.sla_due_date).toLocaleDateString('id-ID', {day:'2-digit', month:'short', year:'numeric'}) : '-' }}
+                                    </span>
+                                    <span class="rounded-full border border-slate-200 bg-slate-50 px-1.5 py-0.5 text-[9px] font-semibold text-slate-500 dark:border-slate-700 dark:bg-slate-950/35 dark:text-slate-400">
+                                        {{ task.release_date ? 'Manual release' : 'SLA kategori' }}
+                                    </span>
+                                </div>
                             </td>
 
                             <!-- 8.5. SLA STATUS -->

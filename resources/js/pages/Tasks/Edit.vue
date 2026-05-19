@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { index as tasksIndex, update as updateTask } from '@/routes/tasks';
 
 // Menerima data dari TaskController@edit
 const props = defineProps<{
@@ -45,7 +46,7 @@ const releaseDateChanged = computed(() => {
 
 const submitForm = () => {
     // Karena ini halaman Edit, kita gunakan metode PUT ke URL spesifik task tersebut
-    form.put(`/tasks/${props.task.id}`);
+    form.put(updateTask.url(props.task.id));
 };
 </script>
 
@@ -56,7 +57,7 @@ const submitForm = () => {
         
         <!-- Header -->
         <div class="flex items-center gap-4 border-b pb-4">
-            <Link href="/tasks">
+            <Link :href="tasksIndex.url()">
                 <Button variant="outline" size="icon" class="h-10 w-10 shrink-0 rounded-full border-slate-300">
                     <ArrowLeft class="h-5 w-5" />
                 </Button>
@@ -173,6 +174,9 @@ const submitForm = () => {
                         <div class="space-y-2">
                             <Label for="release_date">Tanggal Release (Target)</Label>
                             <Input id="release_date" type="date" v-model="form.release_date" class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-sky-600" />
+                            <p class="text-xs text-muted-foreground">
+                                Opsional. Jika dikosongkan, deadline efektif mengikuti SLA kategori.
+                            </p>
                             <p v-if="form.errors.release_date" class="text-sm text-red-500">{{ form.errors.release_date }}</p>
                         </div>
                         <div class="space-y-2">
@@ -207,7 +211,7 @@ const submitForm = () => {
             </div>
 
             <div class="mt-8 flex justify-end gap-4 border-t pt-6">
-                <Link href="/tasks">
+                <Link :href="tasksIndex.url()">
                     <Button type="button" variant="outline" class="h-11 px-8">Batal</Button>
                 </Link>
                 <Button type="submit" :disabled="form.processing" class="h-11 px-8 bg-sky-600 hover:bg-sky-700 text-white flex items-center gap-2">

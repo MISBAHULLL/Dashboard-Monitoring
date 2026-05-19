@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Services\ActivityLogger;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -271,6 +272,12 @@ class BackupController extends Controller
 
             // Re-enable foreign key checks after successful restore
             DB::statement('SET FOREIGN_KEY_CHECKS=1');
+
+            Log::info('Backup restore: running pending migrations');
+            Artisan::call('migrate', ['--force' => true]);
+            Log::info('Backup restore: migrations completed', [
+                'output' => Artisan::output(),
+            ]);
 
             // Clean up temp file
             Storage::disk('local')->delete($tempPath);

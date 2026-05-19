@@ -13,6 +13,7 @@ import {
 import { computed, ref } from 'vue';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
+import ConfirmDialog from '@/components/ConfirmDialog.vue';
 import { dashboard } from '@/routes';
 import {
     create as createBackupRoute,
@@ -52,6 +53,15 @@ const page = usePage<{ flash: FlashMessages }>();
 const flash = computed(() => page.props.flash ?? {});
 
 const isCreatingBackup = ref(false);
+const confirmAction = ref({
+    open: false,
+    title: '',
+    description: '',
+    confirmLabel: 'Lanjutkan',
+    variant: 'warning' as 'danger' | 'warning' | 'success' | 'default',
+    loading: false,
+    onConfirm: () => {},
+});
 const restoreForm = useForm({
     backup_file: null as File | null,
 });
@@ -87,18 +97,27 @@ function formatDate(timestamp: number): string {
 }
 
 function createBackup() {
-    if (confirm('Apakah Anda yakin ingin membuat backup database?')) {
-        isCreatingBackup.value = true;
-        router.post(
-            createBackupRoute.url(),
-            {},
-            {
-                onFinish: () => {
-                    isCreatingBackup.value = false;
+    confirmAction.value = {
+        open: true,
+        title: 'Buat Backup Database',
+        description: 'Sistem akan membuat snapshot database saat ini dan menyimpannya sebagai file SQL di server.',
+        confirmLabel: 'Buat Backup',
+        variant: 'default',
+        loading: false,
+        onConfirm: () => {
+            confirmAction.value.open = false;
+            isCreatingBackup.value = true;
+            router.post(
+                createBackupRoute.url(),
+                {},
+                {
+                    onFinish: () => {
+                        isCreatingBackup.value = false;
+                    },
                 },
-            },
-        );
-    }
+            );
+        },
+    };
 }
 
 function downloadBackup(filename: string) {
@@ -106,13 +125,22 @@ function downloadBackup(filename: string) {
 }
 
 function deleteBackup(filename: string) {
-    if (confirm(`Apakah Anda yakin ingin menghapus backup: ${filename}?`)) {
-        router.delete(destroyBackupRoute.url(), {
-            data: { filename },
-            preserveState: true,
-            preserveScroll: true,
-        });
-    }
+    confirmAction.value = {
+        open: true,
+        title: 'Hapus Backup',
+        description: `File backup "${filename}" akan dihapus dari server dan tidak bisa digunakan untuk restore.`,
+        confirmLabel: 'Hapus Backup',
+        variant: 'danger',
+        loading: false,
+        onConfirm: () => {
+            confirmAction.value.open = false;
+            router.delete(destroyBackupRoute.url(), {
+                data: { filename },
+                preserveState: true,
+                preserveScroll: true,
+            });
+        },
+    };
 }
 
 function handleFileChange(event: Event) {
@@ -126,23 +154,32 @@ function handleFileChange(event: Event) {
 
 function restoreBackup() {
     if (!restoreForm.backup_file) {
-        alert('Pilih file backup terlebih dahulu!');
-
         return;
     }
 
-    if (
-        confirm(
-            'PERINGATAN!\n\nRestore database akan MENGHAPUS semua data saat ini dan menggantinya dengan data dari backup.\n\nApakah Anda yakin ingin melanjutkan?',
-        )
-    ) {
-        restoreForm.post(restoreBackupRoute.url(), {
-            onSuccess: () => {
-                restoreForm.reset();
-                selectedFilename.value = null;
-            },
-        });
-    }
+    const filename = selectedFilename.value ?? restoreForm.backup_file.name;
+
+    confirmAction.value = {
+        open: true,
+        title: 'Restore Database',
+        description: `Restore akan menghapus data saat ini dan menggantinya dengan isi file "${filename}". Setelah restore, sistem akan menjalankan migration terbaru agar schema tetap cocok dengan kode aplikasi.`,
+        confirmLabel: 'Restore Sekarang',
+        variant: 'danger',
+        loading: false,
+        onConfirm: () => {
+            confirmAction.value.loading = true;
+            restoreForm.post(restoreBackupRoute.url(), {
+                onSuccess: () => {
+                    restoreForm.reset();
+                    selectedFilename.value = null;
+                },
+                onFinish: () => {
+                    confirmAction.value.loading = false;
+                    confirmAction.value.open = false;
+                },
+            });
+        },
+    };
 }
 </script>
 
@@ -528,5 +565,18 @@ function restoreBackup() {
                 </div>
             </div>
         </section>
+
+        <ConfirmDialog
+            :open="confirmAction.open"
+            :title="confirmAction.title"
+            :description="confirmAction.description"
+            :confirm-label="confirmAction.confirmLabel"
+            cancel-label="Batal"
+            :variant="confirmAction.variant"
+            :loading="confirmAction.loading"
+            @update:open="(value) => (confirmAction.open = value)"
+            @confirm="confirmAction.onConfirm"
+            @cancel="confirmAction.open = false"
+        />
     </div>
 </template>

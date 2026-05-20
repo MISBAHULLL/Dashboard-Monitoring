@@ -153,7 +153,7 @@ const statItems = computed<StatItem[]>(() => [
                                 fill="none"
                             >
                                 <path
-                                    d="M3 11L11 3M11 3H5M11 3V9"
+                                    d="M7 11V3M7 3L3.5 6.5M7 3l3.5 3.5"
                                     stroke="currentColor"
                                     stroke-width="2"
                                     stroke-linecap="round"
@@ -162,12 +162,12 @@ const statItems = computed<StatItem[]>(() => [
                             </svg>
                             <svg
                                 v-else
-                                class="h-3 w-3 rotate-180"
+                                class="h-3 w-3"
                                 viewBox="0 0 14 14"
                                 fill="none"
                             >
                                 <path
-                                    d="M3 11L11 3M11 3H5M11 3V9"
+                                    d="M7 3v8M7 11l-3.5-3.5M7 11l3.5-3.5"
                                     stroke="currentColor"
                                     stroke-width="2"
                                     stroke-linecap="round"
@@ -331,6 +331,11 @@ const statItems = computed<StatItem[]>(() => [
 
 .grid-task-trend--down {
     background: #e01d1d;
+    color: #111;
+}
+
+.dark .grid-task-trend--down {
+    background: #ef4444;
     color: #111;
 }
 

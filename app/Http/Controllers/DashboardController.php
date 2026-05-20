@@ -44,80 +44,45 @@ class DashboardController extends Controller
 
             $periodTaskWithTrashedQuery = Task::withTrashed()
                 ->when($periodStart, fn ($query) => $query->where('created_at', '>=', $periodStart));
-
             $activeTasks = (clone $periodTaskQuery)->count();
             $trashedTasks = (clone $periodTaskWithTrashedQuery)->onlyTrashed()->count();
+            $openTasks = (clone $periodTaskQuery)->where('status', 'open')->count();
+            $teamsCount = Team::count();
+            $clientsCount = Client::count();
 
             $stats = [
                 'total_tasks' => $activeTasks,
                 'active_tasks' => $activeTasks,
                 'trashed_tasks' => $trashedTasks,
                 'total_tasks_with_trashed' => (clone $periodTaskWithTrashedQuery)->count(),
-                'open_tasks' => (clone $periodTaskQuery)->where('status', 'open')->count(),
+                'open_tasks' => $openTasks,
                 'in_progress_tasks' => (clone $periodTaskQuery)->where('status', 'in_progress')->count(),
                 'completed_tasks' => (clone $periodTaskQuery)->where('status', 'completed')->count(),
-                'total_clients' => Client::count(),
-                'total_teams' => Team::count(),
+                'total_clients' => $clientsCount,
+                'total_teams' => $teamsCount,
             ];
 
-            // Hitung trend: bandingkan periode aktif vs periode sebelumnya dengan durasi yang sama.
-            // Badge hanya muncul jika kedua periode punya data (mencegah angka misleading
-            // saat data baru mulai diinput dan periode sebelumnya masih kosong).
-            // Jika period = 'all', tidak ada periode pembanding → semua trend = 0 (badge tidak muncul).
+            // Bandingkan periode aktif dengan periode sebelumnya yang durasinya sama.
+            // Untuk "Semua", tidak ada pembanding yang natural, jadi badge trend disembunyikan.
             $trendEnd = $now->copy();
 
             if ($periodStart !== null) {
-                // Durasi periode aktif dalam detik
                 $periodDuration = $periodStart->diffInSeconds($trendEnd);
-
-                // Periode sebelumnya: mundur sejauh durasi yang sama
-                $prevEnd   = $periodStart->copy()->subSecond();
+                $prevEnd = $periodStart->copy()->subSecond();
                 $prevStart = $prevEnd->copy()->subSeconds($periodDuration)->startOfDay();
 
-                // Tasks: dibuat dalam periode aktif vs periode sebelumnya
-                $tasksCurrent  = Task::whereBetween('created_at', [$periodStart, $trendEnd])->count();
-                $tasksPrevious = Task::whereBetween('created_at', [$prevStart, $prevEnd])->count();
-                // Badge hanya muncul jika kedua periode punya data
-                $tasksTrend = ($tasksCurrent > 0 && $tasksPrevious > 0) ? ($tasksCurrent - $tasksPrevious) : 0;
-
-                // Teams
-                $teamsCurrent  = Team::whereBetween('created_at', [$periodStart, $trendEnd])->count();
-                $teamsPrevious = Team::whereBetween('created_at', [$prevStart, $prevEnd])->count();
-                $teamsTrend    = ($teamsCurrent > 0 && $teamsPrevious > 0) ? ($teamsCurrent - $teamsPrevious) : 0;
-
-                // Clients/faskes
-                $clientsCurrent  = Client::whereBetween('created_at', [$periodStart, $trendEnd])->count();
-                $clientsPrevious = Client::whereBetween('created_at', [$prevStart, $prevEnd])->count();
-                $clientsTrend    = ($clientsCurrent > 0 && $clientsPrevious > 0) ? ($clientsCurrent - $clientsPrevious) : 0;
-
-                // Pending: selisih task open baru masuk vs yang diselesaikan dalam periode aktif
-                // Ini tetap dihitung tanpa syarat karena mencerminkan pergerakan dalam periode itu sendiri
-                $newOpenTasks      = Task::where('status', 'open')
-                    ->whereBetween('created_at', [$periodStart, $trendEnd])->count();
-                $recentlyCompleted = Task::where('status', 'completed')
-                    ->whereBetween('updated_at', [$periodStart, $trendEnd])->count();
-                $pendingTrend = $newOpenTasks - $recentlyCompleted;
+                $tasksTrend = $activeTasks - Task::whereBetween('created_at', [$prevStart, $prevEnd])->count();
+                $teamsTrend = Team::whereBetween('created_at', [$periodStart, $trendEnd])->count()
+                    - Team::onlyTrashed()->whereBetween('deleted_at', [$periodStart, $trendEnd])->count();
+                $clientsTrend = Client::whereBetween('created_at', [$periodStart, $trendEnd])->count()
+                    - Client::onlyTrashed()->whereBetween('deleted_at', [$periodStart, $trendEnd])->count();
+                $pendingTrend = $openTasks - Task::where('status', 'open')
+                    ->whereBetween('created_at', [$prevStart, $prevEnd])
+                    ->count();
             } else {
-                // period = 'all': tidak ada window periode, gunakan bulan ini vs bulan lalu
-                // sebagai pembanding untuk tasks dan pending agar badge tetap bermakna.
-                // Tim dan faskes tetap 0 karena total keseluruhan tidak punya pembanding natural.
-                $thisMonthStart = $now->copy()->startOfMonth();
-                $lastMonthStart = $now->copy()->subMonth()->startOfMonth();
-                $lastMonthEnd   = $thisMonthStart->copy()->subSecond();
-
-                $tasksThisMonth = Task::where('created_at', '>=', $thisMonthStart)->count();
-                $tasksLastMonth = Task::whereBetween('created_at', [$lastMonthStart, $lastMonthEnd])->count();
-                $tasksTrend     = ($tasksThisMonth > 0 && $tasksLastMonth > 0)
-                    ? ($tasksThisMonth - $tasksLastMonth)
-                    : 0;
-
-                $newOpenThisMonth      = Task::where('status', 'open')
-                    ->where('created_at', '>=', $thisMonthStart)->count();
-                $completedThisMonth    = Task::where('status', 'completed')
-                    ->where('updated_at', '>=', $thisMonthStart)->count();
-                $pendingTrend = $newOpenThisMonth - $completedThisMonth;
-
-                $teamsTrend   = 0;
+                $tasksTrend = 0;
+                $teamsTrend = 0;
+                $pendingTrend = 0;
                 $clientsTrend = 0;
             }
 

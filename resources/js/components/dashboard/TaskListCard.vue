@@ -59,12 +59,18 @@ const variantConfig = {
   recent: {
     title: '5 Task Terbaru',
     description: 'Task yang baru saja dibuat ke dalam sistem.',
-    emptyMessage: 'Belum ada task yang dibuat.',
+    emptyTitle: 'Belum ada task terbaru',
+    emptyMessage: 'Task baru akan muncul di sini setelah dibuat atau setelah data restore berhasil masuk ke tabel task.',
+    emptyHint: 'Gunakan daftar task untuk memastikan filter periode atau hasil restore sudah sesuai.',
+    emptyActionLabel: 'Buka Daftar Task',
   },
   assigned: {
     title: 'Tugas Anda yang Belum Selesai',
     description: 'Daftar task yang di-assign ke Anda dan membutuhkan perhatian.',
-    emptyMessage: 'Hebat! Anda tidak memiliki task yang tertunda. 🎉',
+    emptyTitle: 'Tidak ada tugas tertunda',
+    emptyMessage: 'Anda belum memiliki task aktif yang perlu dikerjakan. Task yang baru di-assign akan muncul otomatis di kartu ini.',
+    emptyHint: 'Cek daftar task jika ingin melihat riwayat atau task yang sudah selesai.',
+    emptyActionLabel: 'Lihat Task',
   },
 } as const;
 
@@ -130,6 +136,10 @@ const priorityBadgeClasses: Record<TaskPriority, string> = {
  */
 const viewAllUrl = computed(() => {
   const ids = displayTasks.value.map((task) => task.id).join(',');
+  if (!ids) {
+    return tasksIndex.url();
+  }
+
   return tasksIndex({ query: { ids } }).url;
 });
 
@@ -241,11 +251,43 @@ const getPriorityClasses = (priority: TaskPriority): string => {
         <!-- Empty state -->
         <div
           v-if="displayTasks.length === 0"
-          class="flex h-full items-center justify-center"
+          class="flex h-full items-center justify-center px-4 py-8"
         >
-          <p class="text-sm text-muted-foreground text-center py-8">
-            {{ config.emptyMessage }}
-          </p>
+          <div class="flex max-w-[420px] flex-col items-center gap-3 text-center">
+            <div class="flex h-12 w-12 items-center justify-center rounded-xl border border-dashed border-primary/30 bg-primary/5 text-primary">
+              <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M16 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V8Z" />
+                <path d="M15 3v4a2 2 0 0 0 2 2h4" />
+                <path d="M8 13h8" />
+                <path d="M8 17h5" />
+              </svg>
+            </div>
+
+            <div class="space-y-1.5">
+              <h3 class="text-sm font-semibold text-foreground">
+                {{ config.emptyTitle }}
+              </h3>
+              <p class="text-sm leading-relaxed text-muted-foreground">
+                {{ config.emptyMessage }}
+              </p>
+              <p class="text-xs leading-relaxed text-muted-foreground/80">
+                {{ config.emptyHint }}
+              </p>
+            </div>
+
+            <ActionTooltip :label="config.emptyActionLabel" side="bottom">
+            <Link
+              :href="viewAllUrl"
+              class="inline-flex items-center gap-1.5 rounded-md border border-border bg-background px-3 py-1.5 text-xs font-semibold text-primary transition-colors hover:bg-primary/10 dark:border-slate-700 dark:bg-slate-950/30"
+            >
+              {{ config.emptyActionLabel }}
+              <svg class="h-3 w-3" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M5 12h14" />
+                <path d="m12 5 7 7-7 7" />
+              </svg>
+            </Link>
+            </ActionTooltip>
+          </div>
         </div>
 
         <!-- Task timeline list -->

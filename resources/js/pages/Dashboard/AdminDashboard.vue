@@ -137,7 +137,7 @@ defineOptions({
                 <TaskOverdueCard
                     :count="overdue_count"
                     :tasks="overdue_tasks"
-                    :view-all-link="overdue_tasks.length > 3 ? tasksIndex({ query: { status: 'overdue' } }).url : undefined"
+                    :view-all-link="tasksIndex({ query: { status: 'overdue' } }).url"
                 />
             </div>
 

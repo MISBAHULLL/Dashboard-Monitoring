@@ -97,19 +97,34 @@ const formatDate = (date?: string): string => {
 
         <div class="mx-5 border-t border-gray-100 dark:border-border/60" />
 
-        <!-- Big zero -->
-        <div class="flex flex-1 flex-col items-center justify-center gap-3 py-10">
+        <!-- Informative empty state -->
+        <div class="flex flex-1 flex-col items-center justify-center gap-1.5 px-5 py-3 text-center">
             <span
                 class="font-['Plus_Jakarta_Sans',sans-serif] font-bold leading-none text-[#f24040]"
-                style="font-size: 72px"
+                style="font-size: clamp(38px, 6vw, 50px)"
             >
                 0
             </span>
-            <p
-                class="font-['Plus_Jakarta_Sans',sans-serif] font-normal text-[15px] text-gray-500 dark:text-muted-foreground"
+            <div class="max-w-[300px]">
+                <h3 class="text-[16px] font-bold leading-tight text-[#093b70] dark:text-blue-200">
+                    Tidak ada task overdue
+                </h3>
+                <p
+                    class="mt-0.5 text-[12px] leading-tight text-gray-500 dark:text-muted-foreground"
+                >
+                    Semua task aktif masih aman.
+                </p>
+            </div>
+
+            <ActionTooltip v-if="viewAllLink" label="Buka daftar task overdue" side="bottom">
+            <Link
+                :href="viewAllLink"
+                class="mt-0.5 inline-flex items-center gap-1.5 rounded-lg border-[1.5px] border-black bg-white px-3 py-1 text-[12px] font-semibold text-[#111] transition-all duration-200 hover:bg-[#111] hover:text-white dark:border-slate-500 dark:bg-slate-900/40 dark:text-slate-100 dark:hover:bg-slate-100 dark:hover:text-[#111]"
             >
-                Tidak ada task overdue.
-            </p>
+                Cek Task Overdue
+                <ArrowRight :size="13" :stroke-width="2.5" />
+            </Link>
+            </ActionTooltip>
         </div>
     </article>
 

@@ -133,7 +133,7 @@ const columns: Array<{
     {
         id: 'completed',
         title: 'Completed',
-        subtitle: `${props.meta.completed_shown} dari ${props.meta.completed_count} ditampilkan`,
+        subtitle: `${props.meta.completed_count} task selesai`,
         icon: Trophy,
         panelClass: 'border-[2px] border-[#2BAE6E]/30 bg-emerald-50/80 dark:border-emerald-300/35 dark:bg-emerald-400/10',
         headerClass: 'bg-[#E4F7ED] text-[#166534] dark:bg-emerald-400/12 dark:text-emerald-100',
@@ -347,7 +347,7 @@ const onDrop = (e: DragEvent, newStatus: TaskStatus) => {
 <template>
     <Head title="Kanban Board" />
 
-    <div class="flex h-full min-h-0 flex-1 flex-col gap-6 overflow-hidden bg-tm-page px-4 py-5 dark:bg-[#081422] md:px-6 md:py-7 xl:px-7">
+    <div class="flex h-full min-h-0 flex-1 flex-col gap-4 overflow-hidden bg-tm-page px-4 py-5 dark:bg-[#081422] md:px-6 md:py-6 xl:px-7">
         <!-- Sync Message Toast -->
         <div
             v-if="syncMessage"
@@ -399,47 +399,47 @@ const onDrop = (e: DragEvent, newStatus: TaskStatus) => {
         </div>
 
         <!-- Stat Cards — Neo-brutalist style -->
-        <div class="grid w-full shrink-0 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <div class="grid w-full shrink-0 gap-3 sm:grid-cols-2 xl:grid-cols-4">
             <!-- Task Aktif -->
-            <div class="relative overflow-hidden rounded-[16px] border-[2px] border-black bg-white p-5 shadow-[3px_4px_0px_0px_rgba(27,58,107,0.12)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[4px_5px_0px_0px_rgba(27,58,107,0.16)] dark:border-slate-700/80 dark:bg-[#111c2e] dark:shadow-[0_14px_32px_rgba(0,0,0,0.42),0_0_0_1px_rgba(148,163,184,0.08)]">
-                <div class="mb-3 h-[3px] w-10 rounded-full bg-[#1B3A6B]"></div>
+            <div class="relative overflow-hidden rounded-[14px] border-[2px] border-black bg-white p-4 shadow-[3px_4px_0px_0px_rgba(27,58,107,0.12)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[4px_5px_0px_0px_rgba(27,58,107,0.16)] dark:border-slate-700/80 dark:bg-[#111c2e] dark:shadow-[0_14px_32px_rgba(0,0,0,0.42),0_0_0_1px_rgba(148,163,184,0.08)]">
+                <div class="mb-2 h-[3px] w-10 rounded-full bg-[#1B3A6B]"></div>
                 <p class="text-[11px] font-bold uppercase tracking-[0.16em] text-[#5C6B7A] dark:text-slate-400">Task Aktif</p>
-                <p class="mt-1.5 text-3xl font-extrabold text-[#1B3A6B] dark:text-white">{{ meta.active_count }}</p>
+                <p class="mt-1 text-2xl font-extrabold text-[#1B3A6B] dark:text-white">{{ meta.active_count }}</p>
                 <p class="mt-1 text-xs text-[#5C6B7A] dark:text-slate-500">Open, in progress, dan revision.</p>
             </div>
             <!-- Completed Window -->
-            <div class="relative overflow-hidden rounded-[16px] border-[2px] border-black bg-white p-5 shadow-[3px_4px_0px_0px_rgba(43,174,110,0.15)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[4px_5px_0px_0px_rgba(43,174,110,0.2)] dark:border-slate-700/80 dark:bg-[#111c2e] dark:shadow-[0_14px_32px_rgba(0,0,0,0.42),0_0_0_1px_rgba(52,211,153,0.12)]">
-                <div class="mb-3 h-[3px] w-10 rounded-full bg-[#2BAE6E]"></div>
+            <div class="relative overflow-hidden rounded-[14px] border-[2px] border-black bg-white p-4 shadow-[3px_4px_0px_0px_rgba(43,174,110,0.15)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[4px_5px_0px_0px_rgba(43,174,110,0.2)] dark:border-slate-700/80 dark:bg-[#111c2e] dark:shadow-[0_14px_32px_rgba(0,0,0,0.42),0_0_0_1px_rgba(52,211,153,0.12)]">
+                <div class="mb-2 h-[3px] w-10 rounded-full bg-[#2BAE6E]"></div>
                 <p class="text-[11px] font-bold uppercase tracking-[0.16em] text-[#2BAE6E]">Completed</p>
-                <p class="mt-1.5 text-3xl font-extrabold text-[#1B3A6B] dark:text-white">{{ meta.completed_count }}</p>
+                <p class="mt-1 text-2xl font-extrabold text-[#1B3A6B] dark:text-white">{{ meta.completed_count }}</p>
                 <p class="mt-1 text-xs text-[#5C6B7A] dark:text-slate-500">{{ meta.completed_shown }} terbaru ditampilkan di board.</p>
             </div>
             <!-- Total Ditampilkan -->
-            <div class="relative overflow-hidden rounded-[16px] border-[2px] border-black bg-white p-5 shadow-[3px_4px_0px_0px_rgba(3,105,161,0.12)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[4px_5px_0px_0px_rgba(3,105,161,0.16)] dark:border-slate-700/80 dark:bg-[#111c2e] dark:shadow-[0_14px_32px_rgba(0,0,0,0.42),0_0_0_1px_rgba(56,189,248,0.12)]">
-                <div class="mb-3 h-[3px] w-10 rounded-full bg-[#0369A1]"></div>
+            <div class="relative overflow-hidden rounded-[14px] border-[2px] border-black bg-white p-4 shadow-[3px_4px_0px_0px_rgba(3,105,161,0.12)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[4px_5px_0px_0px_rgba(3,105,161,0.16)] dark:border-slate-700/80 dark:bg-[#111c2e] dark:shadow-[0_14px_32px_rgba(0,0,0,0.42),0_0_0_1px_rgba(56,189,248,0.12)]">
+                <div class="mb-2 h-[3px] w-10 rounded-full bg-[#0369A1]"></div>
                 <p class="text-[11px] font-bold uppercase tracking-[0.16em] text-[#0369A1]">Total Task</p>
-                <p class="mt-1.5 text-3xl font-extrabold text-[#1B3A6B] dark:text-white">{{ meta.total_count }}</p>
+                <p class="mt-1 text-2xl font-extrabold text-[#1B3A6B] dark:text-white">{{ meta.total_count }}</p>
                 <p class="mt-1 text-xs text-[#5C6B7A] dark:text-slate-500">Semua task aktif + completed.</p>
             </div>
             <!-- Mode Interaksi -->
-            <div class="relative overflow-hidden rounded-[16px] border-[2px] border-black bg-white p-5 shadow-[3px_4px_0px_0px_rgba(217,119,6,0.12)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[4px_5px_0px_0px_rgba(217,119,6,0.16)] dark:border-slate-700/80 dark:bg-[#111c2e] dark:shadow-[0_14px_32px_rgba(0,0,0,0.42),0_0_0_1px_rgba(251,191,36,0.12)]">
-                <div class="mb-3 h-[3px] w-10 rounded-full bg-[#D97706]"></div>
+            <div class="relative overflow-hidden rounded-[14px] border-[2px] border-black bg-white p-4 shadow-[3px_4px_0px_0px_rgba(217,119,6,0.12)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[4px_5px_0px_0px_rgba(217,119,6,0.16)] dark:border-slate-700/80 dark:bg-[#111c2e] dark:shadow-[0_14px_32px_rgba(0,0,0,0.42),0_0_0_1px_rgba(251,191,36,0.12)]">
+                <div class="mb-2 h-[3px] w-10 rounded-full bg-[#D97706]"></div>
                 <p class="text-[11px] font-bold uppercase tracking-[0.16em] text-[#D97706]">Mode Interaksi</p>
-                <p class="mt-1.5 text-lg font-extrabold text-[#1B3A6B] dark:text-white">Drag + Quick Actions</p>
+                <p class="mt-1 text-base font-extrabold text-[#1B3A6B] dark:text-white">Drag + Quick Actions</p>
                 <p class="mt-1 text-xs text-[#5C6B7A] dark:text-slate-500">Lebih stabil di desktop, tetap usable di mobile.</p>
             </div>
         </div>
 
         <!-- Board Search -->
-        <div class="shrink-0 rounded-[16px] border-[2px] border-black bg-white p-3 shadow-[2px_4px_4px_0_rgba(11,42,107,0.12)] dark:border-slate-700/80 dark:bg-[#111c2e] dark:shadow-[0_14px_32px_rgba(0,0,0,0.42),0_0_0_1px_rgba(148,163,184,0.08)]">
-            <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+        <div class="shrink-0 rounded-[14px] border-[2px] border-black bg-white p-2.5 shadow-[2px_4px_4px_0_rgba(11,42,107,0.12)] dark:border-slate-700/80 dark:bg-[#111c2e] dark:shadow-[0_14px_32px_rgba(0,0,0,0.42),0_0_0_1px_rgba(148,163,184,0.08)]">
+            <div class="flex flex-col gap-2.5 lg:flex-row lg:items-center lg:justify-between">
                 <div class="relative min-w-0 flex-1">
                     <Search class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#5C6B7A] dark:text-slate-400" />
                     <Input
                         v-model="searchQuery"
                         type="search"
                         placeholder="Cari task, client, product, kategori, status..."
-                        class="h-10 rounded-xl border-[1.5px] border-black/70 bg-[#F8FAFC] pl-9 pr-10 text-sm font-medium text-[#1B3A6B] shadow-[1.5px_2px_0_0_rgba(0,0,0,0.07)] placeholder:text-[#9AAAB8] focus-visible:border-[#0369A1] focus-visible:ring-[#0369A1]/20 dark:border-slate-600 dark:bg-slate-950/25 dark:text-slate-100 dark:placeholder:text-slate-500"
+                        class="h-9 rounded-xl border-[1.5px] border-black/70 bg-[#F8FAFC] pl-9 pr-10 text-sm font-medium text-[#1B3A6B] shadow-[1.5px_2px_0_0_rgba(0,0,0,0.07)] placeholder:text-[#9AAAB8] focus-visible:border-[#0369A1] focus-visible:ring-[#0369A1]/20 dark:border-slate-600 dark:bg-slate-950/25 dark:text-slate-100 dark:placeholder:text-slate-500"
                     />
                     <ActionTooltip v-if="hasSearchQuery" label="Bersihkan pencarian">
                         <button
@@ -451,7 +451,7 @@ const onDrop = (e: DragEvent, newStatus: TaskStatus) => {
                         </button>
                     </ActionTooltip>
                 </div>
-                <div class="flex shrink-0 items-center justify-between gap-3 rounded-xl border border-[#DDE3EC] bg-[#F0F3F7] px-3 py-2 text-xs font-bold text-[#1B3A6B] dark:border-slate-700 dark:bg-slate-900/55 dark:text-slate-200 lg:min-w-[12rem]">
+                <div class="flex shrink-0 items-center justify-between gap-3 rounded-xl border border-[#DDE3EC] bg-[#F0F3F7] px-3 py-1.5 text-xs font-bold text-[#1B3A6B] dark:border-slate-700 dark:bg-slate-900/55 dark:text-slate-200 lg:min-w-[12rem]">
                     <span>{{ hasSearchQuery ? 'Hasil pencarian' : 'Task board' }}</span>
                     <span class="rounded-full bg-white px-2 py-0.5 shadow-sm dark:bg-slate-950/60">
                         {{ matchedTaskCount }} / {{ boardTasks.length }}

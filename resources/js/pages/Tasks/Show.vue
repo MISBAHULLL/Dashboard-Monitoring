@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed, nextTick, onMounted, ref, watch } from 'vue';
 import { Head, Link, router, useForm, usePage } from '@inertiajs/vue3';
 import {
     ArrowLeft,
@@ -110,6 +110,7 @@ const commentForm = useForm({
     reply_to_id: null as number | null,
 });
 const replyTarget = ref<TaskCommentItem | null>(null);
+const commentsScrollRef = ref<HTMLElement | null>(null);
 
 const reviewForm = useForm({
     task_url: props.task.task_url && props.task.task_url !== '-' ? props.task.task_url : '',
@@ -215,15 +216,29 @@ const cancelReply = () => {
 
 const orderedComments = computed(() =>
     [...props.task.comments].sort((left, right) => {
-        if (left.is_pinned !== right.is_pinned) {
-            return Number(right.is_pinned) - Number(left.is_pinned);
-        }
-
         return (
-            new Date(right.created_at ?? '').getTime() -
-            new Date(left.created_at ?? '').getTime()
+            new Date(left.created_at ?? '').getTime() -
+            new Date(right.created_at ?? '').getTime()
         );
     }),
+);
+
+const scrollCommentsToBottom = () => {
+    nextTick(() => {
+        const scroller = commentsScrollRef.value;
+        if (!scroller) return;
+
+        requestAnimationFrame(() => {
+            scroller.scrollTop = scroller.scrollHeight;
+        });
+    });
+};
+
+onMounted(scrollCommentsToBottom);
+
+watch(
+    () => props.task.comments.length,
+    () => scrollCommentsToBottom(),
 );
 
 // --- Review actions (admin: completed / revision) ---
@@ -648,7 +663,11 @@ const submitRevision = () => {
                         </p>
                     </div>
 
-                    <div v-else class="space-y-4">
+                    <div
+                        v-else
+                        ref="commentsScrollRef"
+                        class="max-h-[44rem] min-h-[24rem] space-y-4 overflow-y-auto pr-2 pb-4 scroll-smooth xl:max-h-[48rem]"
+                    >
                         <article
                             v-for="comment in orderedComments"
                             :key="comment.id"

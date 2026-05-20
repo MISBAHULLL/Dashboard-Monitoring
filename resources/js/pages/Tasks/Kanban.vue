@@ -12,9 +12,11 @@ import {
     LoaderCircle,
     MoreHorizontal,
     Plus,
+    Search,
     Zap,
     RotateCcw,
     Trophy,
+    X,
 } from 'lucide-vue-next';
 import { dashboard } from '@/routes';
 import {
@@ -28,6 +30,7 @@ import {
 // UI Components
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
 import ActionTooltip from '@/components/ActionTooltip.vue';
 import {
     DropdownMenu,
@@ -146,6 +149,7 @@ const draggedTaskId = ref<number | null>(null);
 const hoveredColumnId = ref<TaskStatus | null>(null);
 const processingTaskIds = ref<number[]>([]);
 const syncMessage = ref<{ type: 'error' | 'success'; text: string } | null>(null);
+const searchQuery = ref('');
 
 watch(
     () => props.tasks,
@@ -163,6 +167,14 @@ const statusLabelMap: Record<TaskStatus, string> = {
 };
 
 const statusActionOrder: TaskStatus[] = ['open', 'in_progress', 'revision', 'completed'];
+const normalizedSearchTokens = computed(() =>
+    searchQuery.value
+        .trim()
+        .toLowerCase()
+        .split(/\s+/)
+        .filter(Boolean),
+);
+const hasSearchQuery = computed(() => normalizedSearchTokens.value.length > 0);
 
 const isTaskProcessing = (taskId: number) => processingTaskIds.value.includes(taskId);
 
@@ -207,14 +219,47 @@ const compareTasks = (left: TaskItem, right: TaskItem) => {
     return left.id - right.id;
 };
 
+const taskSearchText = (task: TaskItem) =>
+    [
+        task.title,
+        task.category,
+        task.priority,
+        statusLabelMap[task.status],
+        task.sla_status,
+        task.client?.name,
+        task.product?.name,
+        task.assignee?.name,
+        task.release_date ? 'manual' : 'sla',
+        isOverdue(task) ? 'overdue telat' : '',
+        formatDate(taskDeadline(task)),
+    ]
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase();
+
+const filteredBoardTasks = computed(() => {
+    const tokens = normalizedSearchTokens.value;
+    if (tokens.length === 0) return boardTasks.value;
+
+    return boardTasks.value.filter((task) => {
+        const searchableText = taskSearchText(task);
+        return tokens.every((token) => searchableText.includes(token));
+    });
+});
+
 const groupedTasks = computed(() => {
     const groups: Record<TaskStatus, TaskItem[]> = { open: [], in_progress: [], revision: [], completed: [] };
-    boardTasks.value.forEach((task) => {
+    filteredBoardTasks.value.forEach((task) => {
         if (groups[task.status]) groups[task.status].push(task);
     });
     Object.values(groups).forEach((tasks) => tasks.sort(compareTasks));
     return groups;
 });
+
+const matchedTaskCount = computed(() => filteredBoardTasks.value.length);
+const clearSearch = () => {
+    searchQuery.value = '';
+};
 
 const updateTaskStatus = (taskId: number, newStatus: TaskStatus) => {
     const task = boardTasks.value.find((item) => item.id === taskId);
@@ -382,6 +427,36 @@ const onDrop = (e: DragEvent, newStatus: TaskStatus) => {
                 <p class="text-[11px] font-bold uppercase tracking-[0.16em] text-[#D97706]">Mode Interaksi</p>
                 <p class="mt-1.5 text-lg font-extrabold text-[#1B3A6B] dark:text-white">Drag + Quick Actions</p>
                 <p class="mt-1 text-xs text-[#5C6B7A] dark:text-slate-500">Lebih stabil di desktop, tetap usable di mobile.</p>
+            </div>
+        </div>
+
+        <!-- Board Search -->
+        <div class="shrink-0 rounded-[16px] border-[2px] border-black bg-white p-3 shadow-[2px_4px_4px_0_rgba(11,42,107,0.12)] dark:border-slate-700/80 dark:bg-[#111c2e] dark:shadow-[0_14px_32px_rgba(0,0,0,0.42),0_0_0_1px_rgba(148,163,184,0.08)]">
+            <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+                <div class="relative min-w-0 flex-1">
+                    <Search class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#5C6B7A] dark:text-slate-400" />
+                    <Input
+                        v-model="searchQuery"
+                        type="search"
+                        placeholder="Cari task, client, product, kategori, status..."
+                        class="h-10 rounded-xl border-[1.5px] border-black/70 bg-[#F8FAFC] pl-9 pr-10 text-sm font-medium text-[#1B3A6B] shadow-[1.5px_2px_0_0_rgba(0,0,0,0.07)] placeholder:text-[#9AAAB8] focus-visible:border-[#0369A1] focus-visible:ring-[#0369A1]/20 dark:border-slate-600 dark:bg-slate-950/25 dark:text-slate-100 dark:placeholder:text-slate-500"
+                    />
+                    <ActionTooltip v-if="hasSearchQuery" label="Bersihkan pencarian">
+                        <button
+                            type="button"
+                            class="absolute right-2 top-1/2 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-lg text-[#5C6B7A] transition hover:bg-[#E8EEF8] hover:text-[#1B3A6B] dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-100"
+                            @click="clearSearch"
+                        >
+                            <X class="h-3.5 w-3.5" />
+                        </button>
+                    </ActionTooltip>
+                </div>
+                <div class="flex shrink-0 items-center justify-between gap-3 rounded-xl border border-[#DDE3EC] bg-[#F0F3F7] px-3 py-2 text-xs font-bold text-[#1B3A6B] dark:border-slate-700 dark:bg-slate-900/55 dark:text-slate-200 lg:min-w-[12rem]">
+                    <span>{{ hasSearchQuery ? 'Hasil pencarian' : 'Task board' }}</span>
+                    <span class="rounded-full bg-white px-2 py-0.5 shadow-sm dark:bg-slate-950/60">
+                        {{ matchedTaskCount }} / {{ boardTasks.length }}
+                    </span>
+                </div>
             </div>
         </div>
 

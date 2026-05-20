@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import { router, usePage } from '@inertiajs/vue3';
 import {
     AlertTriangle,
@@ -49,6 +49,15 @@ type NotificationState = {
 
 const page = usePage();
 
+// Local optimistic overrides: track which IDs have been marked read client-side
+const localReadIds = ref<Set<number>>(new Set());
+// Track dismissed IDs so they disappear immediately from the list
+const localDismissedIds = ref<Set<number>>(new Set());
+// Track if all were marked read locally
+const localAllRead = ref(false);
+// Track if all were dismissed locally
+const localAllDismissed = ref(false);
+
 const notificationState = computed<NotificationState>(() => {
     return (
         (page.props.notifications as NotificationState | undefined) ?? {
@@ -58,11 +67,49 @@ const notificationState = computed<NotificationState>(() => {
     );
 });
 
-const unreadCount = computed(() => notificationState.value.unread_count);
-const items = computed(() => notificationState.value.items);
-const readItemsCount = computed(
-    () => items.value.filter((notification) => notification.is_read).length,
+// Visible items after applying local dismissals
+const items = computed(() =>
+    localAllDismissed.value
+        ? []
+        : notificationState.value.items.filter(
+              (n) => !localDismissedIds.value.has(n.id),
+          ),
 );
+
+// Effective is_read for each item (server value OR local optimistic)
+const isRead = (notification: NotificationItem): boolean =>
+    notification.is_read || localReadIds.value.has(notification.id) || localAllRead.value;
+
+// Unread count: start from server value, subtract local optimistic reads
+const unreadCount = computed(() => {
+    if (localAllRead.value || localAllDismissed.value) return 0;
+
+    const serverUnread = notificationState.value.unread_count;
+    // Count how many of the locally-read IDs were actually unread on the server
+    const locallyReadCount = notificationState.value.items.filter(
+        (n) => !n.is_read && localReadIds.value.has(n.id),
+    ).length;
+
+    return Math.max(0, serverUnread - locallyReadCount);
+});
+
+const readItemsCount = computed(
+    () => items.value.filter((n) => isRead(n)).length,
+);
+
+// Reset local state when server data refreshes (Inertia page visit)
+// We detect this by watching if the server items changed
+let lastServerItemsJson = '';
+const syncLocalState = () => {
+    const currentJson = JSON.stringify(notificationState.value.items.map((n) => n.id));
+    if (currentJson !== lastServerItemsJson) {
+        lastServerItemsJson = currentJson;
+        localReadIds.value = new Set();
+        localDismissedIds.value = new Set();
+        localAllRead.value = false;
+        localAllDismissed.value = false;
+    }
+};
 
 const formatTimestamp = (value: string | null) => {
     if (!value) {
@@ -146,33 +193,44 @@ const toneForType = (type: NotificationItem['type']) => {
 };
 
 const openNotification = (notification: NotificationItem) => {
-    const visitLink = () => {
-        if (notification.link) {
-            router.get(notification.link, {}, { preserveScroll: true });
-        }
-    };
+    syncLocalState();
 
-    if (notification.is_read) {
-        visitLink();
-        return;
+    // Optimistically mark as read immediately so badge decrements right away
+    if (!isRead(notification)) {
+        localReadIds.value = new Set([...localReadIds.value, notification.id]);
     }
 
-    router.patch(
-        markNotificationAsRead.url(notification.id),
-        {},
-        {
-            preserveState: true,
-            preserveScroll: true,
-            only: ['notifications'],
-            onSuccess: visitLink,
-        },
-    );
+    if (notification.link) {
+        // Fire-and-forget the mark-as-read patch, then navigate
+        if (!notification.is_read) {
+            router.patch(markNotificationAsRead.url(notification.id), {}, {
+                preserveState: true,
+                preserveScroll: true,
+                only: ['notifications'],
+            });
+        }
+        router.get(notification.link, {}, { preserveScroll: false });
+    } else if (!notification.is_read) {
+        router.patch(
+            markNotificationAsRead.url(notification.id),
+            {},
+            {
+                preserveState: true,
+                preserveScroll: true,
+                only: ['notifications'],
+                onSuccess: () => syncLocalState(),
+            },
+        );
+    }
 };
 
 const markAllAsRead = () => {
     if (unreadCount.value === 0) {
         return;
     }
+
+    // Optimistic: mark all as read immediately
+    localAllRead.value = true;
 
     router.patch(
         markAllNotificationsAsRead.url(),
@@ -181,6 +239,7 @@ const markAllAsRead = () => {
             preserveState: true,
             preserveScroll: true,
             only: ['notifications'],
+            onSuccess: () => syncLocalState(),
         },
     );
 };
@@ -190,6 +249,10 @@ const dismissRead = () => {
         return;
     }
 
+    // Optimistic: hide all currently-read items immediately
+    const readIds = items.value.filter((n) => isRead(n)).map((n) => n.id);
+    localDismissedIds.value = new Set([...localDismissedIds.value, ...readIds]);
+
     router.patch(
         dismissReadNotifications.url(),
         {},
@@ -197,6 +260,7 @@ const dismissRead = () => {
             preserveState: true,
             preserveScroll: true,
             only: ['notifications'],
+            onSuccess: () => syncLocalState(),
         },
     );
 };
@@ -206,6 +270,9 @@ const dismissAll = () => {
         return;
     }
 
+    // Optimistic: hide everything immediately
+    localAllDismissed.value = true;
+
     router.patch(
         dismissAllNotifications.url(),
         {},
@@ -213,6 +280,7 @@ const dismissAll = () => {
             preserveState: true,
             preserveScroll: true,
             only: ['notifications'],
+            onSuccess: () => syncLocalState(),
         },
     );
 };
@@ -303,7 +371,7 @@ const dismissAll = () => {
                     :key="notification.id"
                     class="mx-2 mb-1 flex cursor-pointer items-start gap-3 rounded-lg px-3 py-3 transition-colors"
                     :class="
-                        notification.is_read
+                        isRead(notification)
                             ? 'opacity-70'
                             : toneForType(notification.type).item
                     "
@@ -327,7 +395,7 @@ const dismissAll = () => {
                                 {{ notification.title }}
                             </p>
                             <span
-                                v-if="!notification.is_read"
+                                v-if="!isRead(notification)"
                                 class="mt-1 h-2 w-2 shrink-0 rounded-full"
                                 :class="toneForType(notification.type).dot"
                             />

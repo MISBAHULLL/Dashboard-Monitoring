@@ -129,25 +129,48 @@ class NotificationService
 
     /**
      * Notify the task assignee when a new comment is added (unless they are the commenter).
+     * If the commenter is a member, also notify all admins.
      */
     public function notifyNewComment(Task $task, User $commenter): void
     {
-        if (! $task->assigned_to || $task->assigned_to === $commenter->id) {
-            return;
+        // Notify the assignee (member) if they're not the one commenting
+        if ($task->assigned_to && $task->assigned_to !== $commenter->id) {
+            Notification::create([
+                'user_id' => $task->assigned_to,
+                'type' => 'new_comment',
+                'title' => 'Komentar baru pada task Anda',
+                'body' => sprintf(
+                    '%s menambahkan komentar pada task "%s".',
+                    $commenter->name,
+                    $task->title
+                ),
+                'link' => route('tasks.show', $task),
+                'is_read' => false,
+            ]);
         }
 
-        Notification::create([
-            'user_id' => $task->assigned_to,
-            'type' => 'new_comment',
-            'title' => 'Komentar baru pada task Anda',
-            'body' => sprintf(
-                '%s menambahkan komentar pada task "%s".',
-                $commenter->name,
-                $task->title
-            ),
-            'link' => route('tasks.show', $task),
-            'is_read' => false,
-        ]);
+        // If the commenter is a member, notify all admins
+        if ($commenter->isMember()) {
+            $admins = User::where('role', 'admin')
+                ->where('is_active', true)
+                ->where('id', '!=', $commenter->id)
+                ->pluck('id');
+
+            foreach ($admins as $adminId) {
+                Notification::create([
+                    'user_id' => $adminId,
+                    'type' => 'new_comment',
+                    'title' => 'Komentar baru dari member',
+                    'body' => sprintf(
+                        '%s menambahkan komentar pada task "%s".',
+                        $commenter->name,
+                        $task->title
+                    ),
+                    'link' => route('tasks.show', $task),
+                    'is_read' => false,
+                ]);
+            }
+        }
     }
 
     /**

@@ -1,14 +1,16 @@
 <script setup lang="ts">
-import { computed } from 'vue';
-import { Head, Link, useForm } from '@inertiajs/vue3';
+import { computed, ref } from 'vue';
+import { Head, Link, router, useForm } from '@inertiajs/vue3';
 import {
     ArrowLeft,
     CalendarDays,
+    CheckCircle2,
     ClipboardList,
     Info,
     MessageSquareMore,
     Pin,
     PinOff,
+    RotateCcw,
     SendHorizonal,
     Trash2,
     UserRound,
@@ -16,13 +18,22 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
 import {
     destroy as destroyTaskComment,
     store as storeTaskComment,
     pin as pinTaskComment,
 } from '@/routes/tasks/comments';
-import { edit as editTask, index as tasksIndex, submitReview as submitTaskReview } from '@/routes/tasks';
+import { edit as editTask, index as tasksIndex, submitReview as submitTaskReview, updateStatus } from '@/routes/tasks';
 
 type TaskCommentItem = {
     id: number;
@@ -66,6 +77,7 @@ const props = defineProps<{
         can_edit: boolean;
         can_comment: boolean;
         can_submit_review: boolean;
+        can_review: boolean;
     };
 }>();
 
@@ -172,6 +184,45 @@ const orderedComments = computed(() =>
         );
     }),
 );
+
+// --- Review actions (admin: completed / revision) ---
+const revisionDialogOpen = ref(false);
+const revisionForm = useForm({ review_note: '' });
+
+const isReviewPending = computed(() => Boolean(props.task.review_requested_at));
+
+const openRevisionDialog = () => {
+    revisionForm.reset();
+    revisionForm.clearErrors();
+    revisionDialogOpen.value = true;
+};
+
+const closeRevisionDialog = () => {
+    revisionDialogOpen.value = false;
+    revisionForm.reset();
+    revisionForm.clearErrors();
+};
+
+const markCompleted = () => {
+    router.patch(
+        updateStatus.url(props.task.id),
+        { status: 'completed' },
+        { preserveScroll: true },
+    );
+};
+
+const submitRevision = () => {
+    revisionForm
+        .transform((data) => ({
+            status: 'revision',
+            review_note: data.review_note,
+        }))
+        .patch(updateStatus.url(props.task.id), {
+            preserveScroll: true,
+            onSuccess: closeRevisionDialog,
+            onFinish: () => revisionForm.transform((data) => data),
+        });
+};
 </script>
 
 <template>
@@ -326,6 +377,104 @@ const orderedComments = computed(() =>
                 </div>
             </form>
         </section>
+
+        <!-- Admin: Review Decision Section -->
+        <section
+            v-if="permissions.can_review && isReviewPending"
+            class="rounded-[18px] border-2 border-emerald-500 bg-white p-5 shadow-[3px_5px_0_0_rgba(0,0,0,0.14)] dark:border-emerald-500/60 dark:bg-[#111c2e] dark:shadow-[0_18px_44px_rgba(0,0,0,0.42)]"
+        >
+            <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                    <div class="flex flex-wrap items-center gap-2">
+                        <h2 class="text-lg font-extrabold text-tm-navy dark:text-slate-100">
+                            Review Pengajuan
+                        </h2>
+                        <Badge class="rounded-full bg-sky-100 text-sky-700 dark:bg-sky-400/10 dark:text-sky-200">
+                            Menunggu keputusan admin
+                        </Badge>
+                    </div>
+                    <p class="mt-1 text-sm leading-6 text-tm-text-secondary dark:text-slate-400">
+                        Member telah mengajukan task ini untuk direview. Tandai sebagai selesai atau minta revisi jika ada yang perlu diperbaiki.
+                    </p>
+                </div>
+
+                <div class="flex shrink-0 items-center gap-3">
+                    <Button
+                        type="button"
+                        class="h-10 rounded-xl border-[1.5px] border-black bg-amber-400 px-5 text-sm font-bold text-white shadow-[2px_2px_0_0_rgba(0,0,0,0.18)] transition-all hover:-translate-y-0.5 hover:bg-amber-500 dark:border-amber-300/40"
+                        @click="openRevisionDialog"
+                    >
+                        <RotateCcw class="mr-2 h-4 w-4" />
+                        Minta Revisi
+                    </Button>
+                    <Button
+                        type="button"
+                        class="h-10 rounded-xl border-[1.5px] border-black bg-tm-green px-5 text-sm font-bold text-white shadow-[2px_2px_0_0_rgba(0,0,0,0.18)] transition-all hover:-translate-y-0.5 hover:bg-tm-green-dark dark:border-emerald-300/40"
+                        @click="markCompleted"
+                    >
+                        <CheckCircle2 class="mr-2 h-4 w-4" />
+                        Tandai Selesai
+                    </Button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Dialog Revisi -->
+        <Dialog :open="revisionDialogOpen" @update:open="(v) => { if (!v) closeRevisionDialog(); }">
+            <DialogContent class="overflow-hidden rounded-[18px] border-2 border-black bg-white p-0 shadow-[4px_6px_0_0_rgba(0,0,0,0.22)] sm:max-w-[520px] dark:border-slate-700 dark:bg-[#111c2e] dark:shadow-[0_24px_60px_rgba(0,0,0,0.55)]">
+                <form @submit.prevent="submitRevision">
+                    <DialogHeader class="border-b border-slate-100 px-5 py-4 text-left dark:border-slate-700/80">
+                        <DialogTitle class="text-base font-extrabold text-tm-navy dark:text-slate-100">
+                            Minta Revisi Task
+                        </DialogTitle>
+                        <DialogDescription class="mt-1.5 text-sm leading-6 text-slate-600 dark:text-slate-400">
+                            Tulis alasan revisi agar member tahu bagian mana yang perlu diperbaiki.
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    <div class="space-y-3 px-5 py-4">
+                        <div class="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-semibold text-tm-navy dark:border-slate-700 dark:bg-slate-950/35 dark:text-slate-100">
+                            {{ task.title }}
+                        </div>
+
+                        <div class="space-y-1.5">
+                            <Label for="revision-note-show" class="text-xs font-bold uppercase tracking-wide text-tm-navy dark:text-slate-200">
+                                Alasan revisi
+                            </Label>
+                            <Textarea
+                                id="revision-note-show"
+                                v-model="revisionForm.review_note"
+                                rows="5"
+                                placeholder="Contoh: URL sudah bisa dibuka, tetapi data faskes belum sesuai dengan requirement..."
+                                class="resize-none rounded-xl border-[1.5px] border-black/70 text-sm shadow-[1px_2px_0_0_rgba(0,0,0,0.06)] focus:border-tm-navy focus:ring-1 focus:ring-tm-navy dark:border-slate-600 dark:bg-slate-950/35 dark:text-slate-100"
+                                :class="{ '!border-tm-danger': revisionForm.errors.review_note }"
+                            />
+                            <p v-if="revisionForm.errors.review_note" class="text-xs font-semibold text-tm-danger">
+                                {{ revisionForm.errors.review_note }}
+                            </p>
+                        </div>
+                    </div>
+
+                    <DialogFooter class="flex gap-2.5 bg-slate-50/80 px-5 py-4 dark:bg-slate-950/25 sm:justify-end">
+                        <Button
+                            type="button"
+                            variant="outline"
+                            class="h-10 rounded-xl border-[1.5px] border-black px-5 shadow-[1px_2px_0_0_rgba(0,0,0,0.08)] dark:border-slate-600 dark:bg-slate-950/25 dark:text-slate-100"
+                            @click="closeRevisionDialog"
+                        >
+                            Batal
+                        </Button>
+                        <Button
+                            type="submit"
+                            :disabled="revisionForm.processing"
+                            class="h-10 rounded-xl border-[1.5px] border-black bg-tm-warning px-5 font-bold text-white shadow-[2px_2px_0_0_rgba(0,0,0,0.18)] hover:bg-amber-500 disabled:opacity-60"
+                        >
+                            {{ revisionForm.processing ? 'Mengirim...' : 'Kirim Revisi' }}
+                        </Button>
+                    </DialogFooter>
+                </form>
+            </DialogContent>
+        </Dialog>
 
         <div
             class="grid gap-5 xl:grid-cols-[minmax(0,1.35fr)_minmax(22rem,0.9fr)]"

@@ -251,6 +251,7 @@ class TaskController extends Controller
                 'can_edit' => $user->can('update', $task),
                 'can_comment' => $user->can('create', TaskComment::class),
                 'can_submit_review' => $user->can('submitForReview', $task),
+                'can_review' => $user->can('updateStatus', $task) && $user->isAdmin(),
             ],
         ]);
     }

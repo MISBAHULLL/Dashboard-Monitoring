@@ -88,13 +88,13 @@ const mainNavItems = computed<NavItemLucide[]>(() => {
     return items;
 });
 
-const footerNavItems: NavItemLucide[] = [
+const footerNavItems = computed<NavItemLucide[]>(() => [
     {
-        title: 'Pengaturan Sistem',
+        title: user.value?.role === 'member' ? 'Pengaturan Profil' : 'Pengaturan Sistem',
         href: profileEdit(),
         icon: Settings,
     },
-];
+]);
 </script>
 
 <template>

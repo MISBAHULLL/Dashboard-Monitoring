@@ -49,6 +49,7 @@ Route::middleware(['auth'])->group(function () {
     Route::patch('/tasks/{task}/restore', [TaskController::class, 'restore'])->name('tasks.restore');
     Route::delete('/tasks/{task}/force', [TaskController::class, 'forceDestroy'])->name('tasks.forceDestroy');
     Route::patch('/tasks/{task}/status', [TaskController::class, 'updateStatus'])->name('tasks.updateStatus');
+    Route::post('/tasks/{task}/submit-review', [TaskController::class, 'submitForReview'])->name('tasks.submitReview');
     Route::post('/tasks/{task}/comments', [TaskCommentController::class, 'store'])->name('tasks.comments.store');
     Route::delete('/tasks/{task}/comments/{comment}', [TaskCommentController::class, 'destroy'])->name('tasks.comments.destroy');
     Route::patch('/tasks/{task}/comments/{comment}/pin', [TaskCommentController::class, 'togglePin'])->name('tasks.comments.pin');

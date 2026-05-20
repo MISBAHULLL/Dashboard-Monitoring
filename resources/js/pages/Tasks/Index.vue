@@ -169,8 +169,12 @@ watch(() => props.tasks.data, () => {
     selectedTasks.value = [];
 });
 
+const hasReviewEvidence = (task: any) => {
+    return Boolean(task.task_url && task.task_url !== '-') || Boolean(task.documents && task.documents.length > 0);
+};
+
 const toggleCekStatus = (task: any, newStatus: string) => {
-    if ((!task.task_url || task.task_url === '-') && (newStatus === 'completed' || newStatus === 'revision')) {
+    if (!hasReviewEvidence(task) && (newStatus === 'completed' || newStatus === 'revision')) {
         return;
     }
 
@@ -698,13 +702,13 @@ const submitImport = () => {
 
                             <!-- 9. CEK (TOGGLE BUTTONS MODERN) -->
                             <td class="py-2 px-3">
-                                <div v-if="!task.can_update_status"
+                                <div v-if="!task.can_review"
                                      class="mx-auto flex h-6 w-full max-w-[120px] cursor-not-allowed items-center justify-center rounded-md border border-slate-200 bg-slate-100/80 text-[9px] font-bold text-slate-400 opacity-70 dark:border-slate-700 dark:bg-slate-900/60 dark:text-slate-500">
-                                    NO AKSES
+                                    {{ task.review_requested_at ? 'MENUNGGU REVIEW' : 'KHUSUS ADMIN' }}
                                 </div>
-                                <div v-else-if="!task.task_url || task.task_url === '-'" 
+                                <div v-else-if="!hasReviewEvidence(task)" 
                                      class="mx-auto flex h-6 w-full max-w-[120px] cursor-not-allowed items-center justify-center rounded-md border border-slate-200 bg-slate-100/80 text-[9px] font-bold text-slate-400 opacity-70 dark:border-slate-700 dark:bg-slate-900/60 dark:text-slate-500">
-                                    <Lock class="h-3 w-3 mr-1" /> URL KOSONG
+                                    <Lock class="h-3 w-3 mr-1" /> BUKTI KOSONG
                                 </div>
                                 <div v-else class="mx-auto flex w-fit items-center justify-center rounded-lg border border-tm-border bg-slate-100/80 p-0.5 shadow-inner dark:border-slate-700 dark:bg-slate-950/35">
                                     <ActionTooltip label="Tandai task perlu revisi">
@@ -728,11 +732,16 @@ const submitImport = () => {
                             <td class="py-2 px-3 text-center">
                                 <span class="inline-flex items-center justify-center px-2.5 py-1 rounded-md text-[10px] font-bold tracking-wider shadow-sm"
                                     :class="{
-                                        'bg-white text-slate-500 border border-slate-200 dark:bg-slate-950/35 dark:text-slate-400 dark:border-slate-700': task.status === 'open' || task.status === 'in_progress',
+                                        'bg-white text-sky-700 border border-sky-200 dark:bg-sky-400/10 dark:text-sky-200 dark:border-sky-300/35': task.review_requested_at && task.status !== 'completed' && task.status !== 'revision',
+                                        'bg-white text-slate-500 border border-slate-200 dark:bg-slate-950/35 dark:text-slate-400 dark:border-slate-700': (task.status === 'open' || task.status === 'in_progress') && !task.review_requested_at,
                                         'bg-white text-tm-warning border border-tm-warning/30 dark:bg-amber-400/10 dark:text-amber-200 dark:border-amber-300/35': task.status === 'revision',
                                         'bg-white text-tm-green-dark border border-tm-green/30 dark:bg-emerald-400/10 dark:text-emerald-200 dark:border-emerald-300/35': task.status === 'completed'
                                     }">
-                                    <span v-if="task.status === 'open' || task.status === 'in_progress'" class="flex items-center gap-1.5">
+                                    <span v-if="task.review_requested_at && task.status !== 'completed' && task.status !== 'revision'" class="flex items-center gap-1.5">
+                                        <span class="relative flex h-1.5 w-1.5"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-sky-500 opacity-75"></span><span class="relative inline-flex rounded-full h-1.5 w-1.5 bg-sky-500"></span></span>
+                                        SIAP REVIEW
+                                    </span>
+                                    <span v-else-if="task.status === 'open' || task.status === 'in_progress'" class="flex items-center gap-1.5">
                                         <span class="relative flex h-1.5 w-1.5"><span class="relative inline-flex rounded-full h-1.5 w-1.5 bg-slate-400"></span></span>
                                         BELUM
                                     </span>

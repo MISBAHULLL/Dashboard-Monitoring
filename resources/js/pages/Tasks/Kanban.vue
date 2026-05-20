@@ -49,12 +49,14 @@ type TaskItem = {
     sla_due_date?: string | null;
     sla_warning_date?: string | null;
     completed_at?: string | null;
+    review_requested_at?: string | null;
     client?: { name?: string | null } | null;
     product?: { name?: string | null } | null;
     assignee?: { name?: string | null } | null;
     comments_count?: number;
     can_edit: boolean;
     can_update_status: boolean;
+    can_review: boolean;
     sla_status?: string;
 };
 
@@ -166,6 +168,8 @@ const statusLabelMap: Record<TaskStatus, string> = {
 };
 
 const statusActionOrder: TaskStatus[] = ['open', 'in_progress', 'revision', 'completed'];
+const statusOptionsForTask = (task: TaskItem) =>
+    task.can_review ? statusActionOrder : statusActionOrder.filter((status) => ['open', 'in_progress'].includes(status));
 const normalizedSearchTokens = computed(() =>
     searchQuery.value
         .trim()
@@ -176,6 +180,16 @@ const normalizedSearchTokens = computed(() =>
 const hasSearchQuery = computed(() => normalizedSearchTokens.value.length > 0);
 
 const isTaskProcessing = (taskId: number) => processingTaskIds.value.includes(taskId);
+
+const canMoveTaskToStatus = (task: TaskItem, status: TaskStatus) => {
+    if (!task.can_update_status) return false;
+    if (task.can_review) return true;
+
+    return status === 'open' || status === 'in_progress';
+};
+
+const canDragTask = (task: TaskItem) =>
+    task.can_update_status && statusOptionsForTask(task).some((status) => status !== task.status);
 
 const setTaskProcessing = (taskId: number, processing: boolean) => {
     if (processing) {
@@ -280,7 +294,7 @@ const setQuickFilter = (filter: QuickFilter) => {
 
 const updateTaskStatus = (taskId: number, newStatus: TaskStatus) => {
     const task = boardTasks.value.find((item) => item.id === taskId);
-    if (!task || !task.can_update_status || task.status === newStatus || isTaskProcessing(taskId)) return;
+    if (!task || !canMoveTaskToStatus(task, newStatus) || task.status === newStatus || isTaskProcessing(taskId)) return;
 
     const previousStatus = task.status;
     task.status = newStatus;
@@ -313,7 +327,7 @@ const updateTaskStatus = (taskId: number, newStatus: TaskStatus) => {
 
 const onDragStart = (e: DragEvent, taskId: number) => {
     const task = boardTasks.value.find((item) => item.id === taskId);
-    if (!task?.can_update_status || isTaskProcessing(taskId)) return;
+    if (!task || !canDragTask(task) || isTaskProcessing(taskId)) return;
     draggedTaskId.value = taskId;
     if (e.dataTransfer) {
         e.dataTransfer.effectAllowed = 'move';
@@ -560,10 +574,10 @@ const onDrop = (e: DragEvent, newStatus: TaskStatus) => {
                         <div
                             v-for="task in groupedTasks[column.id]"
                             :key="task.id"
-                            :draggable="task.can_update_status && !isTaskProcessing(task.id)"
+                            :draggable="canDragTask(task) && !isTaskProcessing(task.id)"
                             class="group rounded-[12px] border-[1.5px] border-[#DDE3EC] bg-white p-3 transition-all duration-200 dark:border-slate-700/80 dark:bg-slate-950/45 dark:shadow-[0_10px_22px_rgba(0,0,0,0.25)]"
                             :class="[
-                                task.can_update_status && !isTaskProcessing(task.id)
+                                canDragTask(task) && !isTaskProcessing(task.id)
                                     ? 'cursor-grab hover:-translate-y-1 hover:border-[#1B3A6B]/40 hover:shadow-[2px_4px_8px_0px_rgba(27,58,107,0.12)] active:cursor-grabbing active:scale-[0.98] dark:hover:border-sky-300/35 dark:hover:bg-slate-900/80 dark:hover:shadow-[0_14px_28px_rgba(0,0,0,0.34)]'
                                     : 'cursor-default',
                                 draggedTaskId === task.id ? 'scale-[0.96] opacity-50 shadow-none border-dashed' : '',
@@ -592,6 +606,12 @@ const onDrop = (e: DragEvent, newStatus: TaskStatus) => {
                                     >
                                         {{ task.sla_status === 'on_track' ? 'ON TRACK' : task.sla_status === 'overdue' ? 'OVERDUE' : task.sla_status === 'warning' ? 'WARNING' : task.sla_status === 'completed_on_time' ? 'ON TIME' : task.sla_status === 'completed_late' ? 'LATE' : 'UNKNOWN' }}
                                     </span>
+                                    <span
+                                        v-if="task.review_requested_at && task.status !== 'completed' && task.status !== 'revision'"
+                                        class="inline-flex items-center rounded-full border-[1.5px] border-sky-300 bg-sky-50 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-sky-700 dark:border-sky-300/35 dark:bg-sky-400/10 dark:text-sky-200"
+                                    >
+                                        Review
+                                    </span>
                                 </div>
                                 <div class="flex shrink-0 items-center gap-1">
                                     <LoaderCircle
@@ -613,7 +633,7 @@ const onDrop = (e: DragEvent, newStatus: TaskStatus) => {
                                         </DropdownMenuTrigger>
                                         <DropdownMenuContent align="end" class="w-48 rounded-xl border-[1.5px] border-[#DDE3EC] shadow-[3px_4px_12px_0px_rgba(27,58,107,0.12)] dark:border-slate-700 dark:bg-[#111c2e] dark:text-slate-100">
                                             <DropdownMenuItem
-                                                v-for="statusOption in statusActionOrder"
+                                                v-for="statusOption in statusOptionsForTask(task)"
                                                 :key="statusOption"
                                                 :disabled="!task.can_update_status || statusOption === task.status || isTaskProcessing(task.id)"
                                                 class="cursor-pointer rounded-lg text-[13px] font-medium"

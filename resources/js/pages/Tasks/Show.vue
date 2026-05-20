@@ -15,13 +15,14 @@ import {
 } from 'lucide-vue-next';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import {
     destroy as destroyTaskComment,
     store as storeTaskComment,
     pin as pinTaskComment,
 } from '@/routes/tasks/comments';
-import { edit as editTask, index as tasksIndex } from '@/routes/tasks';
+import { edit as editTask, index as tasksIndex, submitReview as submitTaskReview } from '@/routes/tasks';
 
 type TaskCommentItem = {
     id: number;
@@ -48,12 +49,15 @@ type TaskDetail = {
     sla_status: string | null;
     created_at: string | null;
     updated_at: string | null;
+    review_requested_at?: string | null;
+    review_requested_by?: number | null;
     client?: { name?: string | null } | null;
     product?: { name?: string | null } | null;
     engineer?: { name?: string | null } | null;
     assignee?: { name?: string | null } | null;
     creator?: { name?: string | null } | null;
     comments: TaskCommentItem[];
+    documents_count?: number;
 };
 
 const props = defineProps<{
@@ -61,6 +65,7 @@ const props = defineProps<{
     permissions: {
         can_edit: boolean;
         can_comment: boolean;
+        can_submit_review: boolean;
     };
 }>();
 
@@ -75,6 +80,11 @@ defineOptions({
 
 const commentForm = useForm({
     body: '',
+});
+
+const reviewForm = useForm({
+    task_url: props.task.task_url && props.task.task_url !== '-' ? props.task.task_url : '',
+    note: '',
 });
 
 const statusLabels: Record<TaskDetail['status'], string> = {
@@ -98,6 +108,13 @@ const submitComment = () => {
     });
 };
 
+const submitReview = () => {
+    reviewForm.post(submitTaskReview.url(props.task.id), {
+        preserveScroll: true,
+        onSuccess: () => reviewForm.reset(),
+    });
+};
+
 const formatDate = (value: string | null) => {
     if (!value) {
         return 'Belum dijadwalkan';
@@ -114,6 +131,11 @@ const formatDate = (value: string | null) => {
 
 const deadlineSource = computed(() =>
     props.task.release_date ? 'Manual release' : 'SLA kategori',
+);
+
+const hasReviewEvidence = computed(() =>
+    Boolean(props.task.task_url && props.task.task_url !== '-') ||
+    Number(props.task.documents_count ?? 0) > 0,
 );
 
 const deleteComment = (comment: TaskCommentItem) => {
@@ -227,6 +249,83 @@ const orderedComments = computed(() =>
                 </Link>
             </div>
         </div>
+
+        <section
+            v-if="permissions.can_submit_review"
+            class="rounded-[18px] border-2 border-black bg-white p-5 shadow-[3px_5px_0_0_rgba(0,0,0,0.14)] dark:border-slate-700 dark:bg-[#111c2e] dark:shadow-[0_18px_44px_rgba(0,0,0,0.42)]"
+        >
+            <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                <div class="max-w-2xl">
+                    <div class="flex flex-wrap items-center gap-2">
+                        <h2 class="text-lg font-extrabold text-tm-navy dark:text-slate-100">
+                            Ajukan Review ke Admin
+                        </h2>
+                        <Badge
+                            v-if="task.review_requested_at"
+                            class="rounded-full bg-sky-100 text-sky-700 dark:bg-sky-400/10 dark:text-sky-200"
+                        >
+                            Menunggu review
+                        </Badge>
+                    </div>
+                    <p class="mt-1 text-sm leading-6 text-tm-text-secondary dark:text-slate-400">
+                        Kirim task ke admin setelah pekerjaan selesai. Sertakan URL hasil kerja atau pastikan dokumen pendukung sudah terhubung.
+                    </p>
+                </div>
+
+                <div
+                    class="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-600 dark:border-slate-700 dark:bg-slate-950/30 dark:text-slate-300"
+                >
+                    Bukti saat ini:
+                    <span class="font-extrabold" :class="hasReviewEvidence ? 'text-tm-green dark:text-emerald-300' : 'text-tm-danger dark:text-red-300'">
+                        {{ hasReviewEvidence ? 'tersedia' : 'belum ada' }}
+                    </span>
+                </div>
+            </div>
+
+            <form class="mt-4 grid gap-3 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)_auto]" @submit.prevent="submitReview">
+                <div class="space-y-1">
+                    <label class="ml-1 text-[11px] font-bold uppercase tracking-wider text-tm-text-secondary dark:text-slate-400">
+                        URL Hasil Pengerjaan
+                    </label>
+                    <Input
+                        v-model="reviewForm.task_url"
+                        type="url"
+                        placeholder="https://..."
+                        class="h-10 rounded-xl border-[1.5px] border-black bg-white text-sm text-tm-navy shadow-[1px_2px_0_0_rgba(0,0,0,0.08)] dark:border-slate-600 dark:bg-slate-950/40 dark:text-slate-100"
+                        :class="{ 'border-red-500': reviewForm.errors.task_url }"
+                    />
+                    <p v-if="reviewForm.errors.task_url" class="text-xs font-semibold text-red-500">
+                        {{ reviewForm.errors.task_url }}
+                    </p>
+                </div>
+
+                <div class="space-y-1">
+                    <label class="ml-1 text-[11px] font-bold uppercase tracking-wider text-tm-text-secondary dark:text-slate-400">
+                        Catatan Pengerjaan
+                    </label>
+                    <Textarea
+                        v-model="reviewForm.note"
+                        rows="2"
+                        placeholder="Jelaskan singkat apa yang sudah dikerjakan atau bagian yang perlu dicek admin..."
+                        class="min-h-10 rounded-xl border-[1.5px] border-black bg-white text-sm text-tm-navy shadow-[1px_2px_0_0_rgba(0,0,0,0.08)] dark:border-slate-600 dark:bg-slate-950/40 dark:text-slate-100"
+                        :class="{ 'border-red-500': reviewForm.errors.note }"
+                    />
+                    <p v-if="reviewForm.errors.note" class="text-xs font-semibold text-red-500">
+                        {{ reviewForm.errors.note }}
+                    </p>
+                </div>
+
+                <div class="flex items-end">
+                    <Button
+                        type="submit"
+                        :disabled="reviewForm.processing || !reviewForm.note.trim()"
+                        class="h-10 w-full rounded-xl border-[1.5px] border-black bg-tm-green px-4 text-sm font-bold text-white shadow-[2px_2px_0_0_rgba(0,0,0,0.18)] transition-all hover:-translate-y-0.5 hover:bg-tm-green-dark disabled:translate-y-0 disabled:opacity-60 lg:w-auto"
+                    >
+                        {{ reviewForm.processing ? 'Mengirim...' : 'Ajukan Review' }}
+                    </Button>
+                </div>
+            </form>
+        </section>
 
         <div
             class="grid gap-5 xl:grid-cols-[minmax(0,1.35fr)_minmax(22rem,0.9fr)]"

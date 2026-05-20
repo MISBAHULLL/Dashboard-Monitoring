@@ -31,10 +31,13 @@ class Task extends Model
         'status',
         'release_date',
         'completed_at',
+        'review_requested_at',
+        'review_requested_by',
     ];
     protected $casts = [
         'release_date' => 'date',
         'completed_at' => 'datetime',
+        'review_requested_at' => 'datetime',
     ];
 
     /**
@@ -63,6 +66,10 @@ class Task extends Model
     public function assignee(): BelongsTo
     {
         return $this->belongsTo(User::class, 'assigned_to');
+    }
+    public function reviewRequester(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'review_requested_by');
     }
     // Many-to-many: 1 task bisa terhubung ke banyak dokumen
     public function documents(): BelongsToMany
@@ -185,6 +192,21 @@ class Task extends Model
         }
 
         return $this->created_at->copy()->addDays($sla['max_days'])->endOfDay();
+    }
+
+    public function hasReviewEvidence(): bool
+    {
+        $hasUrl = filled($this->task_url) && $this->task_url !== '-';
+
+        if ($hasUrl) {
+            return true;
+        }
+
+        if ($this->relationLoaded('documents')) {
+            return $this->documents->isNotEmpty();
+        }
+
+        return $this->documents()->exists();
     }
 
     protected function slaConfigForCategory(): ?array

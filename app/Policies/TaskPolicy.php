@@ -56,4 +56,11 @@ class TaskPolicy
     {
         return $user->isAdmin() || $task->assigned_to === $user->id;
     }
+
+    public function submitForReview(User $user, Task $task): bool
+    {
+        return $user->isMember()
+            && $task->assigned_to === $user->id
+            && $task->status !== 'completed';
+    }
 }

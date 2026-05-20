@@ -1,7 +1,9 @@
 <?php
 
 use App\Models\Client;
+use App\Models\Notification;
 use App\Models\Task;
+use App\Models\TaskComment;
 use App\Models\Team;
 use App\Models\User;
 
@@ -369,6 +371,61 @@ test('member can update status of own assigned task', function () {
         ->assertRedirect();
 
     expect($task->fresh()->status)->toBe('in_progress');
+});
+
+test('member cannot complete own assigned task directly', function () {
+    $member = User::factory()->member()->create();
+    $task = Task::factory()->assignedTo($member)->create(['status' => 'in_progress']);
+
+    $this->actingAs($member)
+        ->patch(route('tasks.updateStatus', $task), [
+            'status' => 'completed',
+        ])
+        ->assertForbidden();
+
+    expect($task->fresh()->status)->toBe('in_progress');
+});
+
+test('member can submit own task for admin review with evidence url', function () {
+    $admin = User::factory()->admin()->create();
+    $member = User::factory()->member()->create();
+    $task = Task::factory()->assignedTo($member)->create([
+        'status' => 'open',
+        'task_url' => '-',
+    ]);
+
+    $this->actingAs($member)
+        ->post(route('tasks.submitReview', $task), [
+            'task_url' => 'https://example.test/task-result',
+            'note' => 'Pekerjaan sudah selesai dan siap dicek.',
+        ])
+        ->assertRedirect();
+
+    $task->refresh();
+
+    expect($task->status)->toBe('in_progress');
+    expect($task->task_url)->toBe('https://example.test/task-result');
+    expect($task->review_requested_at)->not->toBeNull();
+    expect($task->review_requested_by)->toBe($member->id);
+
+    expect(TaskComment::where('task_id', $task->id)->where('user_id', $member->id)->exists())->toBeTrue();
+    expect(Notification::where('user_id', $admin->id)->where('type', 'task_review_requested')->exists())->toBeTrue();
+});
+
+test('member cannot submit task for review without url or document evidence', function () {
+    $member = User::factory()->member()->create();
+    $task = Task::factory()->assignedTo($member)->create([
+        'status' => 'in_progress',
+        'task_url' => '-',
+    ]);
+
+    $this->actingAs($member)
+        ->post(route('tasks.submitReview', $task), [
+            'note' => 'Pekerjaan sudah selesai dan siap dicek.',
+        ])
+        ->assertSessionHasErrors('task_url');
+
+    expect($task->fresh()->review_requested_at)->toBeNull();
 });
 
 test('member cannot update status of unassigned task', function () {

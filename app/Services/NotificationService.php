@@ -103,6 +103,30 @@ class NotificationService
         }
     }
 
+    public function notifyTaskSubmittedForReview(Task $task, User $submitter): void
+    {
+        $admins = User::query()
+            ->where('role', 'admin')
+            ->where('is_active', true)
+            ->where('id', '!=', $submitter->id)
+            ->pluck('id');
+
+        foreach ($admins as $adminId) {
+            Notification::create([
+                'user_id' => $adminId,
+                'type' => 'task_review_requested',
+                'title' => 'Task siap direview',
+                'body' => sprintf(
+                    '%s mengajukan review untuk task "%s".',
+                    $submitter->name,
+                    $task->title
+                ),
+                'link' => route('tasks.show', $task),
+                'is_read' => false,
+            ]);
+        }
+    }
+
     /**
      * Notify the task assignee when a new comment is added (unless they are the commenter).
      */

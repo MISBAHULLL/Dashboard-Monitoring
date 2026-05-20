@@ -12,6 +12,7 @@ use App\Services\NotificationService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Spatie\SimpleExcel\SimpleExcelWriter;
 
@@ -101,6 +102,7 @@ class TaskController extends Controller
                 'can_restore' => $task->trashed() && $user->can('restore', $task),
                 'can_force_delete' => $task->trashed() && $user->can('forceDelete', $task),
                 'can_update_status' => ! $task->trashed() && $user->can('updateStatus', $task),
+                'can_review' => ! $task->trashed() && $user->isAdmin(),
             ];
         });
 
@@ -222,6 +224,7 @@ class TaskController extends Controller
                 ->with('user:id,name')
                 ->latest(),
         ]);
+        $task->loadCount('documents');
 
         $user = $request->user();
 
@@ -247,6 +250,7 @@ class TaskController extends Controller
             'permissions' => [
                 'can_edit' => $user->can('update', $task),
                 'can_comment' => $user->can('create', TaskComment::class),
+                'can_submit_review' => $user->can('submitForReview', $task),
             ],
         ]);
     }
@@ -457,6 +461,7 @@ class TaskController extends Controller
                 'comments_count' => $task->comments_count,
                 'can_edit' => $user->can('update', $task),
                 'can_update_status' => $user->can('updateStatus', $task),
+                'can_review' => $user->isAdmin(),
             ];
         });
 
@@ -483,11 +488,18 @@ class TaskController extends Controller
             'status' => ['required', Rule::in(['open', 'in_progress', 'revision', 'completed'])],
         ]);
 
+        if ($request->user()->isMember() && in_array($validated['status'], ['revision', 'completed'], true)) {
+            abort(403);
+        }
+
         if ($validated['status'] === 'completed' && $task->status !== 'completed') {
             $validated['completed_at'] = now();
         } elseif ($validated['status'] !== 'completed') {
             $validated['completed_at'] = null;
         }
+
+        $validated['review_requested_at'] = null;
+        $validated['review_requested_by'] = null;
 
         $oldStatus = $task->status;
         $task->update($validated);
@@ -498,6 +510,60 @@ class TaskController extends Controller
         }
 
         return back();
+    }
+
+    public function submitForReview(Request $request, Task $task)
+    {
+        $this->authorize('submitForReview', $task);
+
+        $validated = $request->validate([
+            'task_url' => ['nullable', 'url', 'max:500'],
+            'note' => ['required', 'string', 'min:5', 'max:2000'],
+        ]);
+
+        $task->load('documents');
+
+        $submittedUrl = $validated['task_url'] ?? null;
+        $currentUrl = $task->task_url && $task->task_url !== '-' ? $task->task_url : null;
+
+        if (! $submittedUrl && ! $currentUrl && $task->documents->isEmpty()) {
+            throw ValidationException::withMessages([
+                'task_url' => 'Isi URL hasil pengerjaan atau hubungkan dokumen sebelum mengajukan review.',
+            ]);
+        }
+
+        $oldValues = $task->toArray();
+        $updateData = [
+            'status' => $task->status === 'open' || $task->status === 'revision' ? 'in_progress' : $task->status,
+            'review_requested_at' => now(),
+            'review_requested_by' => $request->user()->id,
+            'completed_at' => null,
+        ];
+
+        if ($submittedUrl) {
+            $updateData['task_url'] = $submittedUrl;
+        }
+
+        $task->update($updateData);
+
+        TaskComment::create([
+            'task_id' => $task->id,
+            'user_id' => $request->user()->id,
+            'body' => trim($validated['note']),
+        ]);
+
+        ActivityLogger::updated(
+            'task',
+            $task->id,
+            $task->title,
+            $oldValues,
+            $task->fresh()->toArray(),
+            "Mengajukan review task '{$task->title}'"
+        );
+
+        $this->notificationService->notifyTaskSubmittedForReview($task->fresh(), $request->user());
+
+        return back()->with('success', 'Task berhasil diajukan untuk review admin.');
     }
 
     public function bulkDestroy(Request $request)
@@ -539,6 +605,8 @@ class TaskController extends Controller
                 } else {
                     $updateData['completed_at'] = null;
                 }
+                $updateData['review_requested_at'] = null;
+                $updateData['review_requested_by'] = null;
 
                 $task->update($updateData);
                 ActivityLogger::statusChanged('task', $task->id, $task->title, $oldStatus, $request->status);

@@ -364,7 +364,7 @@ const onDrop = (e: DragEvent, newStatus: TaskStatus) => {
 <template>
     <Head title="Kanban Board" />
 
-    <div class="flex h-full min-h-0 flex-1 flex-col gap-4 overflow-hidden bg-tm-page px-4 py-5 dark:bg-[#081422] md:px-6 md:py-6 xl:px-7">
+    <div class="flex h-full min-h-0 flex-1 flex-col gap-4 overflow-y-auto overflow-x-hidden bg-tm-page px-4 py-5 dark:bg-[#081422] md:px-6 md:py-6 xl:px-7">
         <!-- Sync Message Toast -->
         <div
             v-if="syncMessage"
@@ -504,8 +504,8 @@ const onDrop = (e: DragEvent, newStatus: TaskStatus) => {
         </div>
 
         <!-- Kanban Columns -->
-        <div class="-mx-1 min-h-0 flex-1 overflow-x-auto overflow-y-hidden px-1 pb-4">
-            <div class="grid h-full min-h-0 min-w-[76rem] grid-cols-4 items-stretch gap-4 xl:min-w-0 xl:gap-5">
+        <div class="-mx-1 min-h-[34rem] flex-1 overflow-x-auto overflow-y-hidden px-1 pb-4 md:min-h-[38rem] xl:min-h-[40rem]">
+            <div class="grid h-full min-h-[34rem] min-w-[76rem] grid-cols-4 items-stretch gap-4 md:min-h-[38rem] xl:min-h-[40rem] xl:min-w-0 xl:gap-5">
                 <div
                     v-for="column in columns"
                     :key="column.id"

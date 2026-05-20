@@ -99,6 +99,8 @@ export interface MemberDashboardStats {
   open_tasks: number;
   in_progress_tasks: number;
   completed_tasks: number;
+  overdue_tasks?: number;
+  due_soon_tasks?: number;
 }
 
 // ============================================================================
@@ -187,6 +189,8 @@ export interface AdminDashboardProps {
 export interface MemberDashboardProps {
   stats: MemberDashboardStats;
   my_tasks: Task[];
+  overdue_tasks?: DeadlineTask[];
+  due_soon_tasks?: DeadlineTask[];
 }
 
 // ============================================================================

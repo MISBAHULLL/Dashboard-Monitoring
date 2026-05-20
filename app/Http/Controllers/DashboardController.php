@@ -224,6 +224,13 @@ class DashboardController extends Controller
 
         // 3. Jika user adalah member biasa, tampilkan MemberDashboard
         $memberTaskQuery = Task::query()->where('assigned_to', $user->id);
+        $memberDeadlineColumns = ['tasks.id', 'tasks.title', 'tasks.client_id', 'tasks.status', 'tasks.release_date', 'tasks.category', 'tasks.created_at', 'tasks.completed_at'];
+        $memberOverdueQuery = Task::query()
+            ->where('assigned_to', $user->id)
+            ->whereSlaOverdue();
+        $memberDueSoonQuery = Task::query()
+            ->where('assigned_to', $user->id)
+            ->whereSlaDueSoon();
 
         return Inertia::render('Dashboard/MemberDashboard', [
             'stats' => [
@@ -231,7 +238,21 @@ class DashboardController extends Controller
                 'open_tasks' => (clone $memberTaskQuery)->where('status', 'open')->count(),
                 'in_progress_tasks' => (clone $memberTaskQuery)->where('status', 'in_progress')->count(),
                 'completed_tasks' => (clone $memberTaskQuery)->where('status', 'completed')->count(),
+                'overdue_tasks' => (clone $memberOverdueQuery)->count(),
+                'due_soon_tasks' => (clone $memberDueSoonQuery)->count(),
             ],
+            'overdue_tasks' => (clone $memberOverdueQuery)
+                ->with('client:id,name')
+                ->select($memberDeadlineColumns)
+                ->orderByRaw(Task::effectiveDeadlineExpression())
+                ->limit(5)
+                ->get(),
+            'due_soon_tasks' => (clone $memberDueSoonQuery)
+                ->with('client:id,name')
+                ->select($memberDeadlineColumns)
+                ->orderByRaw(Task::effectiveDeadlineExpression())
+                ->limit(5)
+                ->get(),
             'my_tasks' => Task::with(['client', 'product'])
                                 ->where('assigned_to', $user->id)
                                 ->whereNotIn('status', ['completed'])

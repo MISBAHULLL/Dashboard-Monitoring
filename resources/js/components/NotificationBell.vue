@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { router, usePage } from '@inertiajs/vue3';
 import {
     AlertTriangle,
@@ -48,6 +48,11 @@ type NotificationState = {
 };
 
 const page = usePage();
+const authUserId = computed(() => {
+    const auth = page.props.auth as { user?: { id?: number | null } | null } | undefined;
+
+    return auth?.user?.id ?? null;
+});
 
 // Local optimistic overrides: track which IDs have been marked read client-side
 const localReadIds = ref<Set<number>>(new Set());
@@ -97,19 +102,32 @@ const readItemsCount = computed(
     () => items.value.filter((n) => isRead(n)).length,
 );
 
-// Reset local state when server data refreshes (Inertia page visit)
-// We detect this by watching if the server items changed
-let lastServerItemsJson = '';
+// Reset local optimistic state when server data or active user changes.
+// Without this, "dismiss all" / "mark read" can hide new notifications after
+// an Inertia refresh or after switching users in the same browser session.
+const serverNotificationSignature = computed(() =>
+    JSON.stringify({
+        user: authUserId.value,
+        unread: notificationState.value.unread_count,
+        items: notificationState.value.items.map((notification) => ({
+            id: notification.id,
+            is_read: notification.is_read,
+        })),
+    }),
+);
+
+let lastServerNotificationSignature = '';
 const syncLocalState = () => {
-    const currentJson = JSON.stringify(notificationState.value.items.map((n) => n.id));
-    if (currentJson !== lastServerItemsJson) {
-        lastServerItemsJson = currentJson;
+    if (serverNotificationSignature.value !== lastServerNotificationSignature) {
+        lastServerNotificationSignature = serverNotificationSignature.value;
         localReadIds.value = new Set();
         localDismissedIds.value = new Set();
         localAllRead.value = false;
         localAllDismissed.value = false;
     }
 };
+
+watch(serverNotificationSignature, () => syncLocalState(), { immediate: true });
 
 const formatTimestamp = (value: string | null) => {
     if (!value) {

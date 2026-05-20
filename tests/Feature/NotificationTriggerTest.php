@@ -286,6 +286,32 @@ test('assignee commenting on own task does not self-notify', function () {
     ]);
 });
 
+test('member comment notifies active admins', function () {
+    $admin = User::factory()->admin()->create();
+    $inactiveAdmin = User::factory()->admin()->create(['is_active' => false]);
+    $member = User::factory()->member()->create();
+    $task = Task::factory()->assignedTo($member)->create(['status' => 'revision']);
+
+    $this->actingAs($member)
+        ->post(route('tasks.comments.store', $task), [
+            'body' => 'Saya sudah memperbaiki catatan revisinya.',
+        ])
+        ->assertRedirect();
+
+    $this->assertDatabaseHas('notifications', [
+        'user_id' => $admin->id,
+        'type' => 'new_comment',
+        'title' => 'Komentar baru dari member',
+        'link' => route('tasks.show', $task),
+        'is_read' => false,
+    ]);
+
+    $this->assertDatabaseMissing('notifications', [
+        'user_id' => $inactiveAdmin->id,
+        'type' => 'new_comment',
+    ]);
+});
+
 test('commenting on unassigned task creates no notification', function () {
     $admin = User::factory()->admin()->create();
     $task = Task::factory()->create(['assigned_to' => null]);

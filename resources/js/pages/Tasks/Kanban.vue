@@ -2,11 +2,8 @@
 import { computed, ref, watch } from 'vue';
 import { Head, Link, router } from '@inertiajs/vue3';
 import {
-    ArrowRightLeft,
     CalendarDays,
-    CheckCircle2,
     Circle,
-    CircleAlert,
     Columns3,
     ListTodo,
     LoaderCircle,
@@ -40,6 +37,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 
 type TaskStatus = 'open' | 'in_progress' | 'revision' | 'completed';
+type QuickFilter = 'all' | 'overdue';
 
 type TaskItem = {
     id: number;
@@ -150,6 +148,7 @@ const hoveredColumnId = ref<TaskStatus | null>(null);
 const processingTaskIds = ref<number[]>([]);
 const syncMessage = ref<{ type: 'error' | 'success'; text: string } | null>(null);
 const searchQuery = ref('');
+const activeQuickFilter = ref<QuickFilter>('all');
 
 watch(
     () => props.tasks,
@@ -237,11 +236,26 @@ const taskSearchText = (task: TaskItem) =>
         .join(' ')
         .toLowerCase();
 
+const matchesQuickFilter = (task: TaskItem, filter: QuickFilter) => {
+    if (filter === 'all') return true;
+    return isOverdue(task);
+};
+
+const countTasksForQuickFilter = (filter: QuickFilter) =>
+    boardTasks.value.filter((task) => matchesQuickFilter(task, filter)).length;
+
+const quickFilters = computed<Array<{ id: QuickFilter; label: string; count: number }>>(() => [
+    { id: 'all', label: 'Semua', count: countTasksForQuickFilter('all') },
+    { id: 'overdue', label: 'Overdue', count: countTasksForQuickFilter('overdue') },
+]);
+
 const filteredBoardTasks = computed(() => {
     const tokens = normalizedSearchTokens.value;
-    if (tokens.length === 0) return boardTasks.value;
 
     return boardTasks.value.filter((task) => {
+        if (!matchesQuickFilter(task, activeQuickFilter.value)) return false;
+        if (tokens.length === 0) return true;
+
         const searchableText = taskSearchText(task);
         return tokens.every((token) => searchableText.includes(token));
     });
@@ -259,6 +273,9 @@ const groupedTasks = computed(() => {
 const matchedTaskCount = computed(() => filteredBoardTasks.value.length);
 const clearSearch = () => {
     searchQuery.value = '';
+};
+const setQuickFilter = (filter: QuickFilter) => {
+    activeQuickFilter.value = filter;
 };
 
 const updateTaskStatus = (taskId: number, newStatus: TaskStatus) => {
@@ -432,30 +449,56 @@ const onDrop = (e: DragEvent, newStatus: TaskStatus) => {
 
         <!-- Board Search -->
         <div class="shrink-0 rounded-[14px] border-[2px] border-black bg-white p-2.5 shadow-[2px_4px_4px_0_rgba(11,42,107,0.12)] dark:border-slate-700/80 dark:bg-[#111c2e] dark:shadow-[0_14px_32px_rgba(0,0,0,0.42),0_0_0_1px_rgba(148,163,184,0.08)]">
-            <div class="flex flex-col gap-2.5 lg:flex-row lg:items-center lg:justify-between">
-                <div class="relative min-w-0 flex-1">
-                    <Search class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#5C6B7A] dark:text-slate-400" />
-                    <Input
-                        v-model="searchQuery"
-                        type="search"
-                        placeholder="Cari task, client, product, kategori, status..."
-                        class="h-9 rounded-xl border-[1.5px] border-black/70 bg-[#F8FAFC] pl-9 pr-10 text-sm font-medium text-[#1B3A6B] shadow-[1.5px_2px_0_0_rgba(0,0,0,0.07)] placeholder:text-[#9AAAB8] focus-visible:border-[#0369A1] focus-visible:ring-[#0369A1]/20 dark:border-slate-600 dark:bg-slate-950/25 dark:text-slate-100 dark:placeholder:text-slate-500"
-                    />
-                    <ActionTooltip v-if="hasSearchQuery" label="Bersihkan pencarian">
-                        <button
-                            type="button"
-                            class="absolute right-2 top-1/2 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-lg text-[#5C6B7A] transition hover:bg-[#E8EEF8] hover:text-[#1B3A6B] dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-100"
-                            @click="clearSearch"
-                        >
-                            <X class="h-3.5 w-3.5" />
-                        </button>
-                    </ActionTooltip>
+            <div class="flex flex-col gap-2.5">
+                <div class="flex flex-col gap-2.5 lg:flex-row lg:items-center lg:justify-between">
+                    <div class="relative min-w-0 flex-1">
+                        <Search class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#5C6B7A] dark:text-slate-400" />
+                        <Input
+                            v-model="searchQuery"
+                            type="search"
+                            placeholder="Cari task, client, product, kategori, status..."
+                            class="h-9 rounded-xl border-[1.5px] border-black/70 bg-[#F8FAFC] pl-9 pr-10 text-sm font-medium text-[#1B3A6B] shadow-[1.5px_2px_0_0_rgba(0,0,0,0.07)] placeholder:text-[#9AAAB8] focus-visible:border-[#0369A1] focus-visible:ring-[#0369A1]/20 dark:border-slate-600 dark:bg-slate-950/25 dark:text-slate-100 dark:placeholder:text-slate-500"
+                        />
+                        <ActionTooltip v-if="hasSearchQuery" label="Bersihkan pencarian">
+                            <button
+                                type="button"
+                                class="absolute right-2 top-1/2 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-lg text-[#5C6B7A] transition hover:bg-[#E8EEF8] hover:text-[#1B3A6B] dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-100"
+                                @click="clearSearch"
+                            >
+                                <X class="h-3.5 w-3.5" />
+                            </button>
+                        </ActionTooltip>
+                    </div>
+                    <div class="flex shrink-0 items-center justify-between gap-3 rounded-xl border border-[#DDE3EC] bg-[#F0F3F7] px-3 py-1.5 text-xs font-bold text-[#1B3A6B] dark:border-slate-700 dark:bg-slate-900/55 dark:text-slate-200 lg:min-w-[12rem]">
+                        <span>{{ hasSearchQuery ? 'Hasil pencarian' : 'Task board' }}</span>
+                        <span class="rounded-full bg-white px-2 py-0.5 shadow-sm dark:bg-slate-950/60">
+                            {{ matchedTaskCount }} / {{ boardTasks.length }}
+                        </span>
+                    </div>
                 </div>
-                <div class="flex shrink-0 items-center justify-between gap-3 rounded-xl border border-[#DDE3EC] bg-[#F0F3F7] px-3 py-1.5 text-xs font-bold text-[#1B3A6B] dark:border-slate-700 dark:bg-slate-900/55 dark:text-slate-200 lg:min-w-[12rem]">
-                    <span>{{ hasSearchQuery ? 'Hasil pencarian' : 'Task board' }}</span>
-                    <span class="rounded-full bg-white px-2 py-0.5 shadow-sm dark:bg-slate-950/60">
-                        {{ matchedTaskCount }} / {{ boardTasks.length }}
-                    </span>
+
+                <div class="flex gap-2 overflow-x-auto pb-0.5">
+                    <button
+                        v-for="filter in quickFilters"
+                        :key="filter.id"
+                        type="button"
+                        :aria-pressed="activeQuickFilter === filter.id"
+                        class="flex h-8 shrink-0 items-center gap-2 rounded-xl border-[1.5px] px-3 text-xs font-extrabold transition-all"
+                        :class="
+                            activeQuickFilter === filter.id
+                                ? 'border-black bg-[#1B3A6B] text-white shadow-[2px_2px_0_0_rgba(0,0,0,0.16)] dark:border-sky-300/50 dark:bg-sky-400/20 dark:text-sky-100'
+                                : 'border-[#DDE3EC] bg-[#F8FAFC] text-[#1B3A6B] hover:border-black/60 hover:bg-[#E8EEF8] dark:border-slate-700 dark:bg-slate-950/25 dark:text-slate-300 dark:hover:bg-slate-800'
+                        "
+                        @click="setQuickFilter(filter.id)"
+                    >
+                        <span>{{ filter.label }}</span>
+                        <span
+                            class="rounded-full px-1.5 py-0.5 text-[10px]"
+                            :class="activeQuickFilter === filter.id ? 'bg-white/20 text-white' : 'bg-white text-[#5C6B7A] dark:bg-slate-900 dark:text-slate-400'"
+                        >
+                            {{ filter.count }}
+                        </span>
+                    </button>
                 </div>
             </div>
         </div>
@@ -513,12 +556,12 @@ const onDrop = (e: DragEvent, newStatus: TaskStatus) => {
                     </div>
 
                     <!-- Task Cards Container -->
-                    <div class="kanban-column-scroll flex min-h-0 flex-1 scroll-pb-6 flex-col gap-3 overflow-y-auto overscroll-contain p-3 pr-2 pb-6">
+                    <div class="kanban-column-scroll flex min-h-0 flex-1 scroll-pb-6 flex-col gap-2.5 overflow-y-auto overscroll-contain p-3 pr-2 pb-6">
                         <div
                             v-for="task in groupedTasks[column.id]"
                             :key="task.id"
                             :draggable="task.can_update_status && !isTaskProcessing(task.id)"
-                            class="group rounded-[14px] border-[1.5px] border-[#DDE3EC] bg-white p-4 transition-all duration-200 dark:border-slate-700/80 dark:bg-slate-950/45 dark:shadow-[0_10px_22px_rgba(0,0,0,0.25)]"
+                            class="group rounded-[12px] border-[1.5px] border-[#DDE3EC] bg-white p-3 transition-all duration-200 dark:border-slate-700/80 dark:bg-slate-950/45 dark:shadow-[0_10px_22px_rgba(0,0,0,0.25)]"
                             :class="[
                                 task.can_update_status && !isTaskProcessing(task.id)
                                     ? 'cursor-grab hover:-translate-y-1 hover:border-[#1B3A6B]/40 hover:shadow-[2px_4px_8px_0px_rgba(27,58,107,0.12)] active:cursor-grabbing active:scale-[0.98] dark:hover:border-sky-300/35 dark:hover:bg-slate-900/80 dark:hover:shadow-[0_14px_28px_rgba(0,0,0,0.34)]'
@@ -529,8 +572,8 @@ const onDrop = (e: DragEvent, newStatus: TaskStatus) => {
                             @dragstart="(e) => onDragStart(e, task.id)"
                             @dragend="onDragEnd"
                         >
-                            <!-- Card Top: Category + Priority -->
-                            <div class="mb-2.5 flex items-start justify-between gap-2">
+                            <!-- Card Top: Category + Actions -->
+                            <div class="mb-2 flex items-start justify-between gap-2">
                                 <div class="flex min-w-0 flex-wrap items-center gap-1.5">
                                     <Badge variant="outline" class="truncate rounded-full border-[1.5px] border-[#DDE3EC] bg-[#F0F3F7] px-2 py-0.5 text-[10px] font-bold text-[#1B3A6B] dark:bg-slate-800 dark:text-slate-300 dark:border-slate-600">
                                         {{ task.category }}
@@ -550,93 +593,21 @@ const onDrop = (e: DragEvent, newStatus: TaskStatus) => {
                                         {{ task.sla_status === 'on_track' ? 'ON TRACK' : task.sla_status === 'overdue' ? 'OVERDUE' : task.sla_status === 'warning' ? 'WARNING' : task.sla_status === 'completed_on_time' ? 'ON TIME' : task.sla_status === 'completed_late' ? 'LATE' : 'UNKNOWN' }}
                                     </span>
                                 </div>
-                                <div class="flex items-center gap-2">
-                                    <span
-                                        class="h-2.5 w-2.5 shrink-0 rounded-full ring-2 ring-white shadow-sm dark:ring-slate-950"
-                                        :class="{
-                                            'bg-[#E84545]': task.priority === 'urgent',
-                                            'bg-[#F59E0B]': task.priority === 'high',
-                                            'bg-[#0369A1]': task.priority === 'medium',
-                                            'bg-[#9AAAB8]': task.priority === 'low',
-                                        }"
-                                        :title="`Priority: ${task.priority}`"
-                                    />
+                                <div class="flex shrink-0 items-center gap-1">
                                     <LoaderCircle
                                         v-if="isTaskProcessing(task.id)"
                                         class="h-4 w-4 animate-spin text-[#2BAE6E]"
                                     />
-                                </div>
-                            </div>
-
-                            <!-- Task Title -->
-                            <h4 class="line-clamp-2 text-[13px] font-bold leading-5 text-[#1B3A6B] dark:text-white">
-                                <Link :href="tasksShow.url(task.id)" class="transition-colors duration-150 hover:text-[#2BAE6E]">
-                                    {{ task.title }}
-                                </Link>
-                            </h4>
-
-                            <!-- Task Meta -->
-                            <div class="mt-2.5 space-y-1.5 text-[11px] text-[#5C6B7A] dark:text-slate-400">
-                                <div class="flex items-center gap-1.5">
-                                    <span class="font-bold text-[#1B3A6B]/70 dark:text-slate-300">Client</span>
-                                    <span class="truncate">{{ task.client?.name || '-' }}</span>
-                                </div>
-                                <div class="flex items-center gap-1.5">
-                                    <span class="font-bold text-[#1B3A6B]/70 dark:text-slate-300">Product</span>
-                                    <span class="truncate">{{ task.product?.name || '-' }}</span>
-                                </div>
-                                <div class="flex items-center gap-1.5">
-                                    <CalendarDays class="h-3 w-3 shrink-0" />
-                                    <span :class="isOverdue(task) ? 'font-bold text-[#E84545] dark:text-red-300' : ''">
-                                        {{ formatDate(taskDeadline(task)) }}
-                                    </span>
-                                    <span class="text-[9px] font-semibold text-[#5C6B7A]/70 dark:text-slate-500">
-                                        {{ task.release_date ? 'Manual' : 'SLA' }}
-                                    </span>
-                                    <span
-                                        v-if="isOverdue(task)"
-                                        class="rounded-full border border-[#E84545]/30 bg-[#FDEAEA] px-1.5 py-0.5 text-[9px] font-bold text-[#A32D2D] dark:border-red-300/35 dark:bg-red-400/10 dark:text-red-200"
-                                    >
-                                        Overdue
-                                    </span>
-                                </div>
-                            </div>
-
-                            <!-- Card Footer -->
-                            <div class="mt-3 flex items-center justify-between gap-2 border-t border-[#DDE3EC] pt-3 dark:border-slate-700">
-                                <div class="flex min-w-0 items-center gap-1.5">
-                                    <span class="rounded-full border border-[#DDE3EC] bg-[#F0F3F7] px-2 py-0.5 text-[10px] font-semibold text-[#5C6B7A] dark:bg-slate-800 dark:text-slate-400 dark:border-slate-600">
-                                        {{ task.comments_count ?? 0 }} komentar
-                                    </span>
-                                    <span
-                                        class="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-bold"
-                                        :class="{
-                                            'border-[#1B3A6B]/20 bg-[#E8EEF8] text-[#1B3A6B] dark:border-sky-300/35 dark:bg-sky-400/10 dark:text-sky-200': task.status === 'open',
-                                            'border-[#0369A1]/20 bg-[#E0F2FE] text-[#0369A1] dark:border-blue-300/35 dark:bg-blue-400/10 dark:text-blue-200': task.status === 'in_progress',
-                                            'border-[#D97706]/20 bg-[#FEF3DC] text-[#92400E] dark:border-amber-300/35 dark:bg-amber-400/10 dark:text-amber-200': task.status === 'revision',
-                                            'border-[#2BAE6E]/20 bg-[#E4F7ED] text-[#166534] dark:border-emerald-300/35 dark:bg-emerald-400/10 dark:text-emerald-200': task.status === 'completed',
-                                        }"
-                                    >
-                                        <Circle v-if="task.status === 'open'" class="h-2.5 w-2.5 fill-current" />
-                                        <ArrowRightLeft v-else-if="task.status === 'in_progress'" class="h-2.5 w-2.5" />
-                                        <CircleAlert v-else-if="task.status === 'revision'" class="h-2.5 w-2.5" />
-                                        <CheckCircle2 v-else class="h-2.5 w-2.5" />
-                                        {{ statusLabelMap[task.status] }}
-                                    </span>
-                                </div>
-
-                                <div class="flex items-center gap-1">
                                     <ActionTooltip v-if="task.can_edit" label="Edit task">
-                                        <Link :href="tasksEdit.url(task.id)" class="hidden sm:block">
-                                            <Button variant="ghost" size="sm" class="h-7 rounded-lg px-2.5 text-[11px] font-bold text-[#1B3A6B] opacity-0 transition-all group-hover:opacity-100 hover:bg-[#E8EEF8] dark:text-white dark:hover:bg-slate-800">
+                                        <Link :href="tasksEdit.url(task.id)">
+                                            <Button variant="ghost" size="sm" class="h-6 rounded-lg px-2 text-[10px] font-bold text-[#1B3A6B] opacity-80 transition-all group-hover:opacity-100 hover:bg-[#E8EEF8] dark:text-white dark:hover:bg-slate-800">
                                                 Edit
                                             </Button>
                                         </Link>
                                     </ActionTooltip>
-
                                     <DropdownMenu>
                                         <DropdownMenuTrigger as-child>
-                                            <Button variant="ghost" size="icon" title="Ubah status task" class="h-7 w-7 rounded-lg text-[#5C6B7A] opacity-60 transition-all group-hover:opacity-100 hover:bg-[#F0F3F7] hover:text-[#1B3A6B] dark:hover:bg-slate-800">
+                                            <Button variant="ghost" size="icon" title="Ubah status task" class="h-6 w-6 rounded-lg text-[#5C6B7A] opacity-70 transition-all group-hover:opacity-100 hover:bg-[#F0F3F7] hover:text-[#1B3A6B] dark:hover:bg-slate-800">
                                                 <MoreHorizontal class="h-4 w-4" />
                                             </Button>
                                         </DropdownMenuTrigger>
@@ -652,13 +623,43 @@ const onDrop = (e: DragEvent, newStatus: TaskStatus) => {
                                             </DropdownMenuItem>
                                             <DropdownMenuItem
                                                 v-if="task.can_edit"
-                                                class="cursor-pointer rounded-lg text-[13px] font-medium sm:hidden"
+                                                class="cursor-pointer rounded-lg text-[13px] font-medium"
                                                 @select="router.get(tasksEdit.url(task.id))"
                                             >
                                                 Edit task
                                             </DropdownMenuItem>
                                         </DropdownMenuContent>
                                     </DropdownMenu>
+                                </div>
+                            </div>
+
+                            <!-- Task Title -->
+                            <h4 class="line-clamp-2 text-[13px] font-bold leading-5 text-[#1B3A6B] dark:text-white">
+                                <Link :href="tasksShow.url(task.id)" class="transition-colors duration-150 hover:text-[#2BAE6E]">
+                                    {{ task.title }}
+                                </Link>
+                            </h4>
+
+                            <!-- Task Meta -->
+                            <div class="mt-2 space-y-1 text-[11px] text-[#5C6B7A] dark:text-slate-400">
+                                <div class="flex items-center gap-1.5">
+                                    <span class="font-bold text-[#1B3A6B]/70 dark:text-slate-300">Client</span>
+                                    <span class="truncate">{{ task.client?.name || '-' }}</span>
+                                </div>
+                                <div class="flex items-center gap-1.5">
+                                    <CalendarDays class="h-3 w-3 shrink-0" />
+                                    <span :class="isOverdue(task) ? 'font-bold text-[#E84545] dark:text-red-300' : ''">
+                                        {{ formatDate(taskDeadline(task)) }}
+                                    </span>
+                                    <span class="text-[9px] font-semibold text-[#5C6B7A]/70 dark:text-slate-500">
+                                        {{ task.release_date ? 'Manual' : 'SLA' }}
+                                    </span>
+                                    <span
+                                        v-if="isOverdue(task)"
+                                        class="rounded-full border border-[#E84545]/30 bg-[#FDEAEA] px-1.5 py-0.5 text-[9px] font-bold text-[#A32D2D] dark:border-red-300/35 dark:bg-red-400/10 dark:text-red-200"
+                                    >
+                                        Overdue
+                                    </span>
                                 </div>
                             </div>
                         </div>

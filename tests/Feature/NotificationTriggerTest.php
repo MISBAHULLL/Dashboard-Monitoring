@@ -111,6 +111,34 @@ test('task notifications are dismissed when task is completed', function () {
         });
 });
 
+test('completing a reviewed task dismisses its pending review notification', function () {
+    $admin = User::factory()->admin()->create();
+    $member = User::factory()->member()->create();
+    $task = Task::factory()->assignedTo($member)->create([
+        'status' => 'in_progress',
+        'review_requested_at' => now(),
+        'review_requested_by' => $member->id,
+    ]);
+
+    $reviewNotification = Notification::create([
+        'user_id' => $admin->id,
+        'type' => 'task_review_requested',
+        'title' => 'Task siap direview',
+        'body' => 'Ada task yang siap direview.',
+        'link' => route('tasks.show', $task),
+        'is_read' => false,
+    ]);
+
+    $this->actingAs($admin)
+        ->patch(route('tasks.updateStatus', $task), [
+            'status' => 'completed',
+        ])
+        ->assertRedirect();
+
+    expect($reviewNotification->fresh()->is_read)->toBeTrue();
+    expect($reviewNotification->fresh()->dismissed_at)->not->toBeNull();
+});
+
 test('dismiss read notifications hides only current user read notifications', function () {
     $user = User::factory()->member()->create();
     $otherUser = User::factory()->member()->create();
@@ -144,6 +172,28 @@ test('dismiss read notifications hides only current user read notifications', fu
     expect($readNotification->fresh()->dismissed_at)->not->toBeNull();
     expect($unreadNotification->fresh()->dismissed_at)->toBeNull();
     expect($otherNotification->fresh()->dismissed_at)->toBeNull();
+});
+
+test('opening a notification can mark it as read before redirecting to its task', function () {
+    $user = User::factory()->admin()->create();
+    $task = Task::factory()->create();
+
+    $notification = Notification::create([
+        'user_id' => $user->id,
+        'type' => 'task_review_requested',
+        'title' => 'Task siap direview',
+        'body' => 'Ada task yang siap direview.',
+        'link' => route('tasks.show', $task),
+        'is_read' => false,
+    ]);
+
+    $this->actingAs($user)
+        ->patch(route('notifications.read', $notification), [
+            'visit' => true,
+        ])
+        ->assertRedirect(route('tasks.show', $task));
+
+    expect($notification->fresh()->is_read)->toBeTrue();
 });
 
 test('dismiss all notifications hides only current user notifications', function () {

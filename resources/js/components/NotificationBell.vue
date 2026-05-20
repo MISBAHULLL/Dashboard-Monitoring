@@ -213,22 +213,35 @@ const toneForType = (type: NotificationItem['type']) => {
 const openNotification = (notification: NotificationItem) => {
     syncLocalState();
 
+    const wasUnread = !isRead(notification);
+
     // Optimistically mark as read immediately so badge decrements right away
-    if (!isRead(notification)) {
+    if (wasUnread) {
         localReadIds.value = new Set([...localReadIds.value, notification.id]);
     }
 
     if (notification.link) {
-        // Fire-and-forget the mark-as-read patch, then navigate
-        if (!notification.is_read) {
-            router.patch(markNotificationAsRead.url(notification.id), {}, {
-                preserveState: true,
-                preserveScroll: true,
-                only: ['notifications'],
-            });
+        if (wasUnread) {
+            router.patch(
+                markNotificationAsRead.url(notification.id),
+                { visit: true },
+                {
+                    preserveScroll: false,
+                    onError: () => {
+                        localReadIds.value = new Set(
+                            [...localReadIds.value].filter((id) => id !== notification.id),
+                        );
+                    },
+                },
+            );
+        } else {
+            router.get(notification.link, {}, { preserveScroll: false });
         }
-        router.get(notification.link, {}, { preserveScroll: false });
-    } else if (!notification.is_read) {
+
+        return;
+    }
+
+    if (wasUnread) {
         router.patch(
             markNotificationAsRead.url(notification.id),
             {},
@@ -236,9 +249,13 @@ const openNotification = (notification: NotificationItem) => {
                 preserveState: true,
                 preserveScroll: true,
                 only: ['notifications'],
+                onError: () => {
+                    localReadIds.value = new Set(
+                        [...localReadIds.value].filter((id) => id !== notification.id),
+                    );
+                },
                 onSuccess: () => syncLocalState(),
-            },
-        );
+            });
     }
 };
 
@@ -352,7 +369,7 @@ const dismissAll = () => {
                         @click="markAllAsRead"
                     >
                         <CheckCheck class="h-3.5 w-3.5" />
-                        Tandai dibaca
+                        Tandai dibaca semua
                     </button>
                 </div>
 

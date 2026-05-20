@@ -20,6 +20,10 @@ class NotificationController extends Controller
             $notification->update(['is_read' => true]);
         }
 
+        if ($request->boolean('visit') && $notification->link) {
+            return redirect()->to($notification->link);
+        }
+
         return back();
     }
 

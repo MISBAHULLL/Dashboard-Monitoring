@@ -9,6 +9,7 @@ use App\Services\ActivityLogger;
 use App\Services\NotificationService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class TaskCommentController extends Controller
 {
@@ -23,6 +24,11 @@ class TaskCommentController extends Controller
 
         $validated = $request->validate([
             'body' => ['required', 'string', 'max:5000'],
+            'reply_to_id' => [
+                'nullable',
+                'integer',
+                Rule::exists('task_comments', 'id')->where('task_id', $task->id),
+            ],
         ]);
 
         /** @var User $user */
@@ -31,6 +37,7 @@ class TaskCommentController extends Controller
         /** @var TaskComment $comment */
         $comment = $task->comments()->create([
             'user_id' => $user->id,
+            'reply_to_id' => $validated['reply_to_id'] ?? null,
             'body' => $validated['body'],
             'is_pinned' => false,
         ]);

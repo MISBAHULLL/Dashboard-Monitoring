@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 /**
  * @property int $id
  * @property int $task_id
+ * @property int|null $reply_to_id
  * @property bool $is_pinned
  *
  * @method bool|null delete()
@@ -20,6 +21,7 @@ class TaskComment extends Model
     protected $fillable = [
         'task_id',
         'user_id',
+        'reply_to_id',
         'body',
         'is_pinned',
     ];
@@ -36,5 +38,10 @@ class TaskComment extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function replyTo(): BelongsTo
+    {
+        return $this->belongsTo(self::class, 'reply_to_id');
     }
 }

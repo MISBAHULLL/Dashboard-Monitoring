@@ -221,7 +221,7 @@ class TaskController extends Controller
             'assignee:id,name',
             'creator:id,name',
             'comments' => fn ($query) => $query
-                ->with('user:id,name')
+                ->with(['user:id,name', 'replyTo.user:id,name'])
                 ->latest(),
         ]);
         $task->loadCount('documents');
@@ -234,12 +234,21 @@ class TaskController extends Controller
                 'comments' => $task->comments
                     ->map(fn (TaskComment $comment) => [
                         'id' => $comment->id,
+                        'reply_to_id' => $comment->reply_to_id,
                         'body' => $comment->body,
                         'is_pinned' => $comment->is_pinned,
                         'created_at' => $comment->created_at?->toIso8601String(),
                         'user' => $comment->user ? [
                             'id' => $comment->user->id,
                             'name' => $comment->user->name,
+                        ] : null,
+                        'reply_to' => $comment->replyTo ? [
+                            'id' => $comment->replyTo->id,
+                            'body' => $comment->replyTo->body,
+                            'user' => $comment->replyTo->user ? [
+                                'id' => $comment->replyTo->user->id,
+                                'name' => $comment->replyTo->user->name,
+                            ] : null,
                         ] : null,
                         'can_delete' => $user->can('delete', $comment),
                         'can_pin' => $user->can('pin', $comment),

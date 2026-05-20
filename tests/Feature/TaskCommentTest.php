@@ -37,6 +37,58 @@ test('member can add comment to assigned task', function () {
     ]);
 });
 
+test('user can reply to a comment on the same task', function () {
+    $admin = User::factory()->admin()->create();
+    $member = User::factory()->member()->create();
+    $task = Task::factory()->assignedTo($member)->create();
+
+    $parentComment = TaskComment::create([
+        'task_id' => $task->id,
+        'user_id' => $admin->id,
+        'body' => 'Data relasi table masih perlu diperbaiki.',
+        'is_pinned' => false,
+    ]);
+
+    $this->actingAs($member)
+        ->post(route('tasks.comments.store', $task), [
+            'body' => 'Sudah saya perbaiki bagian relasi table.',
+            'reply_to_id' => $parentComment->id,
+        ])
+        ->assertRedirect();
+
+    $this->assertDatabaseHas('task_comments', [
+        'task_id' => $task->id,
+        'user_id' => $member->id,
+        'reply_to_id' => $parentComment->id,
+        'body' => 'Sudah saya perbaiki bagian relasi table.',
+    ]);
+});
+
+test('user cannot reply to a comment from another task', function () {
+    $member = User::factory()->member()->create();
+    $task = Task::factory()->assignedTo($member)->create();
+    $otherTask = Task::factory()->assignedTo($member)->create();
+
+    $otherComment = TaskComment::create([
+        'task_id' => $otherTask->id,
+        'user_id' => $member->id,
+        'body' => 'Komentar dari task lain.',
+        'is_pinned' => false,
+    ]);
+
+    $this->actingAs($member)
+        ->post(route('tasks.comments.store', $task), [
+            'body' => 'Tidak boleh reply silang task.',
+            'reply_to_id' => $otherComment->id,
+        ])
+        ->assertSessionHasErrors('reply_to_id');
+
+    $this->assertDatabaseMissing('task_comments', [
+        'task_id' => $task->id,
+        'reply_to_id' => $otherComment->id,
+    ]);
+});
+
 test('member cannot comment on unassigned task', function () {
     $member = User::factory()->member()->create();
     $task = Task::factory()->create();

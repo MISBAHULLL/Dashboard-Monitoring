@@ -486,27 +486,47 @@ class TaskController extends Controller
 
         $validated = $request->validate([
             'status' => ['required', Rule::in(['open', 'in_progress', 'revision', 'completed'])],
+            'review_note' => ['nullable', 'string', 'min:5', 'max:2000'],
         ]);
 
         if ($request->user()->isMember() && in_array($validated['status'], ['revision', 'completed'], true)) {
             abort(403);
         }
 
-        if ($validated['status'] === 'completed' && $task->status !== 'completed') {
-            $validated['completed_at'] = now();
-        } elseif ($validated['status'] !== 'completed') {
-            $validated['completed_at'] = null;
+        $status = $validated['status'];
+        $reviewNote = trim($validated['review_note'] ?? '');
+
+        if ($status === 'revision' && $request->user()->isAdmin() && $reviewNote === '') {
+            throw ValidationException::withMessages([
+                'review_note' => 'Alasan revisi wajib diisi agar member tahu bagian yang perlu diperbaiki.',
+            ]);
         }
 
-        $validated['review_requested_at'] = null;
-        $validated['review_requested_by'] = null;
+        $updateData = ['status' => $status];
+
+        if ($status === 'completed' && $task->status !== 'completed') {
+            $updateData['completed_at'] = now();
+        } elseif ($status !== 'completed') {
+            $updateData['completed_at'] = null;
+        }
+
+        $updateData['review_requested_at'] = null;
+        $updateData['review_requested_by'] = null;
 
         $oldStatus = $task->status;
-        $task->update($validated);
+        $task->update($updateData);
 
-        if ($oldStatus !== $validated['status']) {
-            ActivityLogger::statusChanged('task', $task->id, $task->title, $oldStatus, $validated['status']);
-            $this->notificationService->notifyStatusChanged($task, $oldStatus, $validated['status'], $request->user());
+        if ($oldStatus !== $status && $status === 'revision' && $reviewNote !== '') {
+            TaskComment::create([
+                'task_id' => $task->id,
+                'user_id' => $request->user()->id,
+                'body' => "Alasan revisi:\n\n{$reviewNote}",
+            ]);
+        }
+
+        if ($oldStatus !== $status) {
+            ActivityLogger::statusChanged('task', $task->id, $task->title, $oldStatus, $status);
+            $this->notificationService->notifyStatusChanged($task, $oldStatus, $status, $request->user());
         }
 
         return back();

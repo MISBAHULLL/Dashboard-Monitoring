@@ -296,6 +296,20 @@ const updateTaskStatus = (taskId: number, newStatus: TaskStatus) => {
     const task = boardTasks.value.find((item) => item.id === taskId);
     if (!task || !canMoveTaskToStatus(task, newStatus) || task.status === newStatus || isTaskProcessing(taskId)) return;
 
+    let reviewNote: string | null = null;
+    if (task.can_review && newStatus === 'revision') {
+        const input = window.prompt(`Tuliskan alasan revisi untuk "${task.title}":`);
+        reviewNote = input?.trim() ?? '';
+
+        if (!reviewNote) {
+            syncMessage.value = {
+                type: 'error',
+                text: 'Alasan revisi wajib diisi sebelum task dipindahkan ke Revision.',
+            };
+            return;
+        }
+    }
+
     const previousStatus = task.status;
     task.status = newStatus;
     syncMessage.value = null;
@@ -303,7 +317,10 @@ const updateTaskStatus = (taskId: number, newStatus: TaskStatus) => {
 
     router.patch(
         tasksUpdateStatus.url(taskId),
-        { status: newStatus },
+        {
+            status: newStatus,
+            ...(reviewNote ? { review_note: reviewNote } : {}),
+        },
         {
             preserveScroll: true,
             preserveState: true,

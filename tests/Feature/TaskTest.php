@@ -428,6 +428,39 @@ test('member cannot submit task for review without url or document evidence', fu
     expect($task->fresh()->review_requested_at)->toBeNull();
 });
 
+test('admin must provide a revision note when marking task as revision', function () {
+    $admin = User::factory()->admin()->create();
+    $task = Task::factory()->create(['status' => 'in_progress']);
+
+    $this->actingAs($admin)
+        ->patch(route('tasks.updateStatus', $task), [
+            'status' => 'revision',
+        ])
+        ->assertSessionHasErrors('review_note');
+
+    expect($task->fresh()->status)->toBe('in_progress');
+});
+
+test('admin revision note is saved as a task comment', function () {
+    $admin = User::factory()->admin()->create();
+    $task = Task::factory()->create(['status' => 'in_progress']);
+
+    $this->actingAs($admin)
+        ->patch(route('tasks.updateStatus', $task), [
+            'status' => 'revision',
+            'review_note' => 'Data hasil pengerjaan belum sesuai dengan requirement awal.',
+        ])
+        ->assertRedirect();
+
+    expect($task->fresh()->status)->toBe('revision');
+
+    $this->assertDatabaseHas('task_comments', [
+        'task_id' => $task->id,
+        'user_id' => $admin->id,
+        'body' => "Alasan revisi:\n\nData hasil pengerjaan belum sesuai dengan requirement awal.",
+    ]);
+});
+
 test('member cannot update status of unassigned task', function () {
     $member = User::factory()->member()->create();
     $task = Task::factory()->create(['status' => 'open']);

@@ -27,6 +27,15 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
 import ActionTooltip from '@/components/ActionTooltip.vue';
 import ConfirmDialog from '@/components/ConfirmDialog.vue';
 
@@ -173,6 +182,51 @@ const hasReviewEvidence = (task: any) => {
     return Boolean(task.task_url && task.task_url !== '-') || Boolean(task.documents && task.documents.length > 0);
 };
 
+const revisionDialogOpen = ref(false);
+const revisionTargetTask = ref<any | null>(null);
+const revisionForm = useForm({
+    review_note: '',
+});
+
+const openRevisionDialog = (task: any) => {
+    revisionTargetTask.value = task;
+    revisionForm.reset();
+    revisionForm.clearErrors();
+    revisionDialogOpen.value = true;
+};
+
+const closeRevisionDialog = () => {
+    revisionDialogOpen.value = false;
+    revisionTargetTask.value = null;
+    revisionForm.reset();
+    revisionForm.clearErrors();
+};
+
+const handleRevisionDialogOpenChange = (open: boolean) => {
+    if (open) {
+        revisionDialogOpen.value = true;
+        return;
+    }
+
+    closeRevisionDialog();
+};
+
+const submitRevision = () => {
+    if (!revisionTargetTask.value) return;
+
+    revisionForm
+        .transform((data) => ({
+            status: 'revision',
+            review_note: data.review_note,
+        }))
+        .patch(updateStatus.url(revisionTargetTask.value.id), {
+            preserveScroll: true,
+            preserveState: true,
+            onSuccess: closeRevisionDialog,
+            onFinish: () => revisionForm.transform((data) => data),
+        });
+};
+
 const toggleCekStatus = (task: any, newStatus: string) => {
     if (!hasReviewEvidence(task) && (newStatus === 'completed' || newStatus === 'revision')) {
         return;
@@ -181,6 +235,11 @@ const toggleCekStatus = (task: any, newStatus: string) => {
     let finalStatus = newStatus;
     if (task.status === newStatus) {
         finalStatus = 'open';
+    }
+
+    if (finalStatus === 'revision') {
+        openRevisionDialog(task);
+        return;
     }
 
     router.patch(updateStatus.url(task.id), { status: finalStatus }, {
@@ -861,6 +920,62 @@ const submitImport = () => {
             </div>
         </div>
     </Teleport>
+
+    <Dialog :open="revisionDialogOpen" @update:open="handleRevisionDialogOpenChange">
+        <DialogContent class="overflow-hidden rounded-[18px] border-2 border-black bg-white p-0 shadow-[4px_6px_0_0_rgba(0,0,0,0.22)] sm:max-w-[520px] dark:border-slate-700 dark:bg-[#111c2e] dark:shadow-[0_24px_60px_rgba(0,0,0,0.55)]">
+            <form @submit.prevent="submitRevision">
+                <DialogHeader class="border-b border-slate-100 px-5 py-4 text-left dark:border-slate-700/80">
+                    <DialogTitle class="text-base font-extrabold text-tm-navy dark:text-slate-100">
+                        Minta Revisi Task
+                    </DialogTitle>
+                    <DialogDescription class="mt-1.5 text-sm leading-6 text-slate-600 dark:text-slate-400">
+                        Tulis alasan revisi agar member tahu bagian mana yang perlu diperbaiki.
+                    </DialogDescription>
+                </DialogHeader>
+
+                <div class="space-y-3 px-5 py-4">
+                    <div v-if="revisionTargetTask" class="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-semibold text-tm-navy dark:border-slate-700 dark:bg-slate-950/35 dark:text-slate-100">
+                        {{ revisionTargetTask.title }}
+                    </div>
+
+                    <div class="space-y-1.5">
+                        <Label for="revision-note" class="text-xs font-bold uppercase tracking-wide text-tm-navy dark:text-slate-200">
+                            Alasan revisi
+                        </Label>
+                        <Textarea
+                            id="revision-note"
+                            v-model="revisionForm.review_note"
+                            rows="5"
+                            placeholder="Contoh: URL sudah bisa dibuka, tetapi data faskes belum sesuai dengan requirement..."
+                            class="resize-none rounded-xl border-[1.5px] border-black/70 text-sm shadow-[1px_2px_0_0_rgba(0,0,0,0.06)] focus:border-tm-navy focus:ring-1 focus:ring-tm-navy dark:border-slate-600 dark:bg-slate-950/35 dark:text-slate-100"
+                            :class="{ '!border-tm-danger': revisionForm.errors.review_note }"
+                        />
+                        <p v-if="revisionForm.errors.review_note" class="text-xs font-semibold text-tm-danger">
+                            {{ revisionForm.errors.review_note }}
+                        </p>
+                    </div>
+                </div>
+
+                <DialogFooter class="flex gap-2.5 bg-slate-50/80 px-5 py-4 dark:bg-slate-950/25 sm:justify-end">
+                    <Button
+                        type="button"
+                        variant="outline"
+                        class="h-10 rounded-xl border-[1.5px] border-black px-5 shadow-[1px_2px_0_0_rgba(0,0,0,0.08)] dark:border-slate-600 dark:bg-slate-950/25 dark:text-slate-100"
+                        @click="closeRevisionDialog"
+                    >
+                        Batal
+                    </Button>
+                    <Button
+                        type="submit"
+                        :disabled="revisionForm.processing"
+                        class="h-10 rounded-xl border-[1.5px] border-black bg-tm-warning px-5 font-bold text-white shadow-[2px_2px_0_0_rgba(0,0,0,0.18)] hover:bg-amber-500 disabled:opacity-60"
+                    >
+                        {{ revisionForm.processing ? 'Mengirim...' : 'Kirim Revisi' }}
+                    </Button>
+                </DialogFooter>
+            </form>
+        </DialogContent>
+    </Dialog>
 
     <!-- Confirm Dialog -->
     <ConfirmDialog

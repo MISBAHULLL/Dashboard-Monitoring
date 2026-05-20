@@ -15,7 +15,10 @@ test('admin changing status notifies assignee', function () {
     $task = Task::factory()->assignedTo($member)->create(['status' => 'open']);
 
     $this->actingAs($admin)
-        ->patch(route('tasks.updateStatus', $task), ['status' => 'revision'])
+        ->patch(route('tasks.updateStatus', $task), [
+            'status' => 'revision',
+            'review_note' => 'Perlu perbaikan pada hasil pengerjaan.',
+        ])
         ->assertRedirect();
 
     $this->assertDatabaseHas('notifications', [

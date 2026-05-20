@@ -2,6 +2,7 @@
 import { computed } from 'vue';
 import { Clock, ArrowRight } from 'lucide-vue-next';
 import { Link } from '@inertiajs/vue3';
+import ActionTooltip from '@/components/ActionTooltip.vue';
 import { show as showTask } from '@/routes/tasks';
 import type { DeadlineTask } from '@/types/dashboard';
 
@@ -93,14 +94,15 @@ const formatDate = (date?: string): string => {
                 </h2>
             </div>
 
+            <ActionTooltip v-if="viewAllLink" label="Lihat semua task due soon" side="left">
             <Link
-                v-if="viewAllLink"
                 :href="viewAllLink"
                 class="flex items-center gap-1 rounded-full border-2 border-black bg-white px-4 py-1 text-[#111] transition-all duration-200 hover:bg-[#111] hover:text-white hover:scale-105 dark:bg-slate-900/40 dark:text-slate-100 dark:border-slate-500 dark:hover:bg-slate-100 dark:hover:text-[#111] font-['Solway',serif] text-[14px] font-medium"
             >
                 View All
                 <ArrowRight :size="14" :stroke-width="2.5" />
             </Link>
+            </ActionTooltip>
         </div>
 
         <div class="mx-6 border-t border-gray-100 dark:border-border/60" />
@@ -162,13 +164,14 @@ const formatDate = (date?: string): string => {
             </div>
 
             <!-- Right: View All button (rectangle rounded, not pill) -->
+            <ActionTooltip v-if="viewAllLink" label="Lihat semua task due soon" side="left">
             <Link
-                v-if="viewAllLink"
                 :href="viewAllLink"
                 class="flex flex-shrink-0 items-center gap-1 rounded-lg border-[1.5px] border-black bg-white px-2.5 py-1 text-[13px] font-semibold text-[#111] leading-tight transition-all duration-200 hover:bg-[#111] hover:text-white hover:scale-105 dark:bg-slate-900/40 dark:text-slate-100 dark:border-slate-500 dark:hover:bg-slate-100 dark:hover:text-[#111]"
             >
                 View All&nbsp;<ArrowRight :size="13" :stroke-width="2.5" />
             </Link>
+            </ActionTooltip>
         </div>
 
         <!-- Task list (left side ~56% width) -->
@@ -192,12 +195,14 @@ const formatDate = (date?: string): string => {
                 </span>
 
                 <!-- Title -->
+                <ActionTooltip :label="`Buka task: ${task.title}`" side="top">
                 <Link
                     :href="showTask(task.id).url"
                     class="m-0 block truncate pr-20 text-[14.5px] font-medium leading-[1.4] text-[#111] hover:text-sky-600 transition-colors dark:text-slate-100 dark:hover:text-sky-400"
                 >
                     {{ task.title }}
                 </Link>
+                </ActionTooltip>
 
                 <!-- Due sub-label -->
                 <p

@@ -2,6 +2,7 @@
 import { computed } from 'vue';
 import { Trophy, Medal, Award } from 'lucide-vue-next';
 import { Link } from '@inertiajs/vue3';
+import ActionTooltip from '@/components/ActionTooltip.vue';
 import { index as tasksIndex } from '@/routes/tasks';
 import type { TeamPerformance } from '@/types/dashboard';
 
@@ -257,6 +258,7 @@ const getRankMeta = (index: number) => {
                 <div class="min-w-0 flex-1">
                     <div class="flex items-center justify-between gap-2">
                         <!-- Nama tim → link ke semua task tim -->
+                        <ActionTooltip :label="`Lihat semua task ${team.name}`" side="top">
                         <Link
                             :href="taskUrl(team.id)"
                             class="truncate text-[14px] font-semibold text-[#093b70] transition-colors hover:text-tm-navy-medium hover:underline dark:text-slate-100 dark:hover:text-sky-400"
@@ -264,6 +266,7 @@ const getRankMeta = (index: number) => {
                         >
                             {{ team.name }}
                         </Link>
+                        </ActionTooltip>
                         <span
                             class="flex-shrink-0 text-[12px] font-extrabold tabular-nums"
                             :class="getProgressTextColor(team.completion_rate)"
@@ -298,6 +301,7 @@ const getRankMeta = (index: number) => {
                         >
                             Total
                         </span>
+                        <ActionTooltip :label="`Semua task ${team.name}`" side="top">
                         <Link
                             :href="taskUrl(team.id)"
                             class="text-[14px] font-bold tabular-nums text-[#0b2a6b] transition-colors hover:text-tm-navy-medium hover:underline dark:text-slate-100 dark:hover:text-sky-400"
@@ -305,6 +309,7 @@ const getRankMeta = (index: number) => {
                         >
                             {{ team.total_tasks }}
                         </Link>
+                        </ActionTooltip>
                     </div>
                     <!-- Selesai → filter completed -->
                     <div class="flex flex-col items-end">
@@ -313,6 +318,7 @@ const getRankMeta = (index: number) => {
                         >
                             Selesai
                         </span>
+                        <ActionTooltip :label="`Task selesai ${team.name}`" side="top">
                         <Link
                             :href="taskUrl(team.id, 'completed')"
                             class="text-[14px] font-bold tabular-nums text-tm-green transition-colors hover:text-tm-green-dark hover:underline dark:hover:text-emerald-400"
@@ -320,6 +326,7 @@ const getRankMeta = (index: number) => {
                         >
                             {{ team.completed_tasks }}
                         </Link>
+                        </ActionTooltip>
                     </div>
                     <!-- Overdue → filter overdue -->
                     <div class="flex flex-col items-end">
@@ -329,14 +336,19 @@ const getRankMeta = (index: number) => {
                             Overdue
                         </span>
                         <!-- Hanya jadi link jika ada overdue, kalau 0 tetap teks biasa -->
-                        <Link
+                        <ActionTooltip
                             v-if="team.overdue_tasks > 0"
+                            :label="`Task overdue ${team.name}`"
+                            side="top"
+                        >
+                        <Link
                             :href="taskUrl(team.id, 'overdue')"
                             class="text-[14px] font-bold tabular-nums text-tm-danger transition-colors hover:text-red-700 hover:underline dark:hover:text-red-400"
                             :title="`Task overdue ${team.name}`"
                         >
                             {{ team.overdue_tasks }}
                         </Link>
+                        </ActionTooltip>
                         <span
                             v-else
                             class="text-[14px] font-bold tabular-nums text-tm-text-muted dark:text-slate-500"

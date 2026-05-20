@@ -2,6 +2,7 @@
 import { computed } from 'vue';
 import { Link } from '@inertiajs/vue3';
 import { ListTodo, Users, Clock, Building2, ArrowUpRight } from 'lucide-vue-next';
+import ActionTooltip from '@/components/ActionTooltip.vue';
 import { index as tasksIndex } from '@/routes/tasks';
 import { index as teamsIndex } from '@/routes/teams';
 import { index as clientsIndex } from '@/routes/clients';
@@ -58,6 +59,7 @@ interface StatItem {
     value: number;
     icon: typeof ListTodo;
     href: string;
+    tooltip: string;
     meta?: string;
     trend?: { direction: 'up' | 'down'; value: number };
 }
@@ -68,6 +70,7 @@ const statItems = computed<StatItem[]>(() => [
         value: props.totalTasks,
         icon: ListTodo,
         href: tasksIndex.url(),
+        tooltip: 'Lihat semua task aktif',
         meta: `Total ${props.totalTasksWithTrashed ?? props.totalTasks} | Terhapus ${props.trashedTasks ?? 0}`,
         trend: props.trends ? makeTrend(props.trends.tasks) : undefined,
     },
@@ -76,6 +79,7 @@ const statItems = computed<StatItem[]>(() => [
         value: props.totalTeams,
         icon: Users,
         href: teamsIndex.url(),
+        tooltip: 'Lihat data tim',
         trend: props.trends ? makeTrend(props.trends.teams) : undefined,
     },
     {
@@ -83,6 +87,7 @@ const statItems = computed<StatItem[]>(() => [
         value: props.pendingTasks,
         icon: Clock,
         href: tasksIndex({ query: { status: 'open' } }).url,
+        tooltip: 'Lihat task open yang menunggu dikerjakan',
         trend: props.trends ? makeTrend(props.trends.pending) : undefined,
     },
     {
@@ -90,6 +95,7 @@ const statItems = computed<StatItem[]>(() => [
         value: props.totalClients,
         icon: Building2,
         href: clientsIndex.url(),
+        tooltip: 'Lihat data faskes',
         trend: props.trends ? makeTrend(props.trends.clients) : undefined,
     },
 ]);
@@ -104,9 +110,13 @@ const statItems = computed<StatItem[]>(() => [
 
         <!-- Content -->
         <div v-else class="grid grid-cols-2 gap-3 h-full">
-            <Link
+            <ActionTooltip
                 v-for="(stat, index) in statItems"
                 :key="index"
+                :label="stat.tooltip"
+                side="top"
+            >
+            <Link
                 :href="stat.href"
                 class="grid-task-item"
                 :aria-label="`${stat.label}: ${stat.value}`"
@@ -180,6 +190,7 @@ const statItems = computed<StatItem[]>(() => [
                 <!-- Tebal: h-[Xpx], Geser: translate-y-[Ypx], Margin kiri-kanan: mx-[Xpx] -->
                 <div class="grid-task-line"></div>
             </Link>
+            </ActionTooltip>
         </div>
     </div>
 </template>

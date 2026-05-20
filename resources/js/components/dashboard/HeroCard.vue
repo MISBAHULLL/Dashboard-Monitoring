@@ -1,5 +1,8 @@
 <script setup lang="ts">
 import { computed } from 'vue';
+import { Link } from '@inertiajs/vue3';
+import ActionTooltip from '@/components/ActionTooltip.vue';
+import { index as tasksIndex } from '@/routes/tasks';
 
 /**
  * HeroCard Component
@@ -103,18 +106,24 @@ const greeting = computed(() => {
         <!-- Subtitle with inline badges -->
         <p class="mt-5 text-[18px] text-[#a4a3a3] font-['Solway',serif] leading-snug dark:text-slate-300">
           kamu mempunyai
-          <span
-            class="inline-flex items-center rounded-[3px] px-1 py-[1px] text-[18px] font-normal bg-[rgba(199,153,36,0.28)] text-[#eab223] mx-0.5 dark:bg-amber-400/15 dark:text-amber-300"
-          >
-            {{ pendingCount }} Pending
-          </span>
+          <ActionTooltip label="Lihat task open yang menunggu dikerjakan" side="top">
+            <Link
+              :href="tasksIndex({ query: { status: 'open' } }).url"
+              class="inline-flex items-center rounded-[3px] px-1 py-[1px] text-[18px] font-normal bg-[rgba(199,153,36,0.28)] text-[#eab223] mx-0.5 transition-colors hover:bg-amber-400/30 hover:text-amber-200 dark:bg-amber-400/15 dark:text-amber-300"
+            >
+              {{ pendingCount }} Pending
+            </Link>
+          </ActionTooltip>
           dan
           <br/>
-          <span
-            class="inline-flex items-center rounded-[3px] px-1 py-[1px] text-[18px] font-normal bg-[rgba(224,29,29,0.38)] text-[#e01d1d] ml-0 mt-1 dark:bg-red-500/20 dark:text-red-300"
-          >
-            {{ overdueCount }} Overdue
-          </span>
+          <ActionTooltip label="Lihat task overdue" side="bottom">
+            <Link
+              :href="tasksIndex({ query: { status: 'overdue' } }).url"
+              class="inline-flex items-center rounded-[3px] px-1 py-[1px] text-[18px] font-normal bg-[rgba(224,29,29,0.38)] text-[#e01d1d] ml-0 mt-1 transition-colors hover:bg-red-500/30 hover:text-red-200 dark:bg-red-500/20 dark:text-red-300"
+            >
+              {{ overdueCount }} Overdue
+            </Link>
+          </ActionTooltip>
         </p>
       </div>
 
@@ -125,9 +134,14 @@ const greeting = computed(() => {
           <p class="text-[20px] uppercase tracking-[0.15em] text-[#a4a3a3] font-['Solway',serif] dark:text-slate-300">
             TASK AKTIF
           </p>
-          <p class="mt-0.5 text-[50px] leading-none font-normal text-white font-['Solway',serif]">
-            {{ totalTasks }}
-          </p>
+          <ActionTooltip label="Lihat semua task aktif" side="top">
+            <Link
+              :href="tasksIndex.url()"
+              class="mt-0.5 block text-[50px] leading-none font-normal text-white font-['Solway',serif] transition-colors hover:text-emerald-200"
+            >
+              {{ totalTasks }}
+            </Link>
+          </ActionTooltip>
           <p
             v-if="totalTasksWithTrashed !== undefined || trashedTasks !== undefined"
             class="mt-1 text-[12px] font-semibold tracking-wide text-slate-400 dark:text-slate-400"

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { Link } from '@inertiajs/vue3';
+import ActionTooltip from '@/components/ActionTooltip.vue';
 import { show as showTask, index as tasksIndex } from '@/routes/tasks';
 import type { Task, TaskListVariant, TaskStatus, TaskPriority } from '@/types/dashboard';
 
@@ -208,6 +209,7 @@ const getPriorityClasses = (priority: TaskPriority): string => {
             </div>
           </div>
           <!-- View all link -->
+          <ActionTooltip label="Lihat semua task pada daftar ini" side="left">
           <Link
             :href="viewAllUrl"
             class="inline-flex items-center gap-1 rounded-md px-2.5 py-1 text-xs font-medium text-primary
@@ -219,6 +221,7 @@ const getPriorityClasses = (priority: TaskPriority): string => {
               <path d="m12 5 7 7-7 7" />
             </svg>
           </Link>
+          </ActionTooltip>
         </div>
       </header>
 
@@ -268,6 +271,7 @@ const getPriorityClasses = (priority: TaskPriority): string => {
             </div>
 
             <!-- Task card (clickable link to task detail) -->
+            <ActionTooltip :label="`Buka task: ${task.title}`" side="top">
             <Link
               :href="showTask(task.id).url"
               class="flex-1 rounded-lg border-l-[3px] bg-muted/30 p-3 dark:bg-slate-950/20
@@ -335,6 +339,7 @@ const getPriorityClasses = (priority: TaskPriority): string => {
                 </span>
               </div>
             </Link>
+            </ActionTooltip>
           </div>
         </div>
       </div>

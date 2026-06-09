@@ -948,14 +948,4 @@ This project is licensed under the MIT License.
 **Project Period**: Februari 2026 - Juni 2026  
 **Contact**: support@trustmedis.com
 
-## 📞 Support
-
-Jika mengalami masalah atau memiliki pertanyaan:
-
-1. Check [Troubleshooting](#-troubleshooting) section
-2. Open an issue on GitHub
-3. Contact: support@trustmedis.com
-
----
-
 **Made with ❤️ using Laravel, Vue.js, Inertia.js, and TailwindCSS**
